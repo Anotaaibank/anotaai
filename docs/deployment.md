@@ -4,13 +4,17 @@ Destino solicitado em 14/10/2026:
 
 - Código: https://github.com/Anotaaibank/anotaai
 - Banco: projeto Supabase `yqbbbqkouedhrunazpqd`, organização `gzyulgzcggszdysoxvpq`.
-- Hospedagem do aplicativo: Easypanel em `http://72.62.140.186:3000/projects/icom/app/anotei`. O serviço vazio `anotei` foi criado dentro do projeto `icom`, sem alterar os aplicativos existentes, pois o plano recusou criar um quarto projeto. O painel da organização Supabase não hospeda este servidor Next.js.
+- Hospedagem do aplicativo: Easypanel em `http://72.62.140.186:3000/projects/icom/app/anotei`. O serviço `anotei` foi criado dentro do projeto `icom`, sem alterar os aplicativos existentes, pois o plano recusou criar um quarto projeto. A origem foi vinculada ao GitHub, branch `main`, caminho `/`, com compilação por `Dockerfile`. Nenhum deploy foi iniciado.
 
 ## Estado verificado
 
-A conexão GitHub atual é `icomkids`: leitura permitida, escrita negada no repositório solicitado. A conexão Supabase atual enxerga apenas a organização antiga Logosiabrasil; o novo projeto negou acesso. O usuário pediu para preservar esses plugins e autorizar acesso separado às novas contas. O Git Credential Manager permite adicionar Anotaaibank separadamente; o Easypanel já aceitou a autenticação direta. A sessão do painel está guardada exclusivamente em arquivo local criptografado, dentro de `.data`, excluído da publicação.
+A conexão dos plugins continua apontando às contas anteriores, por decisão do usuário. Foram criados acessos separados, aprovados explicitamente, com validade até 21/10/2026: GitHub somente com escrita em Contents e leitura de Metadata em `Anotaaibank/anotaai`; Supabase somente no projeto solicitado, com escrita em banco, migrações e Auth Config, leitura das chaves e seus segredos, Project Settings e Advisors. O fluxo amplo do Git Credential Manager foi cancelado. O Easypanel aceitou autenticação direta; sua sessão está guardada em arquivo local criptografado dentro de `.data`.
 
-Nenhum código ou dado foi publicado e nenhuma migração foi aplicada ao novo Supabase nesta preparação. Apenas o serviço vazio de hospedagem foi criado. Os testes locais e seus dados permanecem no computador. O acesso separado do Supabase pode ser configurado em `.env.deploy.local`, ignorado pelo Git; não trocar o plugin atual. O código de autorização do GitHub é temporário e não deve ser incluído na documentação.
+O código foi enviado ao GitHub. As migrações `schema.sql`, `finance.sql`, `commerce.sql`, `security.sql` e `rpc-identifiers.sql` foram aplicadas no novo Supabase, com histórico registrado. Há 12 tabelas, todas com RLS; nenhuma permite leitura anônima, e as operações de servidor não foram concedidas aos clientes. A última migração corrigiu colisões entre nomes de variáveis PL/pgSQL e colunas, encontradas pelo teste remoto.
+
+O teste com duas contas temporárias confirmou isolamento de leitura, bloqueio de escrita na outra conta e idempotência financeira. Todos os registros de teste foram revertidos na mesma transação; o banco permanece sem usuários ou dados reais. Os advisors não apontaram erros; há oito avisos informativos por tabelas deliberadamente acessíveis apenas ao servidor e quatro alertas para wrappers SECURITY DEFINER autenticados, protegidos por checagem explícita de `auth.uid()`, privilégios revogados para anon e search_path vazio. A aplicação ainda não foi ativada online.
+
+Os acessos administrativos ficam em `.env.deploy.local`; as chaves do novo projeto ficam em `.env.cloud.local`. Ambos são privados e ignorados pelo Git. `.env.local` e os dados do aplicativo local foram preservados. Os tokens temporários servem à implantação; não precisam fazer parte do ambiente da aplicação no servidor.
 
 ## Preparação do servidor
 
@@ -24,7 +28,7 @@ Antes de iniciar, execute `node --env-file=.env.production scripts/deployment-pr
 
 1. Adaptar persistência de convites, vínculos de usuários ao WhatsApp compartilhado e envio de links ao banco remoto, mantendo isolamento por usuário e idempotência.
 2. Concluir cadastro, confirmação de e-mail e sessão no fluxo de convite; definir a transição das contas locais. As senhas locais não são importadas diretamente para Supabase Auth.
-3. Revisar e aplicar migrações no projeto separado solicitado, sem dados de demonstração; validar permissões RLS, auditoria e duas contas independentes.
+3. A estrutura inicial e as correções de segurança já foram aplicadas e testadas no projeto separado. Aplicar e validar também as futuras migrações dos convites e do WhatsApp compartilhado, sem dados de demonstração.
 4. Configurar segredos no servidor, domínio definitivo e webhook do provedor. Transferir somente dados próprios autorizados, com cópia de segurança e conferência.
 5. Após validação, atualizar `supabase_personal_features_ready` em `deployment/target.json`. Enquanto estiver falso, a verificação impede iniciar uma publicação configurada para Supabase.
 

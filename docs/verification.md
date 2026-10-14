@@ -7,7 +7,10 @@
 - 167 testes passaram; os cinco testes novos também foram reexecutados após a correção de tipagem. Typecheck e build de produção isolado `deploy-prep-20261014` concluíram com sucesso. Docker não está instalado neste computador; a imagem ainda não foi construída nem executada em container.
 - Verificação dos arquivos elegíveis para Git não encontrou formatos de credenciais reais; `.env.local`, `.env.deploy.local`, banco SQLite e sessão criptografada do painel permanecem ignorados.
 - Autenticação direta no Easypanel confirmada, preservando os plugins. A tentativa de criar um quarto projeto foi recusada pelo plano; criou-se apenas o serviço vazio `icom/anotei`, sem fonte ou deploy e sem modificar outros serviços.
-- Acesso GitHub separado aguarda autorização da conta Anotaaibank. Acesso Supabase separado aguarda configuração local do token. Convites pessoais e WhatsApp compartilhado ainda dependem da adaptação ao banco remoto antes da ativação desse modo.
+- Posteriormente, o usuário autorizou os escopos específicos e foram criados tokens separados de sete dias; os plugins anteriores foram preservados. O código foi enviado à branch `main` do GitHub e o Easypanel foi vinculado ao repositório com compilação por Dockerfile.
+- Cinco migrações foram aplicadas no Supabase novo: despesas/WhatsApp, finanças, gestão, revogação de permissões anônimas herdadas e correção dos identificadores PL/pgSQL. As 12 tabelas têm RLS e não concedem leitura a anon; rotinas de servidor não são executáveis por clientes.
+- O teste SQL remoto com duas contas temporárias passou: leitura isolada, escrita em outra conta rejeitada, atualização financeira idempotente e reversão de todos os registros de teste. O banco permanece sem usuários, despesas ou perfis financeiros reais. Os advisors retornaram oito INFO de tabelas acessíveis só ao servidor e quatro WARN de wrappers autenticados SECURITY DEFINER; as checagens de identidade, search_path e revogação para anon foram revisadas.
+- Convites pessoais, WhatsApp compartilhado, sessões e migração das contas ainda dependem da adaptação ao banco remoto. A prévia e os dados locais foram preservados; não foi iniciado deploy do aplicativo.
 
 ## Histórico da primeira entrega
 
