@@ -23,9 +23,21 @@ test('sessão cloud guarda tokens cifrados, renova uma vez em concorrência e en
   globalThis.fetch=async(url,init)=>{const path=new URL(String(url)).pathname;
    if(path.endsWith('/token')){refreshed++;await new Promise(done=>setTimeout(done,10));return Response.json({...tokens,access_token:'synthetic-access-new',refresh_token:'synthetic-refresh-new',expires_in:3600});}
    if(path.endsWith('/user')){assert.equal(new Headers(init?.headers).get('Authorization'),'Bearer synthetic-access-new');return Response.json(tokens.user);}
-   if(path.endsWith('/logout')){revoked++;return new Response(null,{status:204});}throw Error('Unexpected request');};
+   if(path.endsWith('/logout')){assert.equal(new URL(String(url)).searchParams.get('scope'),'local');revoked++;return new Response(null,{status:204});}throw Error('Unexpected request');};
   const concurrent=await Promise.all([cloudSession(session.token),cloudSession(session.token),cloudSession(session.token)]);assert.equal(refreshed,1);assert.ok(concurrent.every(value=>value.user.id===id));
   await logoutCloud(session.token);assert.equal(revoked,1);await assert.rejects(()=>cloudSession(session.token),/expirou/);
+ }finally{c.restore();}
+});
+test('sair de um dispositivo preserva a renovação da outra sessão do casal',async()=>{
+ const c=context();try{
+  const user={id:randomUUID(),email:'couple@example.invalid'},first=createCloudSession({access_token:'access-one',refresh_token:'refresh-one',expires_in:3600,user}),second=createCloudSession({access_token:'access-two',refresh_token:'refresh-two',expires_in:-1,user});
+  const revoked=new Set<string>();let refreshed=0;
+  globalThis.fetch=async(url,init)=>{const u=new URL(String(url));
+   if(u.pathname.endsWith('/logout')){assert.equal(u.searchParams.get('scope'),'local');assert.equal(new Headers(init?.headers).get('Authorization'),'Bearer access-one');revoked.add('refresh-one');return new Response(null,{status:204});}
+   if(u.pathname.endsWith('/token')){const input=JSON.parse(String(init?.body));assert.equal(input.refresh_token,'refresh-two');assert.equal(revoked.has(input.refresh_token),false);refreshed++;return Response.json({access_token:'access-two-new',refresh_token:'refresh-two-new',expires_in:3600,user});}
+   if(u.pathname.endsWith('/user')){assert.equal(new Headers(init?.headers).get('Authorization'),'Bearer access-two-new');return Response.json(user);}throw Error('Unexpected request');};
+  await logoutCloud(first.token);await assert.rejects(()=>cloudSession(first.token),/expirou/);
+  assert.equal((await cloudSession(second.token)).user.id,user.id);assert.equal(refreshed,1);assert.equal((c.db.prepare('SELECT count(*) AS total FROM cloud_sessions').get() as {total:number}).total,1);
  }finally{c.restore();}
 });
 test('renovação não pode trocar o dono da sessão',async()=>{

@@ -51,4 +51,4 @@ export async function cloudSession(token:string){
  const user=await verified.json() as CloudUser;if(user.id!==row.user_id)throw new AppError('Sessão inválida.',401);
  return {user:cloudUser(user),token:tokens.access_token};
 }
-export async function logoutCloud(token:string){const hash=sessionHash(token),row=sessions().prepare('SELECT cipher FROM cloud_sessions WHERE hash=?').get(hash) as {cipher:string}|undefined;sessions().prepare('DELETE FROM cloud_sessions WHERE hash=?').run(hash);if(row){try{const tokens=JSON.parse(unseal(row.cipher,personalSecret(),'anotei-cloud-session:'+hash)) as CloudTokens;await authFetch('logout','POST',undefined,tokens.access_token);}catch{}}}
+export async function logoutCloud(token:string){const hash=sessionHash(token),row=sessions().prepare('SELECT cipher FROM cloud_sessions WHERE hash=?').get(hash) as {cipher:string}|undefined;sessions().prepare('DELETE FROM cloud_sessions WHERE hash=?').run(hash);if(row){try{const tokens=JSON.parse(unseal(row.cipher,personalSecret(),'anotei-cloud-session:'+hash)) as CloudTokens;await authFetch('logout?scope=local','POST',undefined,tokens.access_token);}catch{}}}

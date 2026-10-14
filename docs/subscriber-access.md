@@ -4,6 +4,8 @@ Somente a gestão cadastra novos assinantes, envia convites e altera os números
 
 Cada convite cria uma conta pessoal com um número principal. A gestão pode adicionar um segundo número à mesma conta. Ambos consultam e alteram o mesmo saldo, salário, despesas e agenda pelo WhatsApp; no aplicativo, usam o e-mail e senha da conta. O número principal é preservado e não pode ser transferido entre assinaturas. Um terceiro número é recusado no servidor e no banco. Remover o segundo revoga o vínculo e remove a autorização da conexão compartilhada, evitando que ele seja confundido com o gestor.
 
+Sair do aplicativo encerra somente a sessão daquele dispositivo. A sessão do outro integrante continua podendo renovar seu acesso, respeitando a validade da assinatura.
+
 Na gestão, abrir **Cadastros e assinaturas → Assinantes, acesso do casal e Pix**. Há formulário para cadastrar e enviar convite, selecionar uma conta e informar o segundo telefone, configurar o Pix fixo e revisar pagamentos pendentes.
 
 A tela `/assinatura` fica disponível ao usuário autenticado mesmo sem acesso às finanças. Exibe a chave fixa e o recebedor cadastrados pelo administrador, valor e prazo. O usuário paga em seu banco e informa o identificador ou observação; isso apenas cria uma solicitação pendente. A administração confere o crédito em seu banco e aprova ou recusa. O sistema não executa transferência, não comprova automaticamente o recebimento e não inicia cobrança recorrente pelo Pix.
