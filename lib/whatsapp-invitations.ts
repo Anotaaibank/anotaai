@@ -4,6 +4,7 @@ import {rawLocalBot,invitationText,publicAppOrigin,type PersonalInvitation} from
 import {credentials} from './whatsapp-server.ts';
 import {sendText} from './whatsapp.ts';
 import {accessLinkDb,accessLinkInvitation,registeredAccessText,type AccessLink} from './whatsapp-access-links-local.ts';
+import {processCloudInvitations} from './whatsapp-invitations-cloud.ts';
 export async function processAccessLinks(now=Date.now()){
  if(!localMode())return 0;try{publicAppOrigin();}catch{return 0;}const db=accessLinkDb();let count=0;
  const rows=db.prepare("SELECT * FROM whatsapp_access_links WHERE status='NAO_ENVIADO' ORDER BY created_at LIMIT 3").all() as AccessLink[];
@@ -14,7 +15,7 @@ export async function processAccessLinks(now=Date.now()){
  }return count;
 }
 export async function processInvitations(now=Date.now()){
- if(!localMode())return 0;try{publicAppOrigin();}catch{return 0;}let count=0;
+ if(!localMode())return processCloudInvitations(now);try{publicAppOrigin();}catch{return 0;}let count=0;
  const rows=localDb().prepare("SELECT * FROM whatsapp_invitations WHERE send_status='NAO_ENVIADO' AND active=1 AND user_id IS NULL AND expires_at>? ORDER BY created_at LIMIT 3").all(now) as PersonalInvitation[];
  for(const row of rows){const bot=rawLocalBot(row.owner_id);if(!bot?.enabled||bot.status!=='PRONTO'||!bot.allowed_phones.includes(row.phone))continue;
   const claimed=transaction(()=>localDb().prepare("UPDATE whatsapp_invitations SET send_status='ENVIANDO' WHERE id=? AND send_status='NAO_ENVIADO' AND active=1 AND user_id IS NULL").run(row.id).changes);if(!claimed)continue;

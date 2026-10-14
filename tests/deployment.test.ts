@@ -17,7 +17,7 @@ function environment(){return {
 const ready={supabase_project_ref:'yqbbbqkouedhrunazpqd',supabase_personal_features_ready:true};
 
 test('deployment blocks incomplete Supabase invitation and shared WhatsApp support',()=>{
- const result=deploymentReadiness(environment());
+ const result=deploymentReadiness(environment(),{...ready,supabase_personal_features_ready:false});
  assert.equal(result.configuration_ready,false);
  assert.ok(result.problems.some(p=>p.includes('convites pessoais')));
  assert.equal(JSON.stringify(result).includes(secret),false);

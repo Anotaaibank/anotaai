@@ -60,7 +60,9 @@
     ".next-validation-registration-unlocked-20261013/types/**/*.ts",
     ".next-validation-registration-unlocked-20261013/dev/types/**/*.ts",
     ".next-validation-deploy-prep-20261014/types/**/*.ts",
-    ".next-validation-deploy-prep-20261014/dev/types/**/*.ts"
+    ".next-validation-deploy-prep-20261014/dev/types/**/*.ts",
+    ".next-validation-cloud-personal-20261014/types/**/*.ts",
+    ".next-validation-cloud-personal-20261014/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

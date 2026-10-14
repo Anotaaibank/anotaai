@@ -13,9 +13,9 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
 COPY --from=build --chown=node:node /app/public ./public
-COPY --chown=node:node scripts/whatsapp-worker.mjs scripts/deployment-preflight.mjs ./scripts/
+COPY --chown=node:node scripts/whatsapp-worker.mjs scripts/deployment-preflight.mjs scripts/app-runtime.mjs ./scripts/
 COPY --chown=node:node deployment/target.json ./deployment/target.json
 RUN mkdir -p /data && chown node:node /data
 USER node
 EXPOSE 3000
-CMD ["sh", "-c", "node scripts/deployment-preflight.mjs && exec node server.js"]
+CMD ["node", "scripts/app-runtime.mjs"]

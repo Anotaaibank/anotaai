@@ -2,13 +2,14 @@ import {randomUUID} from 'node:crypto';
 import {localDb,transaction} from './local-db.ts';
 import {localMode,service} from './server.ts';
 import {localEffectiveBot,rawLocalBot,localBotAuthorized} from './whatsapp-members-local.ts';
+import {effectivePersonalBot} from './whatsapp-members.ts';
 import type {BotMessage} from './whatsapp-expenses.ts';
 import type {Reminder} from './whatsapp-reminder.ts';
 import {paymentReminderPrefix,type PaymentReminder} from './payment-reminder.ts';
 export type Bot={shared_owner_id?:string;connection_user_id?:string;user_id:string;phone:string;allowed_phones:string[];enabled:boolean;status:'NOVO'|'CRIANDO'|'PRONTO'|'INCERTO'|'FALHOU';instance_id:string|null;token_cipher:string|null;hook_cipher:string;updated_at:string};
 export type Inbox={id:string;user_id:string;provider_id:string;sender:string;type:'text'|'audio';text:string;transcript:string;status:'FILA'|'PROCESSANDO'|'LANCADO'|'ESCLARECER'|'ERRO'|'RESOLVIDO';entry_id:string|null;reply:string;reply_status:string;created_at:string;lease:string|null;claimed_at:string|null;finance_confirmation?:string;confirmation_code?:string;confirmation_used?:boolean};
 export async function rawBot(user:string){if(localMode())return rawLocalBot(user);const [row]=await service<Bot[]>('anota_whatsapp_bots?user_id=eq.'+encodeURIComponent(user));return row||null;}
-export async function getBot(user:string){if(localMode())return localEffectiveBot(user);const [row]=await service<Bot[]>('anota_whatsapp_bots?user_id=eq.'+encodeURIComponent(user));return row||null;}
+export async function getBot(user:string){return effectivePersonalBot(user);}
 export async function putBot(bot:Bot,expected:string|null){if(localMode()){return transaction(()=>{const db=localDb(),old=db.prepare('SELECT updated_at FROM bots WHERE user_id=?').get(bot.user_id) as {updated_at:string}|undefined;if(old&&old.updated_at!==expected)throw new Error('A configuração mudou. Atualize a página.');db.prepare('INSERT INTO bots VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET data=excluded.data,updated_at=excluded.updated_at').run(bot.user_id,JSON.stringify(bot),bot.updated_at);});}if(expected){const result=await service<Bot[]>('anota_whatsapp_bots?user_id=eq.'+bot.user_id+'&updated_at=eq.'+encodeURIComponent(expected),'PATCH',bot);if(!result.length)throw new Error('A configuração mudou. Atualize a página.');}else await service('anota_whatsapp_bots','POST',bot);}
 export async function botPatch(user:string,patch:Partial<Bot>){const b=await rawBot(user);if(!b)throw new Error('Salve os números primeiro.');await putBot({...b,...patch,updated_at:new Date().toISOString()},b.updated_at);}
 export async function provisionClaim(user:string){if(localMode())return transaction(()=>{const row=localDb().prepare('SELECT data FROM bots WHERE user_id=?').get(user) as {data:string}|undefined;if(!row)return false;const bot=JSON.parse(row.data) as Bot;if(!['NOVO','FALHOU'].includes(bot.status))return false;bot.status='CRIANDO';bot.updated_at=new Date().toISOString();localDb().prepare('UPDATE bots SET data=?,updated_at=? WHERE user_id=?').run(JSON.stringify(bot),bot.updated_at,user);return true;});return service<boolean>('rpc/anota_provision_claim','POST',{p_user:user});}
@@ -29,5 +30,5 @@ export async function enqueueReminder(b:Bot,r:Reminder|PaymentReminder,now=Date.
 }
 export async function reminderBots(){
  if(localMode())return (localDb().prepare('SELECT data FROM bots').all() as {data:string}[]).map(r=>localEffectiveBot((JSON.parse(r.data) as Bot).user_id)).filter((b):b is Bot=>!!b&&b.enabled&&b.status==='PRONTO'&&!!b.allowed_phones.length);
- const result:Bot[]=[];for(let offset=0;offset<100000;offset+=1000){const rows=await service<Bot[]>('anota_whatsapp_bots?enabled=eq.true&status=eq.PRONTO&order=user_id&limit=1000&offset='+offset);result.push(...rows);if(rows.length<1000)return result;}throw new Error('Consulta de lembretes acima do limite.');
+ const result:Bot[]=[];for(let offset=0;offset<100000;offset+=1000){const rows=await service<Bot[]>('anota_whatsapp_bots?enabled=eq.true&status=eq.PRONTO&order=user_id&limit=1000&offset='+offset),effective=await Promise.all(rows.map(row=>getBot(row.user_id)));result.push(...effective.filter((bot):bot is Bot=>!!bot&&bot.enabled&&bot.status==='PRONTO'&&!!bot.allowed_phones.length));if(rows.length<1000)return result;}throw new Error('Consulta de lembretes acima do limite.');
 }
