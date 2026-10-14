@@ -11,3 +11,8 @@
 .anotei-registration .login-password-toggle:focus-visible{outline:2px solid #165449;outline-offset:1px}
 .anotei-registration .login-password-toggle:disabled{opacity:.5;cursor:default}
 @media(max-width:760px){.anotei-registration{grid-template-columns:1fr;gap:18px;padding:18px}.anotei-registration-story{padding:24px}.anotei-registration-story .login-orb{width:64px;height:64px}.anotei-registration .bank-card{padding:20px}}
+.subscription-payment .bank-card h2,.subscription-payment .bank-card h3{color:#123f36}
+.subscription-payment .bank-card textarea{width:100%;box-sizing:border-box;background:#fff;color:#173f36;border:1px solid #b4cdbb;border-radius:12px;padding:14px;min-height:100px;line-height:1.5;color-scheme:light}
+.subscription-payment .bank-card textarea::placeholder{color:#536c5d;opacity:1}
+.subscription-payment .bank-card .bank-primary{background:linear-gradient(145deg,#166454,#0c443b);color:#f4e3b3;box-shadow:0 4px 12px #0a3d3920;border:1px solid #5c8b71}
+.subscription-payment .anotei-registration-story>.login-orb+p{color:#ded19e;font-size:11px;letter-spacing:.12em;margin-top:16px}

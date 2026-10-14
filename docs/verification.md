@@ -1,5 +1,12 @@
 # Verificação — 7 de outubro de 2026
 
+## Assinaturas com dois números e Pix — 14 de outubro de 2026
+
+- Typecheck e 174 testes passaram. O Dockerfile voltou a compilar e validar no servidor antes da publicação.
+- As novas tabelas têm RLS e nenhum acesso direto de clientes. Testes SQL transacionais passaram para aprovação manual, bloqueio antes do pagamento, aprovação idempotente, vencimento e limite de dois números. O gestor foi testado com mais de 100 números, sem limite comercial de assinantes.
+- No aplicativo online, uma conta temporária ficou bloqueada antes e depois de informar um Pix pendente, obteve acesso após aprovação administrativa e perdeu acesso ao vencer. Tentativas de autoaprovação, cadastro de contatos e terceiro número foram recusadas. Os dois números foram encaminhados à mesma conta.
+- Em tela de celular, o WhatsApp do assinante não apresenta cadastro de contatos, e o vencimento redireciona ao pagamento. Nenhum Pix real foi aprovado ou mensagem de teste enviada. A conta temporária e seus registros foram removidos; o WhatsApp real da IA continua conectado.
+
 ## Publicação online — 14 de outubro de 2026
 
 - Aplicativo ativo em https://icom-anotei.pqaykh.easypanel.host, com certificado HTTPS, Supabase próprio e volume persistente no serviço separado icom/anotei.
