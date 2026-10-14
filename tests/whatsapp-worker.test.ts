@@ -135,3 +135,16 @@ test('outbox remoto respeita esquema existente, dono, lease nulo e leituras em p
   const fs=await import('../lib/finance-server.ts');assert.deepEqual(await fs.financeStateForBot(c.user),{documents:[],expenses:[]});
  }finally{for(const k of keys){if(old[k]===undefined)delete process.env[k];else process.env[k]=old[k];}c.restore();}
 });
+
+test('limpeza esconde mensagens antigas sem permitir que o mesmo evento seja lançado novamente',async()=>{
+ const c=await context();try{
+  const event={provider_id:randomUUID(),sender,type:'text' as const,text:'Mensagem de teste antiga',sent_at:new Date().toISOString()};
+  const id=await c.store.enqueue(c.user,event);assert.ok(id);
+  const row=(await c.store.history(c.user)).find(message=>message.id===id)!;assert.ok(row);
+  localDb().prepare('UPDATE inbox SET data=? WHERE id=? AND user_id=?').run(JSON.stringify({...row,text:'',transcript:'',reply:'',status:'RESOLVIDO',reply_status:'LIMPO',confirmation_used:true}),id,c.user);
+  assert.equal((await c.store.history(c.user)).some(message=>message.id===id),false);
+  assert.equal(await c.store.enqueue(c.user,event),null);
+  const fresh=await c.store.enqueue(c.user,{...event,provider_id:randomUUID(),text:'Nova mensagem'});assert.ok(fresh);
+  assert.equal((await c.store.history(c.user)).some(message=>message.id===fresh),true);
+ }finally{c.restore();}
+});
