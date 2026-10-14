@@ -4,6 +4,7 @@ import {seal,unseal} from './secret-box.ts';
 import {AppError} from './model.ts';
 import {phoneBR} from './whatsapp.ts';
 import {authorizedPhones} from './whatsapp-contacts.ts';
+import {isManager} from './commerce.ts';
 import type {Bot} from './whatsapp-store.ts';
 
 export type PersonalInvitation={id:string;owner_id:string;phone:string;user_id:string|null;token_hash:string;token_cipher:string;expires_at:number;send_status:'NAO_ENVIADO'|'ENVIANDO'|'ACEITO'|'INCERTO'|'FALHOU';active:number;created_at:string;updated_at:string};
@@ -16,24 +17,24 @@ export function personalRecipient(owner:string,phone:string):string|null{
  const invite=localDb().prepare('SELECT * FROM whatsapp_invitations WHERE owner_id=? AND phone=?').get(owner,phone) as PersonalInvitation|undefined;
  if(!invite)return owner;
  const member=invite.user_id?rawLocalBot(invite.user_id):null;
- return invite.active&&member?.enabled&&member.status==='PRONTO'&&member.shared_owner_id===owner&&member.allowed_phones.length===1&&member.allowed_phones[0]===phone?invite.user_id:null;
+ return invite.active&&member?.enabled&&member.status==='PRONTO'&&member.shared_owner_id===owner&&member.allowed_phones.length<=2&&member.allowed_phones.includes(phone)?invite.user_id:null;
 }
 export function localBotAuthorized(user:string,phone:string){const bot=rawLocalBot(user);if(!bot?.enabled||bot.status!=='PRONTO'||!bot.allowed_phones.includes(phone))return false;return personalRecipient(bot.shared_owner_id||user,phone)===user;}
 export function localEffectiveBot(user:string):Bot|null{
  const own=rawLocalBot(user);if(!own)return null;
  if(!own.shared_owner_id){const pending=new Set(localInvitations(user).map(i=>i.phone));return {...own,allowed_phones:own.allowed_phones.filter(p=>!pending.has(p))};}
  const master=rawLocalBot(own.shared_owner_id);if(!master||master.shared_owner_id)return {...own,enabled:false};
- return {...own,phone:master.phone,status:master.status,enabled:own.allowed_phones.length===1&&localBotAuthorized(user,own.allowed_phones[0]),token_cipher:master.token_cipher,connection_user_id:master.user_id};
+ return {...own,phone:master.phone,status:master.status,enabled:own.allowed_phones.length>=1&&own.allowed_phones.length<=2&&localBotAuthorized(user,own.allowed_phones[0]),token_cipher:master.token_cipher,connection_user_id:master.user_id};
 }
 export function createPersonalInvitation(owner:string,rawPhone:unknown,expected:string,now=Date.now()){
  publicAppOrigin();const phone=phoneBR(rawPhone);
  return transaction(()=>{const db=localDb(),bot=rawLocalBot(owner);if(!bot||bot.shared_owner_id||!bot.enabled||bot.status!=='PRONTO')throw new AppError('Conecte e ative o WhatsApp da IA antes de convidar.',409);if(bot.updated_at!==expected)throw new AppError('A configuração mudou. Atualize a lista.',409);
   const previous=db.prepare('SELECT * FROM whatsapp_invitations WHERE phone=?').get(phone) as PersonalInvitation|undefined;
   if(previous&&previous.owner_id!==owner)throw new AppError('Este número já está vinculado a outra conta.',409);
-  if(previous?.user_id){const numbers=bot.allowed_phones.includes(phone)?bot.allowed_phones:authorizedPhones([...bot.allowed_phones,phone],bot.phone),date=new Date(Math.max(now,Date.parse(bot.updated_at)+1)).toISOString();db.prepare('UPDATE bots SET data=?,updated_at=? WHERE user_id=?').run(JSON.stringify({...bot,allowed_phones:numbers,updated_at:date}),date,owner);db.prepare('UPDATE whatsapp_invitations SET active=1 WHERE id=?').run(previous.id);return previous;}
+  if(previous?.user_id){const numbers=bot.allowed_phones.includes(phone)?bot.allowed_phones:authorizedPhones([...bot.allowed_phones,phone],bot.phone,isManager(owner)?Infinity:100),date=new Date(Math.max(now,Date.parse(bot.updated_at)+1)).toISOString();db.prepare('UPDATE bots SET data=?,updated_at=? WHERE user_id=?').run(JSON.stringify({...bot,allowed_phones:numbers,updated_at:date}),date,owner);db.prepare('UPDATE whatsapp_invitations SET active=1 WHERE id=?').run(previous.id);return previous;}
   if(previous&&(previous.send_status==='INCERTO'||previous.send_status==='ENVIANDO'))throw new AppError('O envio está em conferência. Confira o WhatsApp antes de reenviar.',409);
   if(previous&&previous.active&&previous.expires_at>now&&bot.allowed_phones.includes(phone)){if(previous.send_status==='FALHOU')db.prepare("UPDATE whatsapp_invitations SET send_status='NAO_ENVIADO' WHERE id=?").run(previous.id);return previous;}
-  const numbers=bot.allowed_phones.includes(phone)?bot.allowed_phones:authorizedPhones([...bot.allowed_phones,phone],bot.phone);
+  const numbers=bot.allowed_phones.includes(phone)?bot.allowed_phones:authorizedPhones([...bot.allowed_phones,phone],bot.phone,isManager(owner)?Infinity:100);
   if(phone===bot.phone)throw new AppError('O número da IA deve ser diferente do convidado.');
   const token=randomBytes(32).toString('base64url'),id=previous?.id||randomUUID(),date=new Date(Math.max(now,Date.parse(bot.updated_at)+1)).toISOString();
   db.prepare('INSERT INTO whatsapp_invitations VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET token_hash=excluded.token_hash,token_cipher=excluded.token_cipher,expires_at=excluded.expires_at,send_status=excluded.send_status,active=1,updated_at=excluded.updated_at').run(id,owner,phone,null,tokenHash(token),seal(token,localSecret(),'anotei-invitation:'+id),now+7*86400000,'NAO_ENVIADO',1,previous?.created_at||date,date);

@@ -11,7 +11,7 @@ export const publicAppOrigin=local.publicAppOrigin;
 export const invitationHash=(value:string)=>createHash('sha256').update(value).digest('hex');
 export function personalSecret(){const key=localMode()?localSecret():process.env.ANOTA_WHATSAPP_ENCRYPTION_KEY;if(!key||key.length<32)throw new AppError('Configure a proteção dos convites no servidor.',503);return key;}
 export async function rawPersonalBot(user:string){if(localMode())return local.rawLocalBot(user);const [bot]=await service<Bot[]>('anota_whatsapp_bots?user_id=eq.'+encodeURIComponent(user));return bot||null;}
-export async function personalInvitations(owner:string){if(localMode())return local.localInvitations(owner);return service<local.PersonalInvitation[]>('anota_whatsapp_invitations?owner_id=eq.'+encodeURIComponent(owner)+'&order=created_at,id');}
+export async function personalInvitations(owner:string){if(localMode())return local.localInvitations(owner);const result:local.PersonalInvitation[]=[];for(let offset=0;;offset+=1000){const rows=await service<local.PersonalInvitation[]>('anota_whatsapp_invitations?owner_id=eq.'+encodeURIComponent(owner)+'&order=created_at,id&limit=1000&offset='+offset);result.push(...rows);if(rows.length<1000)return result;}}
 export async function personalRecipient(owner:string,phone:string):Promise<string|null>{if(localMode())return local.personalRecipient(owner,phone);return service<string|null>('rpc/anota_personal_recipient','POST',{p_owner:owner,p_phone:phone});}
 export async function effectivePersonalBot(user:string):Promise<Bot|null>{
  if(localMode())return local.localEffectiveBot(user);
@@ -19,7 +19,7 @@ export async function effectivePersonalBot(user:string):Promise<Bot|null>{
  if(!own.shared_owner_id){const invitations=await personalInvitations(user),members=new Set(invitations.map(i=>i.phone));return {...own,allowed_phones:own.allowed_phones.filter(phone=>!members.has(phone))};}
  const master=await rawPersonalBot(own.shared_owner_id);
  if(!master||master.shared_owner_id)return {...own,enabled:false};
- const permitted=own.allowed_phones.length===1&&await personalRecipient(master.user_id,own.allowed_phones[0])===user;
+ const permitted=own.allowed_phones.length>=1&&own.allowed_phones.length<=2&&await personalRecipient(master.user_id,own.allowed_phones[0])===user;
  return {...own,phone:master.phone,status:master.status,enabled:permitted,token_cipher:master.token_cipher,connection_user_id:master.user_id};
 }
 export async function createPersonalInvitation(owner:string,rawPhone:unknown,expected:string,now=Date.now()){

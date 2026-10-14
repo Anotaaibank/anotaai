@@ -20,20 +20,22 @@ async function context(){const old={storage:process.env.ANOTA_STORAGE,url:proces
  return {...m,user,bot,async message(text:string,type:'text'|'audio'='text',number=sender){const id=await m.store.enqueue(user,{provider_id:randomUUID(),sender:number,type,text:type==='audio'?'':text,sent_at:new Date().toISOString()});assert.ok(id);const row=await m.store.claimMessage();assert.ok(row);assert.equal(row.id,id);await m.worker.processMessage(row);return (await m.store.history(user)).find(r=>r.id===id)!;},restore(){globalThis.fetch=transport;for(const [k,v]of Object.entries({ANOTA_STORAGE:old.storage,ANOTA_WHATSAPP_URL:old.url,OPENAI_API_KEY:old.key})){if(v===undefined)delete process.env[k];else process.env[k]=v;}}};
 }
 test('configuração salva cem números na conta, conserva a conexão e revoga quem foi removido',async()=>{
- const c=await context();try{
+ const c=await context(),previousManager=process.env.ANOTA_MANAGER_USER_IDS;try{
+  await assert.rejects(c.server.saveBot({user:{id:c.user,name:'Teste',email:'test@example.test'},token:'fixture'},{phone,allowed_phones:[sender],enabled:true,expected_updated_at:c.bot.updated_at}),/exclusiva da gestão/);
+  process.env.ANOTA_MANAGER_USER_IDS=c.user;
   const auth={user:{id:c.user,name:'Teste',email:'test@example.test'},token:'local-test'},numbers=[sender,...Array.from({length:99},(_,i)=>'55119'+String(10000000+i))];
   await assert.rejects(c.server.saveBot(auth,{phone,allowed_phones:numbers,enabled:true,expected_updated_at:c.bot.updated_at}),/convite pessoal/);
   await c.store.putBot({...c.bot,allowed_phones:numbers},c.bot.updated_at);
   await c.server.saveBot(auth,{phone,allowed_phones:numbers,enabled:true,expected_updated_at:c.bot.updated_at});
   const saved=(await c.store.getBot(c.user))!;assert.deepEqual(saved.allowed_phones,numbers);assert.equal(saved.instance_id,c.bot.instance_id);assert.equal(saved.token_cipher,c.bot.token_cipher);
-  await assert.rejects(c.server.saveBot(auth,{phone,allowed_phones:[...numbers,'5511977777777'],enabled:true,expected_updated_at:saved.updated_at}),/100/);
+  await assert.rejects(c.server.saveBot(auth,{phone,allowed_phones:[...numbers,'5511977777777'],enabled:true,expected_updated_at:saved.updated_at}),/convite pessoal/);
   assert.deepEqual((await c.store.getBot(c.user))!.allowed_phones,numbers);
   await c.server.saveBot(auth,{phone,allowed_phones:[sender],enabled:true,expected_updated_at:saved.updated_at});
   assert.deepEqual((await c.store.getBot(c.user))!.allowed_phones,[sender]);assert.equal(await c.store.getBot(randomUUID()),null);
   let sends=0;globalThis.fetch=async()=>{sends++;return Response.json({id:randomUUID()});};
   const rejected=await c.message('Qual meu saldo?','text',numbers[1]);assert.equal(rejected.status,'ERRO');assert.equal(sends,0);
   await assert.rejects(c.server.saveBot(auth,{phone,allowed_phones:numbers,enabled:true,expected_updated_at:saved.updated_at}),/configuração mudou/i);
- }finally{c.restore();}
+ }finally{if(previousManager===undefined)delete process.env.ANOTA_MANAGER_USER_IDS;else process.env.ANOTA_MANAGER_USER_IDS=previousManager;c.restore();}
 });
 
 test('WhatsApp entrega consultas reais do dono por escrito sem modelo ou busca remota de status',async()=>{

@@ -13,7 +13,8 @@ function manager<T>(fn:(id:string)=>T){const old=process.env.ANOTA_MANAGER_USER_
 
 test('gestão não aceita dados de cartão, comissão inválida ou versões e datas inválidas',()=>{
  const commercial=profile();assert.equal(commercialInput(commercial).payment_method,'CARTAO');
- for(const bad of [{card_number:'1234'},{payment_method:'PIX'},{follow_up_date:'2026-02-30'},{notes:'x'.repeat(2001)},{expected:'inválida'}])assert.throws(()=>commercialInput({...commercial,...bad}));
+ assert.equal(commercialInput({...commercial,payment_method:'PIX'}).payment_method,'PIX');
+ for(const bad of [{card_number:'1234'},{payment_method:'CRIPTO'},{follow_up_date:'2026-02-30'},{notes:'x'.repeat(2001)},{expected:'inválida'}])assert.throws(()=>commercialInput({...commercial,...bad}));
  for(const bad of [{code:'CÓDIGO'},{commission_bps:10001},{commission_bps:-1},{commission_bps:0.5},{active:'true'},{owner:randomUUID()}])assert.throws(()=>campaign(bad));
  const input={user_id:randomUUID(),status:'CANCELADA',plan:'Mensal',monthly_cents:4900,renewal_date:null,expected:null,commercial};assert.throws(()=>subscriptionInput(input));assert.equal(subscriptionInput({...input,commercial:profile({cancellation_reason:'Não utiliza mais'})}).status,'CANCELADA');
 });

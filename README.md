@@ -29,7 +29,7 @@ O esquema habilita RLS e restringe leituras ao proprietário. Escritas passam po
 
 ## Estado desta entrega
 
-O aplicativo e seu banco próprio estão online. A conta migrada entra com a senha atual; os dados locais originais permanecem preservados. Voz e WhatsApp foram usados nos testes locais anteriores; devem ser conferidos no endereço publicado após reconectar o celular da IA. A cobrança recorrente por cartão continua uma integração separada: cadastrar uma pessoa não inicia cobrança nem cria assinatura paga. Ver `docs/verification.md` e `docs/personal-finance.md`.
+O aplicativo e seu banco próprio estão online. A gestão cadastra assinantes e até dois números do casal por conta; assinantes não cadastram contatos. O Pix fixo é aprovado manualmente pela gestão para liberar ou renovar o acesso. Vencimento bloqueia app e WhatsApp, preservando os dados. Ver `docs/subscriber-access.md`. Cobrança automática recorrente por cartão continua uma integração separada. Ver também `docs/verification.md` e `docs/personal-finance.md`.
 
 O salário pergunta sobre outra renda. Em Rendas complementares, registre o valor bruto recebido, a atividade e seus custos: R$ 80 de Uber menos R$ 25 de gasolina gera R$ 55 líquidos. Cada movimento altera o caixa uma única vez. Custos da atividade têm histórico, edição e arquivamento próprios e ficam fora dos totais de despesas pessoais. A IA do painel e o WhatsApp usam o mesmo intérprete e as mesmas confirmações. Renda prevista permanece fora do saldo até o recebimento.
 

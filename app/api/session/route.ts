@@ -1,7 +1,7 @@
 import {cookies} from 'next/headers';
 import {assistantName} from '@/lib/assistant-name';
 import {AppError,object} from '@/lib/model';
-import {authorize,body,config,cookieName,failure,json,localMode,sameOrigin} from '@/lib/server';
+import {authorizeIdentity,body,config,cookieName,failure,json,localMode,sameOrigin} from '@/lib/server';
 import {loginLocal,logoutLocal,registerLocal,throttleLocal} from '@/lib/local-db';
 import {attributeRegistration,campaignSecret} from '@/lib/commerce-server';
 import {attributeLocalRegistration} from '@/lib/commerce-local';
@@ -10,7 +10,7 @@ import {registerPersonalInvitation} from '@/lib/invitation-registration';
 import {registerCloudInvitation} from '@/lib/invitation-registration-cloud';
 import {authFetch,loginCloud,createCloudSession,logoutCloud,type CloudTokens} from '@/lib/cloud-auth';
 export const runtime='nodejs';
-export async function GET(){try{const {user}=await authorize();return json({user});}catch(e){return failure(e);}}
+export async function GET(){try{const {user}=await authorizeIdentity();return json({user});}catch(e){return failure(e);}}
 export async function POST(req:Request){try{
  sameOrigin(req);const input=object(await body(req)),email=typeof input.email==='string'?input.email.trim().toLowerCase():'',password=input.password,name=typeof input.name==='string'?input.name.trim():'';
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||typeof password!=='string'||password.length>128||password.length<(input.action==='register'?10:1)||input.action==='register'&&(name.length<2||name.length>80))throw new AppError('Confira nome, e-mail e senha. Para criar a conta, use pelo menos 10 caracteres na senha.');
