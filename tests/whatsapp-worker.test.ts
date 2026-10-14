@@ -171,3 +171,10 @@ test('áudio recorrente usa o mesmo fluxo e edição da agenda não cria dois co
   transcript='Agenda uma consulta dia 10 de novembro às 14h.';const appointment=await c.message('', 'audio');assert.equal(appointment.status,'ESCLARECER',appointment.reply);transcript='opção dois';await c.message('', 'audio');const correction=await c.message('às 15h');assert.equal(correction.status,'ESCLARECER',correction.reply);assert.match(correction.reply,/15:00/);assert.equal(localFinanceState(c.user).documents.filter(d=>d.kind==='APPOINTMENT').length,0);await c.message('1');const appointments=localFinanceState(c.user).documents.filter(d=>d.kind==='APPOINTMENT');assert.equal(appointments.length,1);assert.equal(appointments[0].details.time,'15:00');
  }finally{c.restore();}
 });
+
+test('edição inválida ou expirada não prende um novo pedido completo nem permite confirmar a proposta antiga',async()=>{
+ const c=await context();try{
+  globalThis.fetch=async()=>Response.json({id:randomUUID()});const first=await c.message('Lança 25 reais de sorvete.');const edit=await c.message('2');await c.store.patchMessage(edit,{finance_confirmation:'edit.v1.invalid'});
+  const fresh=await c.message('Lança 30 reais de gasolina.');assert.equal(fresh.status,'ESCLARECER',fresh.reply);assert.match(fresh.reply,/30,00/);await c.message('CONFIRMAR '+first.confirmation_code);assert.equal(localFinanceState(c.user).expenses.length,0);await c.message('1');assert.equal(localFinanceState(c.user).expenses.length,1);assert.equal(localFinanceState(c.user).expenses[0].amount_cents,3000);
+ }finally{c.restore();}
+});
