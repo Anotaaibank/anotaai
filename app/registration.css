@@ -1,0 +1,13 @@
+.anotei-registration{min-height:100vh;background:#e7f1e6;display:grid;grid-template-columns:1fr 1fr;gap:36px;padding:clamp(20px,6vw,80px);color:#173f36}
+.anotei-registration-story{border-radius:24px;padding:36px;color:#f2edda;background:radial-gradient(circle at 40% 30%,#16675b,#063c39 70%);display:flex;flex-direction:column;justify-content:center}
+.anotei-registration-story .login-orb{width:100px;height:100px}.anotei-registration h1{font-size:clamp(30px,4vw,48px);line-height:1.15}.anotei-registration .bank-card{background:#f9fff7;border:1px solid #bad3c2;padding:28px;color:#173f36}
+.anotei-registration form{display:grid;gap:16px}.anotei-registration input{background:#fff;color:#173f36;border-color:#b4cdbb}.anotei-registration small{color:#486951;line-height:1.6}.anotei-registration .bank-primary{display:inline-flex;border-radius:10px;padding:14px;background:#165449;color:#f2dfb0;text-decoration:none}.anotei-registration p{line-height:1.7}.anotei-registration .bank-error{color:#903627;background:#f9e8e2;padding:12px;border-radius:10px}
+.anotei-registration .login-password-field{display:grid;gap:8px}
+.anotei-registration .login-password-control{position:relative}
+.anotei-registration .login-password-control input{width:100%;box-sizing:border-box;padding-right:58px}
+.anotei-registration .login-password-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:42px;height:42px;padding:0;margin:0;border:0;border-radius:9px;background:transparent;color:#214c3c;cursor:pointer}
+.anotei-registration .login-password-toggle svg{width:21px;height:21px}
+.anotei-registration .login-password-toggle:hover{background:#e4f1df}
+.anotei-registration .login-password-toggle:focus-visible{outline:2px solid #165449;outline-offset:1px}
+.anotei-registration .login-password-toggle:disabled{opacity:.5;cursor:default}
+@media(max-width:760px){.anotei-registration{grid-template-columns:1fr;gap:18px;padding:18px}.anotei-registration-story{padding:24px}.anotei-registration-story .login-orb{width:64px;height:64px}.anotei-registration .bank-card{padding:20px}}

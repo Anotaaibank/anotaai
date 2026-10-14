@@ -1,0 +1,47 @@
+x-app-environment: &app-environment
+  NODE_ENV: production
+  APP_URL: ${APP_URL:?Configure o endereco HTTPS do aplicativo}
+  ANOTA_STORAGE: ${ANOTA_STORAGE:?Escolha explicitamente local ou supabase}
+  ANOTA_DATABASE_PATH: /data/anota-ai.sqlite
+  ANOTA_PUBLIC_URL: ${ANOTA_PUBLIC_URL:-${APP_URL}}
+  ANOTA_MANAGER_USER_IDS: ${ANOTA_MANAGER_USER_IDS:?Configure o ID do gestor}
+  SUPABASE_URL: ${SUPABASE_URL:-}
+  SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
+  SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:?Configure a chave no servidor}
+  OPENAI_REALTIME_MODEL: ${OPENAI_REALTIME_MODEL:-gpt-realtime-2.1-mini}
+  ANOTA_ASSISTANT_ENABLED: "true"
+  ANOTA_WHATSAPP_URL: ${ANOTA_WHATSAPP_URL:?Configure o provedor de WhatsApp}
+  ANOTA_WHATSAPP_ADMIN_TOKEN: ${ANOTA_WHATSAPP_ADMIN_TOKEN:?Configure o acesso ao provedor}
+  ANOTA_WHATSAPP_ENCRYPTION_KEY: ${ANOTA_WHATSAPP_ENCRYPTION_KEY:-}
+  ANOTA_WHATSAPP_WEBHOOK_URL: ${ANOTA_WHATSAPP_WEBHOOK_URL:-${APP_URL}}
+  ANOTA_WORKER_SECRET: ${ANOTA_WORKER_SECRET:?Configure um segredo de pelo menos 32 caracteres}
+  ANOTA_CAMPAIGN_SIGNING_KEY: ${ANOTA_CAMPAIGN_SIGNING_KEY:-}
+services:
+  web:
+    image: anotei-na-hora:local
+    build: .
+    restart: unless-stopped
+    environment: *app-environment
+    ports:
+      - "127.0.0.1:3100:3000"
+    volumes:
+      - anotei-data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+  worker:
+    image: anotei-na-hora:local
+    restart: unless-stopped
+    command: ["node", "scripts/whatsapp-worker.mjs"]
+    environment:
+      <<: *app-environment
+      ANOTA_WORKER_URL: http://web:3000
+    depends_on:
+      web:
+        condition: service_healthy
+volumes:
+  anotei-data:

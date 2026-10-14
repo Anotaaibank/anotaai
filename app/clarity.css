@@ -1,0 +1,84 @@
+/* Superfícies claras na área de trabalho; a identidade da barra lateral permanece escura. */
+.anota-main{--anotei-text:#173f36;--anotei-muted:#4d6c60;--anotei-line:#bed4c6;--anotei-gold:#71551f;--bank-muted:#4d6c60;--bank-line:#bed4c6;color:var(--anotei-text);color-scheme:light;background:radial-gradient(ellipse at 90% 0%,#d8eddf,transparent 60%),#edf5ef;min-height:100vh}
+.anota-main .anota-topbar{background:#f5faf6;border-bottom-color:#c6d9cc;color:#496858}
+.anota-main .anota-user strong{color:#234e3e}
+.anota-main .anota-user>span{background:#e4ecdc;border-color:#ccd7b9;color:#70551d}
+.anota-main .anotei-live-dot{background:#237750;box-shadow:0 0 8px #28865938}
+.anota-main .bank-eyebrow,.anota-main .period-label{color:#685324}
+.anota-main .bank-heading p:not(.bank-eyebrow){color:#4d6c60}
+.anota-main button{background:#e7f1e9;color:#24543e;border-color:#b4cfbc}
+.anota-main button:hover:not(:disabled){background:#d8eadb;border-color:#7caf89}
+.anota-main input,.anota-main select,.anota-main textarea{color-scheme:light;background:#f8fcf8;color:#173f36;border-color:#b4cdbb}
+.anota-main input::placeholder,.anota-main textarea::placeholder{color:#61776b}
+.anota-main .period-label input{background:#f5faf5;border-color:#bad0c0}
+.anota-main .bank-panel,.anota-main .bank-card,.anota-main .bank-wa-grid .bank-card,.anota-main .bank-card:has(.bank-table-wrap){background:linear-gradient(145deg,#fafffa,#e6f1e8);color:#173f36;border-color:#bad3c2;box-shadow:inset 0 1px 0 #fff,0 8px 24px #254f3710}
+.anota-main .bank-panel h2,.anota-main .bank-card h2{color:#1a4437}
+.anota-main .bank-panel h3{color:#275d42}
+.anota-main .bank-note,.anota-main .bank-panel p,.anota-main .bank-card p,.anota-main .bank-panel li{color:#496858}
+.anota-main .bank-pill{color:#3f614d;background:#e2eee3;border-color:#bcd5bf}
+.anota-main .bank-pill.gold{color:#6d531d;background:#f0ebd8;border-color:#d9cba2}
+.anota-main .bank-pill.green{color:#235d3d;background:#d8eddf;border-color:#b7d8c0}
+.anota-main .text-button{background:transparent;color:#71551f;border-color:transparent}
+.anota-main .text-button:hover:not(:disabled){background:#b9d1b21f;color:#493713}
+.anota-main .anotei-section-caption>span:first-child{color:#476d52}
+.anota-main .anotei-money-card{background:linear-gradient(140deg,#f4faf1,#d9ebde);border-color:#b6d0bc;box-shadow:inset 0 1px 0 #fff,0 9px 24px #28543d12}
+.anota-main .anotei-money-card.salary{background:linear-gradient(140deg,#f7f9e9,#e1edd9);border-color:#c5d0ac}
+.anota-main .money-card-top>span:first-child{color:#3e6048}
+.anota-main .money-symbol{color:#73551d;background:#ecf2df;border-color:#c4d3ae}
+.anota-main .anotei-money-card>strong{color:#174734}
+.anota-main .anotei-money-card>small{color:#496854}
+.anota-main .anotei-money-card>.text-button{color:#70531d}
+.anota-main .anotei-money-card.available{background:radial-gradient(ellipse at 95% 0%,#a5db8a40,transparent 70%),linear-gradient(140deg,#347e5b,#1e624c);border-color:#649b6f;box-shadow:inset 0 1px 0 #c6ffc132,0 10px 24px #3b8a6220}
+.anota-main .anotei-money-card.available .money-card-top>span:first-child{color:#e2f0d6}
+.anota-main .anotei-money-card.available .money-symbol{background:#d4ecac15;border-color:#c9e2b15c;color:#f2dfb0}
+.anota-main .anotei-money-card.available>strong{color:#f3f8df}
+.anota-main .anotei-money-card.available>small,.anota-main .available-footnote{color:#e0edda}
+.anota-main .anotei-money-card.deficit{background:linear-gradient(140deg,#805d36,#564c32);border-color:#b79b62}
+.anota-main .anotei-due-list>div,.anota-main .anotei-month-paid{border-color:#c4d8c7}
+.anota-main .anotei-due-list small,.anota-main .anotei-month-paid{color:#526e5c}
+.anota-main .anotei-due-list strong,.anota-main .anotei-month-paid strong{color:#224d39}
+.anota-main .anotei-due-day{background:#e0eddf;border-color:#bbd2b9;color:#71541c}
+.anota-main .anotei-extra-panel{background:linear-gradient(135deg,#eff8e9,#dceee0)}
+.anota-main .anotei-extra-amount{color:#286344}
+.anota-main .anotei-extra-panel>small{color:#4a6c57}
+.anota-main .anota-hero{background:radial-gradient(ellipse at 12% 50%,#b5dfbc66,transparent 65%),linear-gradient(125deg,#e0eedb,#cee5d5);border-color:#b7d3bc}
+.anota-main .anota-hero p{color:#71551f}
+.anota-main .anota-hero h2{color:#1e4f3b}
+.anota-main .anota-hero span{color:#476952}
+.anota-main .anota-kpi{background:linear-gradient(135deg,#f5faf1,#e0eee1);border-color:#bcd3bf}
+.anota-main .anota-kpi.navy{background:linear-gradient(135deg,#d6e9d0,#bedfc9);border-color:#9ebfa2}
+.anota-main .anota-kpi strong{color:#1f523d}
+.anota-main .anota-kpi span,.anota-main .anota-kpi small,.anota-main .anota-kpi.navy span,.anota-main .anota-kpi.navy small{color:#42694c}
+.anota-main .category-bar>span,.anota-main .nature-total{color:#496a55}
+.anota-main .category-bar strong,.anota-main .nature-total strong{color:#224e39}
+.anota-main .category-bar>i{background:#cddfcc}
+.anota-main .category-bar b{background:linear-gradient(90deg,#397750,#799b52)}
+.anota-main .nature-total i.ESSENCIAL{background:#448857}
+.anota-main .nature-total i.OPCIONAL{background:#967332}
+.anota-main .small-tip{background:#deebdd;color:#496652;border-color:#c1d6c0}
+.anota-main .bank-table th{color:#496b55;border-color:#b9d2be}
+.anota-main .bank-table td{color:#204a38;border-color:#d1e1d3}
+.anota-main .bank-table td small{color:#536e5d}
+.anota-main .bank-personal-groups small,.anota-main .anota-empty,.anota-main .anota-empty h3{color:#486c53}
+.anota-main .bank-personal-groups button[aria-pressed=true]{background:#d8e8ce;border-color:#997333}
+.anota-main .finance-reserves article{background:#e2efdf;border-color:#bdd4bc}
+.anota-main .finance-reserves small{color:#4b6c57}
+.anota-main .bank-note.finance-alert{background:#f3eed7;color:#675020;border-left-color:#987530}
+.anota-main .finance-negative{color:#993d2a}
+.anota-main .bank-error{background:#f9e8e2;color:#903627;border-color:#dfb8a9}
+.anota-main .bank-wa-switch{background:#dfeddf;color:#204a38;border:1px solid #b9d1b9}
+.anota-main .bank-wa-status,.anota-main .bank-wa-status.connected{background:#deeddc;color:#245b3b;border-color:#aecdaf}
+.anota-main .bank-wa-status p,.anota-main .bank-wa-grid small,.anota-main .bank-wa-help p{color:#486951}
+.anota-main .bank-wa-help blockquote{background:#dcecdc;color:#204d37;border-left-color:#669257}
+.anota-main .bank-wa-qr{background:#e5f0e3;color:#28513b;border:1px solid #bdd3bc}
+.anota-main .bank-wa-help a{color:#24643e;font-weight:700;text-decoration:underline;text-underline-offset:4px}
+.anota-app .anota-main .bank-primary,.anota-main .bank-wa-grid .bank-actions button:first-child{background:linear-gradient(150deg,#34785f,#165449 58%,#123f3c)!important;color:#f2dfb0!important;border:1px solid #82ad87!important;box-shadow:inset 0 1px 1px #e2ffce38,inset 0 -2px 4px #001b2550,0 4px 0 #244b3a,0 9px 20px #326d4920}
+.anota-app .anota-main .bank-primary:hover:not(:disabled),.anota-main .bank-wa-grid .bank-actions button:first-child:hover:not(:disabled){background:linear-gradient(145deg,#3f8366,#1b5c4c)!important}
+.anota-main :is(button,a,input,select,textarea):focus-visible{outline-color:#8a6825}
+/* Formulários abertos a partir do painel também usam o contraste claro. */
+.anota-app .anota-modal{--anotei-text:#173f36;--anotei-muted:#4d6c60;background:linear-gradient(140deg,#f8fcf6,#e3f0e5);color:#173f36;border-color:#a7c6ad;color-scheme:light}
+.anota-app .anota-modal h2{color:#1a4437}
+.anota-app .anota-modal input,.anota-app .anota-modal select,.anota-app .anota-modal textarea{color-scheme:light;background:#fafff9;color:#173f36;border-color:#b4cdbb}
+.anota-app .anota-modal button:not(.bank-primary){background:#e1eddf;color:#28533d;border-color:#b4cdbb}
+.anota-app .anota-modal .bank-error{background:#f9e8e2;color:#903627;border-color:#dfb8a9}
+.anota-app .anota-modal .bank-note,.anota-app .anota-modal small{color:#4d6c60}

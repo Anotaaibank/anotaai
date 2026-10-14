@@ -1,0 +1,63 @@
+{
+  "origin": "Experiência Icom",
+  "source_directory": "C:\\Users\\Bruno Lira\\Documents\\Codex\\2026-10-01\\files-pasted-by-the-user-projeto\\outputs\\experiencia-icom",
+  "snapshot_date": "2026-10-07",
+  "files": [
+    {
+      "source": "lib/icom-bank/personal-expenses.ts",
+      "target": "lib/personal-expenses.ts",
+      "source_sha256": "8963fce4d9e44808c5c3215504c363bc23fde0dde0525aa7a8382a3b5816fbe5"
+    },
+    {
+      "source": "lib/icom-bank/expense-context.ts",
+      "target": "lib/expense-context.ts",
+      "source_sha256": "955df77e974cd31e77a48c908de89b4bb3594254e283492725d9aecb4068991f"
+    },
+    {
+      "source": "lib/icom-bank/expense-date.ts",
+      "target": "lib/expense-date.ts",
+      "source_sha256": "533a4de5a7e5f22e07de86cea80ee8ae4e799726c8e4403638c4ea8935bbb7ce"
+    },
+    {
+      "source": "lib/icom-bank/assistant-client.ts",
+      "target": "lib/assistant-client.ts",
+      "source_sha256": "bc2d47835145961ad030baaff35b0f56151aef4259acbb49b4c97ea59c03317d"
+    },
+    {
+      "source": "lib/icom-bank/whatsapp-ai.ts",
+      "target": "lib/whatsapp-ai.ts",
+      "source_sha256": "f0ec4d109b3015f5a8590c33787d95ddec500dde72364bfd81d28fc2d0f24329"
+    },
+    {
+      "source": "lib/icom-bank/whatsapp-expenses.ts",
+      "target": "lib/whatsapp-expenses.ts",
+      "source_sha256": "fc041012fb7931ee7cba5c8617015bb12c6f8461202dba529b8e6f713e0f3fda"
+    },
+    {
+      "source": "lib/secret-box.ts",
+      "target": "lib/secret-box.ts",
+      "source_sha256": "d5b9d0c9340a35a7907027c28351ca9ad82a817d909e0f68cd8e4feb747d1982"
+    },
+    {
+      "source": "app/icom-bank/bank.css",
+      "target": "app/base.css",
+      "source_sha256": "73f80296fa5075fe0ee2938f2bef2df5a1acf6d2cf276b2b879aafd8072897f0"
+    },
+    {
+      "source": "app/icom-bank/voice.css",
+      "target": "app/voice.css",
+      "source_sha256": "fb54a11c0572f00ac5413076a9f281098eb09f9006fcec4121c05d3973f848b8"
+    }
+  ],
+  "excluded": [
+    "env/credentials",
+    "personal and client records",
+    "contracts",
+    "vehicles and stock",
+    "legal",
+    "store sales",
+    "merchant cash",
+    "bank collection",
+    "seller integrations"
+  ]
+}

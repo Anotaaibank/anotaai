@@ -1,0 +1,12 @@
+.git
+.env*
+.data
+.next
+.next-validation*
+node_modules
+.pnpm-store
+artifacts
+*.log
+*.tsbuildinfo
+Dockerfile*
+compose*.yaml

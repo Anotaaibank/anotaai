@@ -1,0 +1,68 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "allowImportingTsExtensions": true,
+    "allowJs": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    ".next-validation/types/**/*.ts",
+    ".next-validation/dev/types/**/*.ts",
+    ".next-validation-commerce/types/**/*.ts",
+    ".next-validation-commerce/dev/types/**/*.ts",
+    ".next-validation-login-20261010-final/types/**/*.ts",
+    ".next-validation-login-20261010-final/dev/types/**/*.ts",
+    ".next-validation-payments-20261013/types/**/*.ts",
+    ".next-validation-payments-20261013/dev/types/**/*.ts",
+    ".next-validation-whatsapp-coverage-20261013/types/**/*.ts",
+    ".next-validation-whatsapp-coverage-20261013/dev/types/**/*.ts",
+    ".next-validation-whatsapp-complete-20261013/types/**/*.ts",
+    ".next-validation-whatsapp-complete-20261013/dev/types/**/*.ts",
+    ".next-validation-whatsapp-delivery-20261013/types/**/*.ts",
+    ".next-validation-whatsapp-delivery-20261013/dev/types/**/*.ts",
+    ".next-validation-whatsapp-contacts-20261013/types/**/*.ts",
+    ".next-validation-whatsapp-contacts-20261013/dev/types/**/*.ts",
+    ".next-validation-personal-invites-20261013/types/**/*.ts",
+    ".next-validation-personal-invites-20261013/dev/types/**/*.ts",
+    ".next-validation-access-links-20261013/types/**/*.ts",
+    ".next-validation-access-links-20261013/dev/types/**/*.ts",
+    ".next-validation-registration-20261013/types/**/*.ts",
+    ".next-validation-registration-20261013/dev/types/**/*.ts",
+    ".next-validation-registration-unlocked-20261013/types/**/*.ts",
+    ".next-validation-registration-unlocked-20261013/dev/types/**/*.ts",
+    ".next-validation-deploy-prep-20261014/types/**/*.ts",
+    ".next-validation-deploy-prep-20261014/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

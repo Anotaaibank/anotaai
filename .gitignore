@@ -1,0 +1,11 @@
+node_modules/
+.pnpm-store/
+.next/
+.next-validation/
+.data/
+.env*
+!.env.example
+*.tsbuildinfo
+artifacts/
+*.log
+.next-validation-*/

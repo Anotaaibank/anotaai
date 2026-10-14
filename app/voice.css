@@ -1,0 +1,72 @@
+.anota-app .bank-header{padding-right:248px}
+.anota-app .bank-header form{flex:1;min-width:0;max-width:100%}
+.anota-app .bank-header form input{min-width:0}
+.anota-app .bank-internal{display:none}
+.anota-app .bank-voice-launch{position:fixed;z-index:35;top:9px;right:20px;width:190px;display:flex;flex-direction:column;align-items:center;gap:9px;padding:0;border:0;border-radius:100px;background:transparent;box-shadow:none;text-align:center;color:#243950}
+.bank-voice-launch strong,.bank-voice-launch small{display:block}
+.bank-voice-launch strong{font-size:12px;font-weight:600;letter-spacing:2.5px}
+.bank-voice-launch strong b{color:#40889d;font-weight:700}
+.bank-voice-launch small{font-size:10px;margin-top:4px;color:#718296;letter-spacing:.3px}
+.bank-ai-label{padding:5px 15px 7px;border-radius:20px;background:#f4f6f9ed;backdrop-filter:blur(8px)}
+.bank-content>.bank-heading{padding-right:174px}
+.bank-ai-orb{position:relative;isolation:isolate;display:block;flex:none;width:164px;height:164px;border-radius:46% 54% 50% 48%;overflow:visible;background:radial-gradient(ellipse at 27% 20%,#536193,#18192e 44%,#090f23 76%);border:0;box-shadow:inset -14px -16px 25px #030615b8,inset 9px 6px 23px #acdbff45,0 24px 31px -11px #18203c6b,0 0 30px #69d5ec36;animation:bank-ai-float 4.6s ease-in-out infinite,bank-ai-organic 9s ease-in-out infinite;transform:translateZ(0)}
+.bank-ai-orb::before{content:'';position:absolute;inset:-15%;z-index:-1;border-radius:45% 55% 58% 42%;background:conic-gradient(from 60deg,#53dfed55,#9586ed66,#de99ef44,#4acdb966,#53dfed55);filter:blur(19px);opacity:.7;animation:bank-ai-mist 8s linear infinite;pointer-events:none}
+.bank-ai-orb::after{content:'';position:absolute;inset:10%;border-radius:50%;background:radial-gradient(ellipse at 25% 20%,#d1f7ff40,transparent 47%);mix-blend-mode:screen;pointer-events:none}
+.bank-ai-atmosphere{position:absolute;inset:0;border-radius:inherit;background:radial-gradient(ellipse at 67% 91%,#86e9eab8,transparent 62%),radial-gradient(circle at 80% 25%,#b0a3ff80,transparent 44%);opacity:.9;animation:bank-ai-color 10s ease-in-out infinite}
+.bank-ai-current{position:absolute;width:100%;height:85%;left:0;top:16%;border-radius:48% 52% 57% 43%;filter:blur(12px);clip-path:ellipse(46% 44% at 50% 50%);will-change:transform;mix-blend-mode:screen}
+.bank-ai-current.first{background:radial-gradient(ellipse at 55% 68%,#d9fafff2 8%,#68e0e8d9 35%,#5d97ed85 51%,transparent 67%);animation:bank-ai-flow-one 4.3s ease-in-out infinite}
+.bank-ai-current.second{top:2%;left:1%;height:90%;background:radial-gradient(ellipse at 45% 55%,#d9caffaa 9%,#b899ef99 32%,transparent 58%);animation:bank-ai-flow-two 5.7s ease-in-out infinite}
+.bank-ai-current.third{top:25%;left:0;height:65%;width:100%;filter:blur(8px);background:radial-gradient(ellipse at 45% 53%,#e4faffdb 8%,#72e8de99 41%,transparent 66%);animation:bank-ai-flow-three 4.8s ease-in-out infinite}
+.bank-ai-glass{position:absolute;inset:0;border-radius:inherit;box-shadow:inset -12px -14px 23px #07102b90,inset 4px 4px 18px #f5ffff30;background:radial-gradient(circle at 24% 16%,#ffffff35,transparent 36%);border:0;pointer-events:none}
+.bank-voice-launch.is-active .bank-ai-orb{box-shadow:inset -14px -16px 25px #030615b8,inset 9px 6px 23px #acdbff45,0 24px 31px -11px #18203c6b,0 0 42px #51bdca60}
+.bank-voice-launch.is-active .bank-ai-current,.bank-voice-stage.speaking .bank-ai-current,.bank-voice-stage.listening .bank-ai-current{animation-duration:3s}
+.bank-voice-dialog{margin:0;position:fixed;inset:88px 24px auto auto;padding:0;width:min(420px,calc(100vw - 32px));max-height:calc(100dvh - 108px);border:1px solid #d9e4ee;border-radius:22px;background:#fff;color:#203349;box-shadow:0 22px 90px #101d3338;font-family:Arial,sans-serif;overflow:auto;overscroll-behavior:contain}
+.bank-voice-dialog::backdrop{background:#142d4633;backdrop-filter:blur(2px)}
+.anota-app .bank-ai-report-open{position:fixed;z-index:35;top:240px;right:27px;width:175px;padding:5px 7px;border:0;background:transparent;color:#42647c;font-size:11px;text-decoration:underline;cursor:pointer}
+.bank-voice-guide label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600}
+.bank-voice-guide input,.bank-voice-guide select{box-sizing:border-box;width:100%;padding:9px;border:1px solid #d9e4ee;border-radius:9px;background:white;color:#203349}
+.bank-voice-guide th,.bank-voice-guide td{padding:8px;text-align:left;border-bottom:1px solid #e8eef4;font-size:12px;white-space:nowrap}
+@media(max-width:800px){.anota-app .bank-ai-report-open{top:179px;right:12px;width:144px}}
+.bank-voice-panel{padding:22px}
+.bank-voice-panel>header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.bank-voice-panel>header h2{font-size:20px;letter-spacing:-.5px;margin:6px 0 0;color:#203349}
+.bank-voice-panel>header button{display:grid;place-items:center;width:36px;height:36px;padding:0;border:0;background:#f0f5fa;border-radius:50%}
+.bank-voice-eyebrow{font-size:9px;letter-spacing:1.8px;color:#74869c}
+.bank-voice-stage{text-align:center;padding:23px 8px 14px}
+.bank-voice-stage>strong{display:block;font-size:16px;color:#183250}
+.bank-voice-stage>p{font-size:12px;line-height:1.6;color:#6c7e93;margin:8px 0 0}
+.bank-voice-halo{width:200px;height:190px;display:grid;place-items:center;margin:auto;position:relative}
+.bank-voice-stage .bank-ai-orb{width:148px;height:148px}
+.bank-voice-stage.paused .bank-ai-orb{filter:saturate(.15)}
+.bank-voice-stage.connecting .bank-ai-orb{animation-duration:2s}
+.anota-app .bank-voice-start{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:46px;background:#1b456d;border:0;border-radius:12px;color:#fff;font-size:13px;font-weight:600}
+.anota-app .bank-voice-start:disabled{background:#e5edf5;color:#6c7f96;opacity:1;cursor:default}
+.bank-voice-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.anota-app .bank-voice-controls button{display:flex;align-items:center;gap:7px;font-size:12px;border-radius:10px;padding:11px 12px}
+.anota-app .bank-voice-controls .bank-voice-end{background:#fff1f1;color:#a13c42;border-color:#f0d8d9}
+.bank-voice-controls small{margin-left:auto;font-variant-numeric:tabular-nums}
+.anota-app .bank-voice-audio{display:flex;align-items:center;gap:6px;border:0;background:none;padding:12px 0 0;font-size:11px;color:#507597}
+.anota-app .bank-voice-privacy{font-size:10px;line-height:1.6;color:#7a8a9d;margin:12px 0 19px}
+.anota-app .bank-voice-activation{padding:12px 14px;border-radius:10px;background:#f1f5fa;font-size:12px;color:#526b87;line-height:1.6}
+.bank-voice-transcript{border-radius:12px;padding:14px;background:#edf7f6;max-height:180px;overflow:auto;margin:16px 0}
+.bank-voice-transcript small{font-size:9px;letter-spacing:1px;color:#58867e}
+.anota-app .bank-voice-transcript p{font-size:12px;line-height:1.7;color:#355b58;white-space:pre-wrap;margin:9px 0 0}
+.bank-voice-guide{border-top:1px solid #e7eef5;padding-top:17px}
+.bank-voice-guide h3{font-size:13px;margin:0;color:#23415f}
+.anota-app .bank-voice-guide>p{font-size:11px;color:#7a8b9f;margin:6px 0 13px}
+.bank-voice-guide details{border-bottom:1px solid #edf2f7;padding:0}
+.bank-voice-guide summary{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;cursor:pointer;font-size:12px;line-height:1.5;padding:13px 0;color:#39546e}
+.bank-voice-guide summary::-webkit-details-marker{display:none}
+.bank-voice-guide details[open]>summary{color:#1b608c;font-weight:600}
+.anota-app .bank-voice-guide details p{font-size:12px;line-height:1.75;color:#5b6f85;margin:0 0 15px}
+.bank-voice-guide details details{margin:0 0 0 12px}
+.bank-voice-dialog button:focus-visible,.bank-voice-dialog summary:focus-visible{outline:2px solid #65a6d3;outline-offset:3px}
+@keyframes bank-ai-float{0%,100%{transform:translate3d(0,0,0) rotate(-3deg) scale(.98)}50%{transform:translate3d(0,-8px,12px) rotate(3deg) scale(1.04)}}
+@keyframes bank-ai-organic{0%,100%{border-radius:46% 54% 50% 48%}35%{border-radius:54% 46% 44% 56%}70%{border-radius:48% 52% 57% 43%}}
+@keyframes bank-ai-mist{0%{transform:rotate(0deg) scale(.95)}50%{transform:rotate(180deg) scale(1.12)}100%{transform:rotate(360deg) scale(.95)}}
+@keyframes bank-ai-color{0%,100%{filter:hue-rotate(0deg);opacity:.85}50%{filter:hue-rotate(58deg);opacity:1}}
+@keyframes bank-ai-flow-one{0%,100%{transform:translate3d(-5%,-8%,0) rotate(-28deg) scale(.92)}50%{transform:translate3d(7%,9%,0) rotate(26deg) scale(1.1)}}
+@keyframes bank-ai-flow-two{0%,100%{transform:translate3d(5%,7%,0) rotate(18deg)}50%{transform:translate3d(-7%,-9%,0) rotate(-13deg) scale(1.12)}}
+@keyframes bank-ai-flow-three{0%,100%{transform:translate3d(-6%,8%,0) rotate(-25deg) scale(.95)}50%{transform:translate3d(8%,-16%,0) rotate(7deg) scale(1.1)}}
+@media(max-width:800px){.anota-app .bank-header{height:236px;padding:0 18px 16px;align-items:flex-end}.anota-app .bank-voice-launch{top:10px;right:12px;width:144px;gap:5px}.bank-voice-launch .bank-ai-orb{width:112px;height:112px}.bank-voice-launch strong{font-size:11px}.bank-voice-launch small{font-size:9px}.bank-ai-label{padding:4px 10px 6px}.bank-content>.bank-heading{padding-right:0}.bank-voice-dialog{inset:20px 12px auto auto;max-height:calc(100dvh - 40px);width:calc(100vw - 24px)}.bank-voice-panel{padding:20px}.bank-voice-stage{padding-top:14px}.bank-voice-halo{height:170px}}
+@media(prefers-reduced-motion:reduce){.bank-voice-dialog *,.bank-voice-launch,.bank-voice-launch *,.bank-ai-orb::before{animation:none!important;transition:none!important}}

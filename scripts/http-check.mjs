@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+const url=process.env.ANOTA_TEST_URL||'http://localhost:3100';
+async function request(path,method='GET',data,session,origin=url){const r=await fetch(url+path,{method,headers:{...(session?{Cookie:session}:{}),...(data?{'Content-Type':'application/json'}:{}),...(method!=='GET'?{Origin:origin}:{})},body:data?JSON.stringify(data):undefined});const body=await r.json();return {status:r.status,body,cookie:r.headers.get('set-cookie')?.split(';')[0]};}
+const suffix=randomUUID().slice(0,8),password=randomUUID();
+const a=await request('/api/session','POST',{action:'register',name:'Conta QA A',email:'qa-a-'+suffix+'@example.test',password});assert.equal(a.status,200);assert.ok(a.cookie);
+const b=await request('/api/session','POST',{action:'register',name:'Conta QA B',email:'qa-b-'+suffix+'@example.test',password});assert.equal(b.status,200);
+assert.equal((await request('/api/expenses')).status,401);
+const payload={id:randomUUID(),kind:'PESSOAL',scope:'PESSOAL',entry_date:'2026-10-06',description:'QA mercado',category:'Supermercado',amount_cents:5000,status:'REALIZADO',details:{payment_method:'PIX'},expected_updated_at:null};
+const created=await request('/api/expenses','POST',payload,a.cookie);assert.equal(created.status,200);const repeated=await request('/api/expenses','POST',payload,a.cookie);assert.equal(repeated.status,200);
+assert.equal((await request('/api/expenses','GET',undefined,a.cookie)).body.rows.length,1);
+assert.equal((await request('/api/expenses','GET',undefined,b.cookie)).body.rows.length,0);
+assert.equal((await request('/api/expenses','POST',payload,b.cookie)).status,403);
+assert.equal((await request('/api/expenses','POST',{...payload,id:randomUUID(),scope:'LOJA'},a.cookie)).status,400);
+assert.equal((await request('/api/expenses','POST',{...payload,id:randomUUID()},a.cookie,'https://wrong.example')).status,403);
+const schedule={payload:{...payload,id:randomUUID(),kind:'MENSAL',status:'PREVISTO',entry_date:'2027-01-31'},months:3};
+const scheduled=await request('/api/expenses/schedule','POST',schedule,a.cookie);assert.equal(scheduled.status,200);assert.deepEqual(scheduled.body.rows.map(r=>r.entry_date),['2027-01-31','2027-02-28','2027-03-31']);
+assert.equal((await request('/api/expenses/schedule','POST',schedule,a.cookie)).status,200);
+assert.equal((await request('/api/expenses','GET',undefined,a.cookie)).body.rows.length,4);
+const report=await request('/api/assistant/data?period=total','GET',undefined,a.cookie);assert.equal(report.body.amount_cents,5000);assert.equal(report.body.count,1);
+assert.equal((await request('/api/assistant/expense','POST',{id:randomUUID(),confirmation:'forged'},a.cookie)).status,403);
+const arch=await request('/api/expenses','PATCH',{id:payload.id,expected_updated_at:created.body.row.updated_at,active:false},a.cookie);assert.equal(arch.status,200);
+assert.equal((await request('/api/assistant/data?period=total','GET',undefined,a.cookie)).body.amount_cents,0);
+assert.equal((await request('/api/whatsapp/worker','POST',{},a.cookie)).status,403);
+assert.equal((await request('/api/whatsapp/webhook?account='+a.body.user.id+'&key=invalid','POST',{})).status,403);
+await request('/api/session','DELETE',undefined,a.cookie);assert.equal((await request('/api/expenses','GET',undefined,a.cookie)).status,401);
+console.log('HTTP: cadastro, isolamento, idempotência, CSRF, agendamento, totais, arquivamento, voz e WhatsApp: OK.');

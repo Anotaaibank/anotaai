@@ -1,0 +1,9 @@
+.bank-login .login-password-field{display:grid;gap:8px;margin:15px 0}
+.bank-login .login-password-field>label{margin:0}
+.bank-login .login-password-control{position:relative}
+.bank-login .login-password-control input{width:100%;box-sizing:border-box;padding-right:56px}
+.bank-login .login-password-toggle{position:absolute;right:5px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:42px;height:42px;margin:0;padding:0;border:0;border-radius:9px;background:transparent;color:#bfe9ce;cursor:pointer}
+.bank-login .login-password-toggle svg{width:21px;height:21px}
+.bank-login .login-password-toggle:hover{background:rgba(143,220,179,.14);color:#f0dfac}
+.bank-login .login-password-toggle:focus-visible{outline:2px solid #e8cd8d;outline-offset:1px}
+.bank-login .login-password-toggle:disabled{opacity:.5;cursor:default}

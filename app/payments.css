@@ -1,0 +1,26 @@
+.anota-app .payment-status{display:inline-flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700;line-height:1.4;white-space:nowrap}
+.anota-app .payment-status small{color:inherit;font-size:10px;margin:0}
+.anota-app .payment-overdue{color:#842e24;background:#ffe7df;border:1px solid #dea38d}
+.anota-app .payment-today{color:#735007;background:#fff0be;border:1px solid #d2b979}
+.anota-app .payment-upcoming{color:#215744;background:#deeee3;border:1px solid #b1cbbb}
+.anota-app .payment-paid{color:#25623d;background:#dceede}
+.anota-app .payment-archived{color:#52635d;background:#e3e9e4}
+.payment-alert{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 24px;margin:0 0 24px;border:1px solid #cf9c7e;border-left:5px solid #ad4d37;border-radius:14px;background:linear-gradient(120deg,#fff2e6,#f9e2d8);color:#752d20;box-shadow:0 0 0 0 rgba(163,65,40,.08);animation:payment-attention 2.8s ease-in-out infinite}
+.payment-alert p{margin:7px 0 0;font-size:14px;line-height:1.6;color:#794533}
+.anota-app .payment-alert button{border-color:#b47a58;background:#fff9ed;color:#6a3c24;font-weight:700;flex-shrink:0}
+.payment-alert-title{display:flex;align-items:center;gap:10px;font-size:17px}
+.payment-count{margin-left:auto;min-width:23px;padding:3px 7px;border-radius:14px;background:#f6c5a7;color:#652519;font-size:12px;font-weight:700}
+.payment-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-bottom:24px}
+.payment-cards article{padding:22px;border:1px solid #bad2c1;border-radius:14px;background:#edf7ed;color:#204936;display:grid;gap:10px}
+.payment-cards article.overdue{background:#fff0e5;border-color:#d3a08d;color:#7b3425}
+.payment-cards strong{font-size:28px}.payment-cards small{font-size:13px;line-height:1.5}
+.anota-app .payment-filters{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}
+.anota-app .payment-filters button[aria-pressed=true]{background:#215b44;color:#fff4d1;border-color:#215b44}
+.anota-app .payment-table tr.is-overdue td{background:#fff3e8}
+.anota-app .payment-table tr.is-overdue td:first-child{border-left:3px solid #bc7050}
+.anota-app .payment-table .row-actions{flex-wrap:wrap}
+.anota-app .payment-status.payment-overdue{animation:payment-badge-attention 2.8s ease-in-out infinite}
+@keyframes payment-attention{50%{box-shadow:0 0 22px rgba(163,65,40,.18);border-color:#b96545}}
+@keyframes payment-badge-attention{50%{background:#ffd3bf;border-color:#bc785a}}
+@media(max-width:800px){.payment-cards{grid-template-columns:1fr}.payment-alert{align-items:flex-start;flex-direction:column;padding:20px}.payment-alert button{width:100%}}
+@media(prefers-reduced-motion:reduce){.payment-alert,.anota-app .payment-status.payment-overdue{animation:none}}

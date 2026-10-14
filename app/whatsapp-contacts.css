@@ -1,0 +1,19 @@
+.anota-main .bank-wa-contacts{display:grid;gap:12px;min-width:0;padding:18px;border:1px solid #bad3c2;border-radius:14px;background:#e7f1e6;margin:8px 0}
+.anota-main .bank-wa-contacts legend{padding:0 8px;font-size:14px;font-weight:700;color:#214c3c}
+.anota-main .bank-wa-contact-count{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;color:#24583e}
+.anota-main .bank-wa-contact-count span{font-size:12px}
+.anota-main .bank-wa-contact-add{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
+.anota-main .bank-wa-contact-add input{flex:1;min-width:160px;width:100%}
+.anota-main .bank-wa-contact-add button{min-height:44px}
+.anota-main .bank-wa-contact-list{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-height:360px;overflow:auto}
+.anota-main .bank-wa-contact-list li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;background:#f7fcf4;border:1px solid #c5dac3;border-radius:10px}
+.anota-main .bank-wa-contact-list li div{display:grid;gap:4px}
+.anota-main .bank-wa-contact-list strong{font-size:14px;color:#173f36}
+.anota-main .bank-wa-contact-list span{font-size:12px;color:#486951}
+.anota-main .bank-wa-contact-list button{min-height:40px;font-size:12px;color:#773b30;border-color:#d3bcb3;background:#fff8f1}
+.anota-main .bank-wa-saved{background:#dfeddf;border:1px solid #aecdaf;border-radius:10px;padding:12px;color:#245b3b;font-size:13px}
+.anota-main .bank-wa-access{display:grid;gap:12px;margin:22px 0;padding:20px;border:1px solid #b9d1bc;border-radius:14px;background:linear-gradient(135deg,#e4f1df,#f5faee);color:#214c3c}
+.anota-main .bank-wa-access h3,.anota-main .bank-wa-access p{margin:0}
+.anota-main .bank-wa-access select{flex:1;min-width:160px;min-height:46px;background:#fcfff9;color:#173f36;border:1px solid #aac7b0;border-radius:9px;padding:10px}
+.anota-main .bank-wa-access small{line-height:1.6;color:#486951}
+@media(max-width:520px){.anota-main .bank-wa-contacts{padding:12px}.anota-main .bank-wa-contact-add button{width:100%}}

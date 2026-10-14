@@ -1,0 +1,15 @@
+import {localMode,rows,query,service,type Auth} from './server.ts';
+import {localFinanceState,localFinanceDocuments,applyLocalFinance,applyLocalWhatsappFinance} from './finance-store.ts';
+import {financeSnapshot,type FinanceDocument,type FinancePlan,type FinanceState} from './finance.ts';
+import {localSecret} from './local-db.ts';
+import {AppError} from './model.ts';
+import type {AdminEntry} from './expenses.ts';
+import {financeQuery,financeReport} from './finance-report.ts';
+export function financeSecret(){const key=localMode()?localSecret():process.env.ANOTA_WHATSAPP_ENCRYPTION_KEY;if(!key)throw new AppError('Configure o segredo de confirmação no servidor.',503);return key;}
+async function financeDocuments(user:string,token?:string){const documents:FinanceDocument[]=[];for(let offset=0;offset<100000;offset+=1000){const path='anota_finance_documents?user_id=eq.'+user+'&select=data&order=id&limit=1000&offset='+offset,page=token?await query<{data:FinanceDocument}[]>(token,path):await service<{data:FinanceDocument}[]>(path);documents.push(...page.map(r=>r.data));if(page.length<1000)return documents;}throw new AppError('Consulta acima do limite.');}
+export async function financeState(auth:Auth):Promise<FinanceState>{if(localMode())return localFinanceState(auth.user.id);return {documents:await financeDocuments(auth.user.id,auth.token),expenses:await rows(auth)};}
+export async function financeStateForBot(user:string):Promise<FinanceState>{if(localMode())return localFinanceState(user);const readExpenses=async()=>{const expenses:AdminEntry[]=[];for(let offset=0;offset<100000;offset+=1000){const page=await service<AdminEntry[]>('anota_expenses?user_id=eq.'+user+'&select=*&limit=1000&offset='+offset+'&order=id');expenses.push(...page);if(page.length<1000)return expenses;}throw new AppError('Consulta acima do limite.');};const [documents,expenses]=await Promise.all([financeDocuments(user),readExpenses()]);return {documents,expenses};}
+export async function applyFinance(auth:Auth,plan:FinancePlan,origin:AdminEntry['origin']='MANUAL'){if(localMode())return applyLocalFinance(auth.user.id,plan,origin);return query(auth.token,'rpc/anota_apply_finance','POST',{p_plan:plan,p_origin:origin});}
+export async function applyFinanceForBot(user:string,plan:FinancePlan,message:{id:string;lease:string|null;sender:string}){if(localMode())return applyLocalWhatsappFinance(user,plan,message);return service('rpc/anota_apply_finance_whatsapp','POST',{p_user:user,p_plan:plan,p_message:message.id,p_lease:message.lease});}
+export async function appointmentsForBot(user:string){return (localMode()?localFinanceDocuments(user):await financeDocuments(user)).filter(d=>d.kind==='APPOINTMENT');}
+export function assistantFinanceData(state:FinanceState,raw:unknown={}){const query=financeQuery(raw);if(query.topic!=='contexto')return financeReport(state,raw);const snapshot=financeSnapshot(state);return {...snapshot,summary:financeReport(state,{topic:'resumo'}),documents:snapshot.documents.slice(0,100),expenses:snapshot.expenses.slice(0,100),timeline:snapshot.timeline.slice(0,100),truncated:state.documents.length>100||state.expenses.length>100};}

@@ -1,0 +1,40 @@
+.anota-user-tools{display:flex;align-items:center;gap:16px;flex-shrink:0}
+.anota-topbar{min-height:140px}
+.anota-main .bank-voice-launch{position:relative;inset:auto;display:flex;flex-direction:column;align-items:center;gap:0;width:124px;min-height:126px;padding:3px 6px;background:none;border:0;box-shadow:none;border-radius:20px;backdrop-filter:none;overflow:visible;flex-shrink:0;animation:none!important;transition:filter .2s!important}
+.anota-main .bank-voice-launch .bank-ai-label{display:block;padding:0 4px;background:transparent;backdrop-filter:none;max-width:120px;color:#164e43}
+.anota-main .bank-voice-launch .bank-ai-label strong{font-size:13px;line-height:1.4;letter-spacing:.4px;overflow-wrap:anywhere}
+.anota-main .bank-voice-launch .bank-ai-label small{font-size:10px;color:#44665b;letter-spacing:0}
+.anotei-orb-space{position:relative;display:grid;place-items:center;width:102px;height:88px;perspective:360px;isolation:isolate;flex-shrink:0;pointer-events:none}
+.anota-main .anotei-orb-space .bank-ai-orb{width:72px;height:72px;min-width:72px;border-radius:50%;overflow:hidden;box-shadow:inset -8px -9px 15px #00282a65,inset 2px 3px 9px #dcffe855,0 12px 26px #10654b44,0 0 20px #50e5af75;animation:anotei-spatial-turn 14s linear infinite!important;transform-style:preserve-3d;will-change:transform}
+.anota-main .anotei-orb-space .bank-ai-glass{display:block;position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 27% 16%,#fff8,transparent 32%),radial-gradient(circle at 70% 82%,#002f2e70,transparent 57%);box-shadow:inset 0 0 4px #deffde88;animation:anotei-light-turn 14s linear infinite;pointer-events:none}
+.anotei-orb-mist{position:absolute;inset:5% 0;z-index:-1;border-radius:50%;background:conic-gradient(from 30deg,transparent,#b5d77985,transparent,#63e7bd95,transparent,#c4df9380,transparent);filter:blur(12px);opacity:.65;animation:anotei-mist-turn 18s linear infinite;pointer-events:none}
+.anotei-orb-ring{position:absolute;inset:7% -2%;border-radius:50%;border:1px solid #83d9b780;box-shadow:0 0 9px #61e5b95c;transform:rotateX(68deg) rotateY(-18deg);animation:anotei-ring-turn 11s linear infinite;pointer-events:none}
+.anotei-orb-shadow{position:absolute;bottom:0;width:62%;height:10px;background:#17674a50;border-radius:50%;filter:blur(5px);z-index:-1;animation:anotei-depth-shadow 7s ease-in-out infinite;pointer-events:none}
+.anota-main .bank-voice-launch:hover{filter:brightness(1.1)}
+.anota-main .bank-voice-launch:focus-visible{outline:3px solid #54776b;outline-offset:0}
+@keyframes anotei-spatial-turn{0%{transform:translateZ(8px) rotateX(-12deg) rotateY(-18deg) rotateZ(0)}25%{transform:translateZ(22px) rotateX(16deg) rotateY(20deg) rotateZ(90deg)}50%{transform:translateZ(8px) rotateX(-12deg) rotateY(18deg) rotateZ(180deg)}75%{transform:translateZ(22px) rotateX(16deg) rotateY(-20deg) rotateZ(270deg)}100%{transform:translateZ(8px) rotateX(-12deg) rotateY(-18deg) rotateZ(360deg)}}
+@keyframes anotei-light-turn{to{transform:rotate(-360deg)}}
+@keyframes anotei-mist-turn{50%{opacity:.85;transform:rotate(180deg) scale(1.1)}100%{transform:rotate(360deg)}}
+@keyframes anotei-ring-turn{50%{transform:rotateX(73deg) rotateY(18deg) rotateZ(180deg)}100%{transform:rotateX(68deg) rotateY(-18deg) rotateZ(360deg)}}
+@keyframes anotei-depth-shadow{50%{opacity:.5;transform:scale(1.15)}}
+.anota-main .bank-voice-launch.is-active .bank-ai-orb,.anota-main .bank-voice-stage.speaking .bank-ai-orb{animation-duration:8s!important}
+.anota-main .bank-voice-halo .anotei-orb-space{width:170px;height:160px;perspective:550px}
+.anota-main .bank-voice-halo .bank-ai-orb{width:130px;height:130px}
+.anotei-voice-header-actions{display:flex;gap:8px}
+.anotei-voice-dock{position:fixed;z-index:60;right:20px;bottom:18px;display:flex;align-items:center;flex-wrap:wrap;gap:10px;max-width:calc(100vw - 40px);padding:12px 16px;background:#0b3935;color:#e7f2d8;border:1px solid #90b98670;border-radius:16px;box-shadow:0 12px 32px #053b3835;font-size:12px}
+.anotei-voice-dock button{padding:7px 10px;color:#f4e3b7;background:#285d4b;border:1px solid #739b7d;border-radius:8px}
+.anotei-voice-dock span{display:flex;gap:7px;align-items:center}
+.anotei-name-settings form{display:grid;gap:10px}
+.anota-main .anotei-name-settings input{background:#073b38;color:#f2f5e6;border-color:#508673}
+.anota-main .anotei-name-settings button{padding:10px;color:#f4e3b7;background:#285d4b;border:1px solid #739b7d;border-radius:10px}
+.anota-main .anota-user{margin-left:0}
+.anota-main .anotei-extra-panel>small{display:block;line-height:1.6}
+.anota-modal .bank-note{line-height:1.6}
+.anota-main .bank-voice-dialog{--text:#f4f5e6;--muted:#bbdccb;color:#f4f5e6}
+.anota-main .bank-voice-dialog .bank-voice-start,.anota-main .bank-voice-dialog .finance-text-command button{background:linear-gradient(145deg,#2d7159,#174f41);color:#f4e3b7;border-color:#759d83;box-shadow:inset 0 1px #ffffff24,0 6px 18px #001e2030}
+.anota-main .bank-voice-dialog .finance-text-command textarea{background:#073b38;color:#f2f5e6;border-color:#508673}
+.anota-main .bank-voice-dialog .finance-text-command textarea::placeholder{color:#b6cfc1}
+.anota-main .bank-voice-dialog .bank-note{color:#bbdccb}
+.anota-main .bank-voice-dialog .bank-voice-guide label{color:#e6f0d9}
+@media(max-width:600px){.anota-topbar{gap:8px;padding:8px 16px;min-height:126px}.anota-topbar>span{display:none}.anota-user-tools{margin-left:auto;gap:8px}.anota-main .bank-voice-launch{width:104px}.anota-user strong{max-width:110px;overflow-wrap:anywhere}.anotei-voice-dock{right:12px;bottom:12px;max-width:calc(100vw - 24px)}}
+@media(prefers-reduced-motion:reduce){.anota-main .anotei-orb-space *{animation:none!important;transform:none;will-change:auto}.anota-main .anotei-orb-ring{transform:rotateX(68deg)}}

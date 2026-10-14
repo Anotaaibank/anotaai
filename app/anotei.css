@@ -1,0 +1,173 @@
+/* Anotei na Hora: verde petróleo, luz de menta e dourado fosco. */
+:root{color-scheme:dark;--anotei-bg:#062c2f;--anotei-panel:#103b3d;--anotei-text:#f5f1df;--anotei-muted:#abc5bd;--anotei-line:#9bdbbc25;--anotei-mint:#a4efc1;--anotei-gold:#dfc98e}
+body{background:var(--anotei-bg);color:var(--anotei-text);font-family:Arial,Helvetica,sans-serif}
+.anota-app,.bank-login{--bank-navy:#07383a;--bank-muted:#abc5bd;--bank-line:#9bdbbc25;background:radial-gradient(ellipse at 86% 0%,#1a695849,transparent 52%),var(--anotei-bg);color:var(--anotei-text)}
+button,input,textarea,select{color:var(--anotei-text);background:#0c3234;border-color:#90caae35}
+input,textarea,select{color-scheme:dark;border-radius:12px}
+input::placeholder,textarea::placeholder{color:#8aafa3}
+button{border-radius:12px;transition:background .18s,border-color .18s,box-shadow .18s,transform .18s}
+button:hover:not(:disabled){background:#1b4a44;border-color:#a1dcba70}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--anotei-gold);outline-offset:4px}
+.bank-primary,.anota-app .bank-primary,.bank-login .bank-primary{background:linear-gradient(150deg,#34785f,#165449 58%,#123f3c);color:var(--anotei-gold);border:1px solid #a3d69b58;border-top-color:#c0edb58f;font-weight:700;box-shadow:inset 0 1px 1px #e2ffce38,inset 0 -3px 6px #001b2580,0 5px 0 #042729,0 10px 24px #66dfaa17;min-height:43px}
+.bank-primary:hover:not(:disabled),.anota-app .bank-primary:hover:not(:disabled){background:linear-gradient(145deg,#43896b,#1f6453);box-shadow:inset 0 1px 1px #e2ffce45,0 5px 0 #042729,0 12px 30px #73e5ac2b;transform:translateY(-1px)}
+.bank-primary:active:not(:disabled){transform:translateY(2px);box-shadow:inset 0 1px 2px #e2ffce30,0 2px 0 #042729}
+.bank-note,.bank-heading p:not(.bank-eyebrow){color:var(--anotei-muted)}
+.bank-eyebrow{color:var(--anotei-gold);font-size:10px;letter-spacing:1.8px}
+.bank-heading h1{font-family:Arial,Helvetica,sans-serif;font-size:31px;font-weight:600;letter-spacing:-1px;margin:10px 0}
+.bank-heading{margin-bottom:24px}
+.bank-panel,.bank-card{background:linear-gradient(145deg,#16444799,#0d3537f2);border-color:var(--anotei-line);border-radius:18px;box-shadow:inset 0 1px 0 #d7ffda08,0 12px 32px #001c231f;color:var(--anotei-text)}
+.bank-panel h2,.bank-card h2{color:#edf3e7;letter-spacing:-.2px;font-size:16px}
+.bank-panel h3{font-size:15px;color:var(--anotei-mint)}
+.bank-panel p,.bank-panel li{font-size:13px;line-height:1.7}
+.bank-panel-title{gap:12px;flex-wrap:wrap}
+.bank-pill{color:#b7d0c5;background:#91cab417;border:1px solid #a0dcb21e;padding:6px 11px}
+.bank-pill.green{color:#b2f4cd;background:#67cba51a}
+.bank-pill.gold{color:var(--anotei-gold);background:#e3c88e12}
+.bank-error{color:#ffd2c7;background:#763a3638;border:1px solid #d99c813d}
+.anota-app .finance-alert{color:#e8d49b;background:#c6a45a12;border-left-color:#ba9b5c;border-radius:0 10px 10px 0;font-size:12px}
+.anota-app .finance-negative{color:#ffb6a1}
+.anota-sidebar{width:246px;background:linear-gradient(175deg,#08383b,#032729 65%);border-right:1px solid #a2d8b320;padding:31px 18px 25px;color:#a4c2b7}
+.anota-brand{padding:0 7px;margin-bottom:35px;font-family:Arial,Helvetica,sans-serif;font-size:inherit;letter-spacing:normal}
+.anota-brand .anotei-brand-lockup{display:flex;align-items:center;gap:12px;margin:0;font:inherit;color:inherit;letter-spacing:normal}
+.anota-brand .anotei-wordmark{display:block;font-size:25px;font-weight:700;letter-spacing:-.8px;color:#f5f1df;margin:0;line-height:1.1}
+.anota-brand .anotei-wordmark strong{display:block;color:var(--anotei-mint);font-size:20px;letter-spacing:-.5px;margin-top:2px}
+.anota-brand .anotei-wordmark strong span{display:inline;color:var(--anotei-gold);font:inherit;letter-spacing:normal;margin:0}
+.anota-brand .anotei-wordmark small{display:block;font-size:6.5px;font-weight:500;letter-spacing:.7px;color:#b5c9bc;margin-top:8px;white-space:nowrap}
+.anotei-orb,.anota-brand .anotei-orb{position:relative;display:block;flex-shrink:0;width:54px;height:54px;overflow:hidden;border-radius:50%;box-shadow:0 0 22px #7bffd52b;font-size:0;margin:0}
+.anotei-orb img{position:absolute;display:block;width:246%;max-width:none;height:auto;left:-73%;top:-28.5%}
+.anota-sidebar nav{gap:8px}
+.anota-sidebar nav button{color:#adcabd;border-radius:13px;font-size:12px;gap:11px;padding:14px 13px;min-height:45px;border:1px solid transparent}
+.anota-sidebar nav button.active{background:linear-gradient(120deg,#33746072,#1852488f);color:var(--anotei-gold);border-color:#98d8a635;box-shadow:inset 0 1px 0 #dfffd51c,0 8px 22px #001d242d}
+.anota-sidebar nav button:hover{background:#97e7bb12}
+.sidebar-bottom{padding:24px 12px 0;border-top:1px solid #a9d9bf18}
+.sidebar-bottom p,.sidebar-bottom strong{color:#a9c6b8;font-size:11px}
+.sidebar-bottom button{color:#c5d8c9}
+.anota-main{margin-left:246px;min-width:0}
+.anota-topbar{padding:19px 36px;background:#052b2fcc;border-bottom:1px solid var(--anotei-line);color:#b2ccc0;min-height:72px}
+.anota-topbar>span{display:flex;align-items:center;gap:8px;font-size:11px}
+.anotei-live-dot{width:6px;height:6px;background:#a6edbc;border-radius:50%;box-shadow:0 0 9px #8feeaf80}
+.anota-user>span{background:#c1d8a618;color:var(--anotei-gold);border:1px solid #c1d8a62c}
+.anota-user strong{color:#d6e5d8}
+.anota-content{padding:30px 36px 135px;max-width:1500px}
+.period-label{color:#adccbd;font-size:10px}
+.period-label input{background:#143f3d;border-color:var(--anotei-line)}
+.anotei-section-caption{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
+.anotei-section-caption>span:first-child{font-size:10px;letter-spacing:1.8px;color:#b8d5c7;font-weight:600}
+.anotei-money-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.anotei-money-card{position:relative;overflow:hidden;padding:22px 19px;display:flex;flex-direction:column;gap:13px;min-height:193px;border:1px solid #9bd6b62c;border-radius:18px;background:linear-gradient(150deg,#23514b9c,#103a3df5);box-shadow:inset 0 1px 0 #ccffdf13,0 12px 30px #00232622}
+.anotei-money-card.salary{border-color:#d1c58943;background:radial-gradient(ellipse at 100% 0%,#b7cf7518,transparent 70%),linear-gradient(150deg,#275348ad,#113c3d)}
+.money-card-top{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.money-card-top>span:first-child{font-size:9px;letter-spacing:1.2px;font-weight:700;color:#c2d9cb}
+.money-symbol{width:29px;height:29px;border:1px solid #addeb42e;border-radius:9px;display:inline-grid;place-items:center;color:var(--anotei-gold);font-size:14px;background:#cae3a90a;flex-shrink:0}
+.anotei-money-card>strong{font-size:clamp(22px,2.1vw,32px);font-weight:600;letter-spacing:-1px;white-space:nowrap}
+.anotei-money-card>small{font-size:10px;line-height:1.7;color:#b0cabe;min-height:34px}
+.anotei-money-card>.text-button{margin-top:auto;justify-content:space-between;text-align:left;font-size:10px;color:var(--anotei-gold)}
+.anotei-money-card.available{background:radial-gradient(ellipse at 95% 0%,#c6fba232,transparent 65%),linear-gradient(140deg,#3e8f6c,#1e6956 60%,#114f48);border-color:#b3ebb667;box-shadow:inset 0 1px 1px #e3ffd738,0 10px 32px #64de9f12}
+.anotei-money-card.available>strong{color:#f2ffda}
+.anotei-money-card.available>small{color:#d0e9d5}
+.available-footnote{font-size:9px;color:#c4e4ce;line-height:1.6;margin-top:auto}
+.anotei-money-card.deficit{background:linear-gradient(145deg,#665c3a,#324a3c);border-color:#dbbd7d6b}
+.anotei-home-details{display:grid;grid-template-columns:1.15fr 1fr;gap:18px}
+.anotei-home-details>.bank-panel{margin:0 0 20px!important;min-width:0;padding:22px}
+.anotei-due-list>div{display:flex;align-items:center;gap:13px;padding:12px 0;border-top:1px solid #97cfa918}
+.anotei-due-list>div>span:nth-child(2){flex:1;min-width:0;display:grid;gap:6px}
+.anotei-due-list b{font-size:12px;font-weight:500;overflow-wrap:anywhere}
+.anotei-due-list small{font-size:10px;color:#a5c3b6}
+.anotei-due-list strong{font-size:12px;white-space:nowrap;color:#e5ead9}
+.anotei-due-day{display:grid;place-items:center;gap:3px;background:#71c49d0f;border:1px solid #98d2aa22;border-radius:10px;min-width:38px;padding:8px;font-size:14px;color:var(--anotei-gold)}
+.anotei-due-day small{font-size:8px;text-transform:uppercase}
+.anotei-month-paid{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:18px;margin-top:14px;border-top:1px solid #a2d3b420;font-size:11px;color:#b5d0c1}
+.anotei-month-paid strong{color:#e9ecda;white-space:nowrap}
+.anotei-extra-panel{background:radial-gradient(ellipse at 100% 0%,#87c59413,transparent 70%),#123c3d}
+.anotei-extra-panel .bank-note{margin:12px 0}
+.anotei-extra-amount{display:block;font-size:28px;color:var(--anotei-mint);letter-spacing:-.7px;margin:13px 0 6px;font-weight:500}
+.anotei-extra-panel>small{display:block;color:#afcdbc;font-size:10px;line-height:1.7}
+.anotei-extra-panel .bank-actions{margin-top:23px;font-size:11px;gap:17px;justify-content:flex-start}
+.anota-hero{background:radial-gradient(ellipse at 10% 50%,#4eb78822,transparent 50%),linear-gradient(120deg,#123e3c,#093336);border-color:#a3dcb72b;min-height:174px;padding:25px 29px;border-radius:20px;gap:24px}
+.anota-hero>div{flex:1}
+.anota-hero p{color:var(--anotei-gold);font-size:9px}
+.anota-hero h2{font:500 26px/1.25 Arial,Helvetica,sans-serif;letter-spacing:-.6px;color:#eaf4e7;margin:10px 0}
+.anota-hero span{color:#b7cfc1;font-size:11px}
+.anota-hero .hero-orb{width:110px;height:110px;flex-shrink:0;box-shadow:0 0 35px #67ffbd29}
+.anota-hero>button{margin:0;font-size:11px;padding:13px 17px;white-space:nowrap}
+.anota-kpi{background:linear-gradient(135deg,#194643,#0e3638);border-color:var(--anotei-line)}
+.anota-kpi.navy{background:linear-gradient(135deg,#27604d,#10423e);border-color:#b4eab42e}
+.anota-kpi span,.anota-kpi small,.anota-kpi.navy span,.anota-kpi.navy small{color:#b1cbbc}
+.anota-kpi strong{color:#f0f4e5;font-size:27px}
+.category-bar{background:transparent!important;border:0}
+.category-bar>span{color:#b9d0c0}
+.category-bar strong,.nature-total strong{color:#e4efde}
+.category-bar>i{background:#c8edc810}
+.category-bar b{background:linear-gradient(90deg,#538d68,#b9dba0)}
+.nature-total{color:#b7cec1}
+.nature-total i.ESSENCIAL{background:#a2e0b1}
+.nature-total i.OPCIONAL{background:var(--anotei-gold)}
+.small-tip{background:#8acdab0c;color:#aac7b8;border:1px solid #a2ddb51c}
+.text-button{color:var(--anotei-gold);border-color:transparent;background:transparent;box-shadow:none}
+.bank-table th{color:#a7c5b6;border-bottom-color:#b3d6b72b}
+.bank-table td{color:#dae9db;border-bottom-color:#b3d6b715}
+.bank-table td small{color:#a2c0b3}
+.bank-filters input,.bank-filters select{background:#0b3134}
+.bank-personal-groups button[aria-pressed=true]{background:#376b523d;border-color:var(--anotei-gold)}
+.bank-personal-groups small{color:#a6c7b8}
+.anota-empty,.anota-empty h3{color:#bfd9ca}
+.anota-modal-backdrop{background:#001b26ad;backdrop-filter:blur(8px)}
+.anota-modal{background:linear-gradient(145deg,#194b47,#082e33);box-shadow:0 25px 80px #001b2870;border-color:#b6eac044}
+.anota-app .finance-reserves article{background:#9bd5ad0b;border:1px solid #aad8b128}
+.anota-app .finance-reserves small{color:#afcabd}
+.bank-wa-status,.bank-wa-status.connected{background:#9bd5ad12;color:#c4e0c9;border:1px solid #aad8b128}
+.bank-wa-help blockquote{background:#a1d6ae0a;border-left-color:var(--anotei-gold);color:#e4eedb;font-family:Arial,Helvetica,sans-serif}
+.bank-wa-help p,.bank-wa-grid small{color:#b1cbbc}
+.bank-wa-qr img{background:#fff;padding:12px;border-radius:14px}
+.bank-login{grid-template-columns:1.1fr 1fr}
+.bank-login-story{align-items:flex-start;padding:60px 14%;background:radial-gradient(ellipse at 40% 30%,#14655b99,transparent 64%),#052e31;color:#bdd7c7;border-right:1px solid var(--anotei-line)}
+.bank-login-story>p:first-child{color:var(--anotei-gold)}
+.bank-login-story .login-orb{width:162px;height:162px;margin:20px 0;box-shadow:0 0 70px #75ffc626}
+.bank-login-story h1{font:700 64px/.98 Arial,Helvetica,sans-serif;letter-spacing:-3px;margin:5px 0 22px;color:#f4f0dc}
+.bank-login-story h1 em{color:var(--anotei-mint)}
+.bank-login-story h2{font:500 19px/1.4 Arial,Helvetica,sans-serif;letter-spacing:.3px;color:var(--anotei-gold)}
+.bank-login-story p{font-size:13px}
+.bank-login-story .login-features span{color:#bcd6c6}
+.login-features svg{color:var(--anotei-gold)}
+.bank-login-story small{color:#a5c5b4}
+.bank-login-card h2{font:600 26px Arial,Helvetica,sans-serif;letter-spacing:-.7px}
+.bank-login-card>p:not(.bank-eyebrow){color:#b4d0bf}
+.bank-login-card form button{font-size:12px;letter-spacing:1px}
+.bank-login input{background:#103638;color:var(--anotei-text);border-color:#94d0ad3b;border-radius:12px}
+.bank-login .text-button{background:transparent;color:var(--anotei-gold);border-color:#a9d7ae2b;border-radius:12px}
+.bank-login .text-button:hover{background:#89ceaa0d}
+.anota-app .bank-voice-launch .bank-ai-label{background:#123e3be8;color:var(--anotei-gold);border:1px solid #9fd7b143;box-shadow:0 7px 20px #00202a66}
+.anota-app .bank-voice-panel{background:linear-gradient(145deg,#194b47,#082e33);color:var(--anotei-text);border-color:#b6eac044;--bank-navy:#dbeedb;--bank-muted:#a9cbbb;--bank-line:#a3d9b329}
+.anota-app .bank-voice-panel input,.anota-app .bank-voice-panel textarea,.anota-app .bank-voice-panel .finance-text-command textarea{color:var(--anotei-text);background:#0b3034;border-color:#aed4af35}
+.anota-app .bank-voice-panel .finance-text-command button{color:var(--anotei-gold);background:#245746;border-color:#a6c8964d}
+.demo-banner{background:#ac91561a;color:var(--anotei-gold);border:1px solid #ae96554d}
+@media(min-width:1400px){.anota-content{padding:36px 48px 135px}.anota-hero{min-height:174px}}
+@media(max-width:1150px){.anotei-money-grid{gap:10px}.anotei-money-card{padding:17px 14px;gap:11px}.anotei-money-card>strong{font-size:23px}.money-card-top>span:first-child{font-size:8px;letter-spacing:.7px}.money-symbol{width:24px;height:24px}.anota-content{padding:27px 24px 130px}.anota-topbar{padding:19px 24px}.anota-sidebar{width:220px}.anota-main{margin-left:220px}.anotei-home-details{grid-template-columns:1fr 1fr}.anotei-home-details>.bank-panel{padding:19px}.anota-hero{gap:18px}.anota-hero .hero-orb{width:85px;height:85px}.anota-hero>button{font-size:10px}}
+@media(max-width:950px){.anotei-money-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.anotei-money-card{min-height:180px}.anotei-money-card>strong{font-size:28px}.money-card-top>span:first-child{font-size:9px}.anotei-home-details{grid-template-columns:1fr}.anota-hero{flex-wrap:wrap}.anota-hero>button{margin-left:103px}.bank-login-story{padding:50px 12%}}
+@media(max-width:700px){.anota-sidebar{width:246px}.anota-main{margin-left:0}.anota-content{padding:23px 16px 125px}.anota-topbar{padding:16px 18px;min-height:64px}.anota-topbar>span{display:none}.mobile-close{color:#f0f3df}.bank-heading{gap:12px;margin-bottom:19px}.bank-heading h1{font-size:28px}.bank-heading p:not(.bank-eyebrow){font-size:12px;line-height:1.6}.anotei-money-card{padding:17px 14px;min-height:190px;gap:11px}.anotei-money-card>strong{font-size:25px}.money-card-top>span:first-child{font-size:8px;letter-spacing:.5px}.anotei-home-details>.bank-panel{padding:20px}.anotei-section-caption{margin-top:7px}.anota-hero{padding:24px 20px;gap:16px;min-height:190px}.anota-hero h2{font-size:23px}.anota-hero .hero-orb{width:73px;height:73px}.anota-hero>div{min-width:160px}.anota-hero span{font-size:10px}.anota-hero>button{margin-left:0;min-height:42px}.anota-kpi strong{font-size:27px}.bank-login{grid-template-columns:1fr}.bank-login-story{padding:35px 30px;min-height:350px}.bank-login-story .login-orb{width:85px;height:85px;margin:10px 0 20px}.bank-login-story h1{font-size:49px}.bank-login-story h2{font-size:16px}.bank-login-card{padding:40px 0}.bank-panel-title>.bank-actions{width:100%}.anota-modal{padding:22px 18px}}
+@media(max-width:370px){.anotei-money-card>strong{font-size:21px}.money-symbol{display:none}.anotei-money-card{padding:15px 12px}.anota-hero .hero-orb{width:55px;height:55px}}
+@media(prefers-reduced-motion:reduce){button,a{transition:none}.bank-primary:hover:not(:disabled){transform:none}.anotei-orb{animation:none}}
+.anota-app .bank-primary,.bank-login .bank-primary{background:linear-gradient(150deg,#34785f,#165449 58%,#123f3c)!important;color:var(--anotei-gold)!important;border:1px solid #a3d69b58!important;border-top-color:#c0edb58f!important;border-radius:12px;padding:12px 18px!important}
+.anota-app .bank-primary:hover:not(:disabled),.bank-login .bank-primary:hover:not(:disabled){background:linear-gradient(145deg,#43896b,#1f6453)!important}
+.anota-app .bank-note,.bank-login .bank-note{background:transparent;padding:0;color:var(--anotei-muted)}
+.anota-app .bank-note.finance-alert{background:#c6a45a12;padding:12px 16px;color:#e8d49b}
+.anota-app .bank-ai-orb{border-radius:50%;overflow:hidden;background:#073539 url('/anotei-na-hora.jpeg') 50% 19.5%/246% auto no-repeat;box-shadow:0 0 24px #81fac04d}
+.anota-app .bank-ai-orb::before,.anota-app .bank-ai-orb::after,.anota-app .bank-ai-current,.anota-app .bank-ai-atmosphere,.anota-app .bank-ai-glass{display:none}
+.anota-app .bank-voice-launch{flex-direction:row;align-items:center;width:auto;gap:8px;padding:8px 12px;bottom:18px;right:20px;background:#0b3537ed;border:1px solid #b7eac044;border-radius:50px;box-shadow:inset 0 1px 0 #d9ffc71c,0 8px 30px #001c2877;backdrop-filter:blur(12px)}
+.anota-app .bank-voice-launch .bank-ai-orb{width:40px;height:40px}
+.anota-app .bank-voice-launch .bank-ai-label{padding:0;background:transparent;border:0;box-shadow:none;text-align:left}
+.anota-app .bank-voice-launch strong{font-size:10px;letter-spacing:1px;color:var(--anotei-gold)}
+.anota-app .bank-voice-launch strong b{color:var(--anotei-mint)}
+.anota-app .bank-voice-launch small{font-size:8px;color:#b7d1c0}
+.anota-app .bank-voice-dialog{background:#0b3337;color:#ecf1df;border-color:#b6eac044;box-shadow:0 22px 90px #001b2880}
+.anota-app .bank-voice-panel>header h2,.anota-app .bank-voice-stage>strong,.anota-app .bank-voice-guide h3{color:#edf3df}
+.anota-app .bank-voice-panel>header button{background:#b5dfb611;color:#ecf1df}
+.anota-app .bank-voice-eyebrow,.anota-app .bank-voice-stage>p,.anota-app .bank-voice-privacy,.anota-app .bank-voice-guide>p,.anota-app .bank-voice-guide details p{color:#b1cbbb}
+.anota-app .bank-voice-start{background:linear-gradient(140deg,#377b60,#185147);color:var(--anotei-gold);border:1px solid #b4d99e52;box-shadow:inset 0 1px 1px #deffd533,0 8px 20px #8ae19b14}
+.anota-app .bank-voice-start:disabled{background:#76947d15;color:#c2d2bc}
+.anota-app .bank-voice-guide,.anota-app .bank-voice-guide details{border-color:#b3d7ac20}
+.anota-app .bank-voice-guide summary,.anota-app .bank-voice-guide details[open]>summary{color:#d0dfc4}
+.anota-app .bank-voice-activation,.anota-app .bank-voice-transcript{background:#9bd5ad10;color:#bfd8c2;border:1px solid #aad8b129}
+.anota-app .bank-voice-transcript p,.anota-app .bank-voice-transcript small{color:#d0e5ca}
+.anota-app .bank-voice-audio{color:var(--anotei-gold)}
+@media(max-width:700px){.anota-app .bank-voice-launch{right:14px;bottom:14px;padding:7px 10px}.anota-app .bank-voice-launch .bank-ai-orb{width:34px;height:34px}}
