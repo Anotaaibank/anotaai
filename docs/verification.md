@@ -1,6 +1,16 @@
 # Verificação — 7 de outubro de 2026
 
-## Preparação da publicação — 14 de outubro de 2026
+## Publicação online — 14 de outubro de 2026
+
+- Aplicativo ativo em https://icom-anotei.pqaykh.easypanel.host, com certificado HTTPS, Supabase próprio e volume persistente no serviço separado icom/anotei.
+- Typecheck, 170 testes e build de produção passaram localmente. O Dockerfile executou novamente build, typecheck e testes no Easypanel antes de produzir a imagem ativa.
+- As sete migrações foram aplicadas; 14 tabelas públicas têm RLS. Testes transacionais confirmaram convite de uso único, bloqueio de acesso antes do cadastro, vínculo do telefone à conta individual e recusa de gravação após revogação. Todos os registros dessas transações foram revertidos.
+- Migração selecionou somente a conta existente do gestor: quatro despesas, três documentos financeiros, seis recibos idempotentes, onze registros de auditoria, integração, histórico de mensagens e dois convites. Conteúdo comparado ao snapshot privado; contas e exemplos soltos ficaram fora. O SQLite original foi preservado.
+- Login HTTP com a senha atual passou local e online, preservando UUID. Consultas autenticadas de finanças, despesas, gestão e WhatsApp passaram. Logout invalidou o cookie; finanças sem autenticação retornam 401 e demonstração retorna 404.
+- Cadastro real em navegador isolado com viewport de celular passou: confirmação editável, olhinho funcional, senhas diferentes bloqueadas, criação de perfil próprio, entrada automática no painel, nome da IA persistido e acesso à gestão recusado. O telefone foi encaminhado à conta correta, e repetir o convite retornou 409. Todas as contas temporárias foram removidas, sem envio de WhatsApp.
+- Worker autenticado disponível; chamadas sem segredo retornam 403. Webhook transferido apenas na instância própria do Anotei. O provedor informou o celular final 0219 desconectado: falta o usuário ler o QR e testar mensagem real. Cobrança recorrente continua uma integração separada.
+
+## Histórico da preparação — 14 de outubro de 2026
 
 - Destinos solicitados: GitHub `Anotaaibank/anotaai`, Supabase `yqbbbqkouedhrunazpqd` e Easypanel. Nenhum código ou banco foi enviado nesta preparação.
 - Criados Dockerfile, Compose com web e worker separados, exclusões de arquivos privados e diagnóstico de implantação sem exposição de segredos. O worker aceita rota interna sem alterar os links públicos.
