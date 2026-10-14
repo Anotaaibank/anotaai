@@ -5,9 +5,9 @@ import type {FinanceDraft} from './finance-ai.ts';
 // A complete single appointment can be prepared from literal date/time evidence.
 // Edits, locations, ambiguous times and combined requests retain the full interpreter.
 export function quickAppointmentDraft(text:string,today:string):FinanceDraft|null{
- const original=text.normalize('NFC').trim(),source=fold(original);
+ const original=text.normalize('NFC').trim(),source=fold(original).replace(/[, ]*por favor[.! ]*$/,'');
  if(source.length>400||/[?\n]|\b(?:empresas?|lojas?|clientes?|contratos?|estoque|juridico|cnpj|pagar|pagamento|reais|recorr\w*|mensal|todo|toda|semanal|alter\w*|edit\w*|corrig\w*|cancel\w*|arquiv\w*|nao)\b/.test(source))return null;
- const m=source.match(/^(?:por favor[, ]+)?(?:agenda|agende|agendar|marca|marque)(?:\s+(?:pra mim|para mim|ai))?[, ]+(?:eu tenho\s+)?(?:(?:um|uma|o|a)\s+)?(.+?)\s+(?:no |na |para |em )?((?:dia .+?)|(?:\d{1,4}[/-].+?)|(?:amanha|hoje|depois de amanha))\s+as\s+(\d{1,2})(?:(?::|h)(\d{2}))?(?:\s*(?:h|horas?))?[.! ]*$/d);
+ const m=source.match(/^(?:por favor[, ]+)?(?:agenda|agende|agendar|marca|marque|me lembra|me lembre)(?:\s+(?:pra mim|para mim|ai))?[, ]+(?:eu tenho\s+)?(?:(?:um|uma|o|a|do|da)\s+)?(.+?)\s+(?:no |na |para |em )?((?:dia .+?)|(?:\d{1,4}[/-].+?)|(?:amanha|hoje|depois de amanha)|(?:(?:proxima |proximo |nesta |neste |essa |esse )?(?:segunda|terca|quarta|quinta|sexta|sabado|domingo)(?:-feira)?))\s+as\s+(\d{1,2})(?:(?::|h)(\d{2}))?(?:\s*(?:h|horas?))?[.! ]*$/d);
  if(!m||!m.indices||m[1].length<2||m[1].length>160||/\be\b|\d|\b(?:depois|antes|tambem|outro|outra)\b/.test(m[1]))return null;
  const hour=Number(m[3]),minute=Number(m[4]||0);if(hour>23||minute>59)return null;
  let date:string;try{date=financeDate(m[2],today,true);}catch{return null;}
@@ -31,6 +31,14 @@ export function quickExpenseDraft(text:string,today:string):FinanceDraft|null{
  if(/\b(?:e|mas|tambem|depois|antes|dois|duas|tres|quatro|cinco|pix|dinheiro|cartao|credito|debito|boleto|transferencia|observacao|nota|categoria|segunda|terca|quarta|quinta|sexta|sabado|domingo|seman\w*|dia\w*|meses|anual|anualmente|recorr\w*|repet\w*|passad[oa]|ultim[oa]|janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro|mei|pj)\b/.test(rest)||/\d/.test(rest)||rest.length>100||rest&&!/^[a-z][a-z /-]*$/.test(rest))return null;
  const description=rest?rest[0].toUpperCase()+rest.slice(1):'Despesa pessoal',category=personalCategory('',description);
  return {intent:'COMMAND',command:{action:'expense_create',description,category,amount_cents:amount,status:'REALIZADO',...(day?{date:financeDate(day,today)}:{})},confidence:'ALTA',question:'',target_excerpt:'',query:'',money_evidence:[{field:'amount_cents',excerpt:money[0]}],date_evidence:day?[{field:'date',excerpt:day}]:[]};
+}
+
+export function quickPlannedExpenseDraft(text:string,today:string):FinanceDraft|null{
+ const original=text.normalize('NFC').trim(),source=fold(original);if(source.length>500||/[\n]|\b(?:todo|toda|cada|mensal|recorr\w*|fix[oa]|parcel\w*|vezes|empresa|loja propria|estoque|clientes|contratos|cnpj|edit\w*|alter\w*|corrig\w*|cancel\w*|quanto|qual|nao)\b/.test(source))return null;
+ const m=source.match(/^(?:por favor[, ]+)?(?:vou pagar|tenho que pagar|agenda|agende|lanca|lance|registra|registre)(?:\s+(?:pra mim|para mim|ai))?[, ]+(.+?)\s+((?:dia .+?)|(?:\d{1,4}[/-]\d{1,2}(?:[/-]\d{2,4})?)|(?:amanha|hoje|depois de amanha))(?:(?:[, ]+)(?:lanca|anota|agenda)[^\n]*)?[.!? ]*$/d);if(!m||!m.indices)return null;
+ const amounts=monetaryLiterals(m[1]);if(amounts.length!==1)return null;let rest=m[1].replace(/^(?:um pagamento de|uma conta de|uma despesa de)\s+/,'');if(!rest.startsWith(amounts[0]))return null;rest=rest.slice(amounts[0].length).replace(/^\s*(?:de|do|da|com|em|no|na)\s+/,'').trim();if(rest.length<2||rest.length>120||/\d|\be\b/.test(rest))return null;
+ let date:string;try{date=financeDate(m[2],today,true);}catch{return null;}const description=rest[0].toUpperCase()+rest.slice(1);
+ return {intent:'COMMAND',command:{action:'expense_create',description,date,amount_cents:literalMoney(amounts[0]),category:personalCategory('',description),status:'PREVISTO'},confidence:'ALTA',question:'',query:'',target_excerpt:'',money_evidence:[{field:'amount_cents',excerpt:amounts[0]}],date_evidence:[{field:'date',excerpt:m[2]}]};
 }
 
 // Realtime receives just the answer for a read, rather than reprocessing every

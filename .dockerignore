@@ -10,3 +10,5 @@ artifacts
 *.tsbuildinfo
 Dockerfile*
 compose*.yaml
+
+supabase/.temp

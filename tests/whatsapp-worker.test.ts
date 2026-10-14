@@ -17,7 +17,7 @@ const sender='5511999999999',phone='5511988888888';
 function add(user:string,c:FinanceCommand){const p=buildFinancePlan(c,localFinanceState(user),user,randomUUID());applyLocalFinance(user,p,'MANUAL');return p;}
 async function context(){const old={storage:process.env.ANOTA_STORAGE,url:process.env.ANOTA_WHATSAPP_URL,key:process.env.OPENAI_API_KEY},transport=globalThis.fetch;process.env.ANOTA_STORAGE='local';process.env.ANOTA_WHATSAPP_URL='https://provider.example';delete process.env.OPENAI_API_KEY;const m=await modules(),user=registerLocal(randomUUID()+'@example.test','whatsapp-test-only','Teste').user.id;
  const bot:import('../lib/whatsapp-store.ts').Bot={user_id:user,phone,allowed_phones:[sender],enabled:true,status:'PRONTO',instance_id:'synthetic-instance',token_cipher:seal('synthetic-token',m.server.encryptionSecret(),'anota-ai-bot:'+user),hook_cipher:'unused-test',updated_at:new Date().toISOString()};await m.store.putBot(bot,null);
- return {...m,user,bot,async message(text:string,type:'text'|'audio'='text',number=sender){const id=await m.store.enqueue(user,{provider_id:randomUUID(),sender:number,type,text:type==='audio'?'':text,sent_at:new Date().toISOString()});assert.ok(id);const row=await m.store.claimMessage();assert.ok(row);assert.equal(row.id,id);await m.worker.processMessage(row);return (await m.store.history(user)).find(r=>r.id===id)!;},restore(){globalThis.fetch=transport;for(const [k,v]of Object.entries({ANOTA_STORAGE:old.storage,ANOTA_WHATSAPP_URL:old.url,OPENAI_API_KEY:old.key})){if(v===undefined)delete process.env[k];else process.env[k]=v;}}};
+ return {...m,user,bot,async message(text:string,type:'text'|'audio'='text',number=sender){const id=await m.store.enqueue(user,{provider_id:randomUUID(),sender:number,type,text:type==='audio'?'':text,sent_at:new Date().toISOString()});assert.ok(id);const row=await m.store.claimMessage();assert.ok(row);assert.equal(row.id,id);await m.worker.processMessage(row);return (await m.store.history(user)).find(r=>r.id===id)!;},restore(){localDb().prepare('DELETE FROM inbox WHERE user_id=?').run(user);localDb().prepare('DELETE FROM bots WHERE user_id=?').run(user);globalThis.fetch=transport;for(const [k,v]of Object.entries({ANOTA_STORAGE:old.storage,ANOTA_WHATSAPP_URL:old.url,OPENAI_API_KEY:old.key})){if(v===undefined)delete process.env[k];else process.env[k]=v;}}};
 }
 test('configuração salva cem números na conta, conserva a conexão e revoga quem foi removido',async()=>{
  const c=await context(),previousManager=process.env.ANOTA_MANAGER_USER_IDS;try{
@@ -50,12 +50,12 @@ test('WhatsApp entrega consultas reais do dono por escrito sem modelo ou busca r
   const event={provider_id:randomUUID(),sender,type:'text' as const,text:'Qual meu saldo?',sent_at:new Date().toISOString()};assert.ok(await c.store.enqueue(c.user,event));assert.equal(await c.store.enqueue(c.user,event),null);await c.worker.processQueue();assert.equal(sent.length,8);
  }finally{c.restore();}
 });
-test('gasto simples prepara botões sem IA; 1 salva uma vez e 2 cancela sem gravar',async()=>{
+test('gasto simples prepara botões sem IA; 1 salva uma vez e cancelar explicitamente não grava',async()=>{
  const c=await context();try{
   const sent:any[]=[];globalThis.fetch=async(url,init)=>{assert.ok(/\/send\/(?:text|menu)$/.test(String(url)),String(url));sent.push(JSON.parse(String(init?.body)));return Response.json({id:randomUUID()});};
-  const p=await c.message('Lança pra mim 150 reais de combustível, por favor?');assert.equal(p.status,'ESCLARECER',p.reply);assert.equal(p.reply_status,'ACEITO');assert.equal(localFinanceState(c.user).expenses.length,0);assert.deepEqual(sent[0].choices,['Confirmar|CONFIRMAR '+p.confirmation_code,'Cancelar|CANCELAR '+p.confirmation_code]);assert.match(p.reply,/150,00/);
+  const p=await c.message('Lança pra mim 150 reais de combustível, por favor?');assert.equal(p.status,'ESCLARECER',p.reply);assert.equal(p.reply_status,'ACEITO');assert.equal(localFinanceState(c.user).expenses.length,0);assert.deepEqual(sent[0].choices,['Confirmar|CONFIRMAR '+p.confirmation_code,'Editar|EDITAR '+p.confirmation_code]);assert.match(p.reply,/150,00/);
   const saved=await c.message('1');assert.equal(saved.status,'LANCADO',saved.reply);assert.equal(localFinanceState(c.user).expenses.length,1);assert.equal(localFinanceState(c.user).expenses[0].amount_cents,15000);await c.message('1');assert.equal(localFinanceState(c.user).expenses.length,1);
-  const cancelled=await c.message('Lança 50 reais de gasolina.');assert.equal(cancelled.status,'ESCLARECER');await c.message('2');assert.equal(localFinanceState(c.user).expenses.length,1);await c.message('CONFIRMAR '+cancelled.confirmation_code);assert.equal(localFinanceState(c.user).expenses.length,1);
+  const cancelled=await c.message('Lança 50 reais de gasolina.');assert.equal(cancelled.status,'ESCLARECER');await c.message('CANCELAR '+cancelled.confirmation_code);assert.equal(localFinanceState(c.user).expenses.length,1);await c.message('CONFIRMAR '+cancelled.confirmation_code);assert.equal(localFinanceState(c.user).expenses.length,1);
   await c.message('Lança 25 reais de sorvete.');await c.message('Lança 30 reais de gasolina.');const ambiguous=await c.message('1');assert.match(ambiguous.reply,/mais de uma/);assert.equal(localFinanceState(c.user).expenses.length,1);
  }finally{c.restore();}
 });
@@ -148,5 +148,26 @@ test('limpeza esconde mensagens antigas sem permitir que o mesmo evento seja lan
   assert.equal(await c.store.enqueue(c.user,event),null);
   const fresh=await c.store.enqueue(c.user,{...event,provider_id:randomUUID(),text:'Nova mensagem'});assert.ok(fresh);
   assert.equal((await c.store.history(c.user)).some(message=>message.id===fresh),true);
+ }finally{c.restore();}
+});
+
+test('conta mensal por texto segue 2 editar, reconfirma, salva uma vez e continua nos próximos meses',async()=>{
+ const c=await context();try{
+  globalThis.fetch=async(url)=>{assert.ok(/\/send\/(?:text|menu)$/.test(String(url)));return Response.json({id:randomUUID()});};
+  const proposal=await c.message('Pago meu carro todo dia 22 valor de 1500 reais agenda para mim.');assert.equal(proposal.status,'ESCLARECER',proposal.reply);assert.match(proposal.reply,/dia 22/);assert.match(proposal.reply,/2 — Editar/);assert.equal(localFinanceState(c.user).expenses.length,0);
+  const editing=await c.message('2');assert.match(editing.reply,/Escreva o que deseja corrigir/);assert.equal(localFinanceState(c.user).expenses.length,0);
+  const correction=await c.message('O valor certo é 1600 reais');assert.equal(correction.status,'ESCLARECER',correction.reply);assert.match(correction.reply,/1.600,00/);assert.equal(localFinanceState(c.user).expenses.length,0);
+  await c.message('CONFIRMAR '+proposal.confirmation_code);assert.equal(localFinanceState(c.user).expenses.length,0);
+  const saved=await c.message('1');assert.equal(saved.status,'LANCADO',saved.reply);let state=localFinanceState(c.user);assert.equal(state.expenses.length,12);assert.ok(state.expenses.every(e=>e.amount_cents===160000&&e.status==='PREVISTO'&&e.kind==='MENSAL'));assert.equal(state.documents.filter(d=>d.kind==='BILL_RULE').length,1);
+  await c.message('CONFIRMAR '+correction.confirmation_code);assert.equal(localFinanceState(c.user).expenses.length,12);
+  const {expandMonthlyBillsForBot}=await import('../lib/monthly-bills-server.ts');const future=Date.parse(brazilDay().slice(0,8)+'01T12:00:00Z')+400*86400000;assert.ok(await expandMonthlyBillsForBot(c.user,future)>0);state=localFinanceState(c.user);const before=state.expenses.length;assert.equal(await expandMonthlyBillsForBot(c.user,future),0);assert.equal(localFinanceState(c.user).expenses.length,before);
+ }finally{c.restore();}
+});
+test('áudio recorrente usa o mesmo fluxo e edição da agenda não cria dois compromissos',async()=>{
+ const c=await context();try{
+  process.env.OPENAI_API_KEY='synthetic-only';let transcript='Pago meu carro todo dia 22 valor de 1500 reais agenda para mim.';
+  globalThis.fetch=async(url)=>{const u=String(url);if(u.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(u.endsWith('/audio/transcriptions'))return Response.json({text:transcript});assert.ok(/\/send\/(?:text|menu)$/.test(u));return Response.json({id:randomUUID()});};
+  const bill=await c.message('', 'audio');assert.equal(bill.status,'ESCLARECER',bill.reply);transcript='opção um';await c.message('', 'audio');assert.equal(localFinanceState(c.user).expenses.length,12);
+  transcript='Agenda uma consulta dia 10 de novembro às 14h.';const appointment=await c.message('', 'audio');assert.equal(appointment.status,'ESCLARECER',appointment.reply);transcript='opção dois';await c.message('', 'audio');const correction=await c.message('às 15h');assert.equal(correction.status,'ESCLARECER',correction.reply);assert.match(correction.reply,/15:00/);assert.equal(localFinanceState(c.user).documents.filter(d=>d.kind==='APPOINTMENT').length,0);await c.message('1');const appointments=localFinanceState(c.user).documents.filter(d=>d.kind==='APPOINTMENT');assert.equal(appointments.length,1);assert.equal(appointments[0].details.time,'15:00');
  }finally{c.restore();}
 });

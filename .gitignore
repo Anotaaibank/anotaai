@@ -9,3 +9,5 @@ node_modules/
 artifacts/
 *.log
 .next-validation-*/
+
+supabase/.temp/
