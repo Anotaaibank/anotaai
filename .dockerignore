@@ -12,3 +12,6 @@ Dockerfile*
 compose*.yaml
 
 supabase/.temp
+
+output
+tmp

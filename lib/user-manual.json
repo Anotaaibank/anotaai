@@ -1,0 +1,523 @@
+{
+  "title": "Seu guia do Anotei na Hora",
+  "subtitle": "Aprenda a organizar seu dinheiro e sua agenda, um passo de cada vez.",
+  "version": "Outubro de 2026",
+  "sections": [
+    {
+      "id": "comecar",
+      "title": "1. Comece por aqui",
+      "menu": "Primeiro acesso",
+      "visual": "start",
+      "intro": "O Anotei reúne seu dinheiro, suas contas e seus compromissos. Você pode usar as telas ou conversar com a IA no aplicativo e no WhatsApp.",
+      "steps": [
+        {
+          "title": "Receba seu convite",
+          "text": "Informe seu número com DDD à administração. Abra o link individual que chegar no seu WhatsApp."
+        },
+        {
+          "title": "Crie sua conta",
+          "text": "Preencha nome e e-mail. Crie uma senha de pelo menos 10 caracteres e repita em Confirmar senha. O olhinho mostra ou esconde o que você digitou."
+        },
+        {
+          "title": "Informe seus valores de partida",
+          "text": "Preencha salário mensal, dia do recebimento e saldo atual. Se não tiver salário fixo, informe 0. Você também pode dar um nome à sua IA."
+        },
+        {
+          "title": "Entre no aplicativo",
+          "text": "Conclua o cadastro. Se aparecer a tela de assinatura, siga o pagamento e aguarde a liberação. Nas próximas visitas, use seu e-mail e sua senha."
+        }
+      ],
+      "example": "Exemplo ilustrativo: salário previsto de R$ 3.000 e saldo atual de R$ 1.200 são informações diferentes.",
+      "tip": "Seu convite é individual. Para usar com seu parceiro, peça à administração o segundo número na mesma conta; não compartilhe o convite com outra pessoa."
+    },
+    {
+      "id": "mapa",
+      "title": "2. Encontre cada ferramenta",
+      "menu": "Mapa do aplicativo",
+      "visual": "menu",
+      "intro": "O menu leva você às áreas do Anotei. Cada nome responde a uma pergunta simples.",
+      "steps": [
+        {
+          "title": "Abra o menu",
+          "text": "No computador, ele fica à esquerda. No celular, toque no botão de menu no alto da tela."
+        },
+        {
+          "title": "Veja seu dinheiro",
+          "text": "Visão geral mostra o resumo. Meu dinheiro guarda salário, saldo e reservas. Rendas complementares reúne o que você ganha além do salário."
+        },
+        {
+          "title": "Organize o que sai e o que acontece",
+          "text": "Contas a pagar mostra pendências. Minhas despesas mostra os gastos. Despesas fixas reúne contas mensais. Agenda mostra pagamentos futuros e compromissos."
+        },
+        {
+          "title": "Use os atalhos de ajuda",
+          "text": "Viagens separa os gastos de cada viagem. WhatsApp mostra seu contato de IA e histórico. Feedback envia sua opinião. Como usar abre este guia."
+        }
+      ],
+      "example": "Quer saber o que está vencido? Vá a Contas a pagar. Quer saber seus horários da semana? Vá à Agenda.",
+      "tip": "Você não precisa decorar o menu. Também pode perguntar à IA: “Para que serve esta aba?”"
+    },
+    {
+      "id": "visao-geral",
+      "title": "3. Visão geral",
+      "menu": "Visão geral",
+      "visual": "overview",
+      "intro": "É a primeira tela para entender como está seu mês: o que você costuma ganhar, o que tem agora e o que ainda precisa pagar.",
+      "steps": [
+        {
+          "title": "Confira o salário fixo",
+          "text": "É a renda mensal prevista. Cadastrar um salário não significa que ele já entrou na conta."
+        },
+        {
+          "title": "Confira o saldo atual",
+          "text": "Ele parte do saldo que você informou e muda com os recebimentos, gastos e movimentações registrados."
+        },
+        {
+          "title": "Olhe as contas pendentes",
+          "text": "São pagamentos ainda não confirmados. Contas antigas em atraso também podem reduzir o dinheiro livre para este mês."
+        },
+        {
+          "title": "Leia o valor disponível",
+          "text": "O disponível do mês é o saldo atual menos as contas pendentes consideradas no mês. Se ficar negativo, há mais compromissos do que dinheiro registrado."
+        }
+      ],
+      "example": "Exemplo ilustrativo: R$ 1.200 no saldo - R$ 500 de contas pendentes = R$ 700 disponíveis.",
+      "tip": "Os exemplos deste guia são apenas desenhos para aprender. O aplicativo mostra os valores que você registrar; não consulta seu banco automaticamente."
+    },
+    {
+      "id": "meu-dinheiro",
+      "title": "4. Meu dinheiro",
+      "menu": "Meu dinheiro",
+      "visual": "wallet",
+      "intro": "Aqui você configura sua renda e o ponto de partida do seu caixa. Depois, registra as entradas quando o dinheiro realmente chega.",
+      "steps": [
+        {
+          "title": "Configure ou revise",
+          "text": "Abra Meu dinheiro e toque em Configurar renda e saldo ou Editar renda e saldo."
+        },
+        {
+          "title": "Preencha salário e saldo inicial",
+          "text": "Informe salário previsto, dia habitual de recebimento, saldo inicial e data desse saldo. Há campos para renda extra, cheque especial e margem de segurança."
+        },
+        {
+          "title": "Registre o salário recebido",
+          "text": "Quando ele cair, use Nova entrada / salário recebido. Informe valor e data e marque É o salário deste mês."
+        },
+        {
+          "title": "Confira e confirme",
+          "text": "Toque em Conferir e continuar. Leia o resumo e confirme a alteração. Se seu salário aumentar, atualize a previsão no cadastro."
+        }
+      ],
+      "example": "Você pode dizer: “Recebi 3000 reais de salário hoje. Registra para mim.”",
+      "tip": "Não registre o mesmo salário duas vezes. Se ele já estava incluído no saldo inicial informado, evite somá-lo novamente."
+    },
+    {
+      "id": "rendas",
+      "title": "5. Rendas complementares",
+      "menu": "Rendas complementares",
+      "visual": "income",
+      "intro": "É o dinheiro que você ganha além do salário: um bico, um serviço ou trabalho por aplicativo. Os custos para fazer esse trabalho ficam separados dos seus gastos pessoais.",
+      "steps": [
+        {
+          "title": "Registre a renda extra",
+          "text": "Abra Rendas complementares e toque em Registrar renda extra. Informe origem, valor, data e se já recebeu."
+        },
+        {
+          "title": "Informe a atividade",
+          "text": "Use um nome que ajude você a reconhecer a renda: Uber, garçom, pedreiro ou outro serviço."
+        },
+        {
+          "title": "Anote o custo do trabalho",
+          "text": "Se gastou para conseguir a renda, informe o custo no cadastro ou use Custo da atividade. Diga de qual trabalho foi esse gasto."
+        },
+        {
+          "title": "Veja quanto realmente rendeu",
+          "text": "O resultado líquido é o que recebeu menos os custos. Renda prevista aparece no planejamento; apenas a recebida aumenta o saldo."
+        }
+      ],
+      "example": "“Ganhei 80 reais fazendo Uber e gastei 25 de gasolina.” Resultado: R$ 55. O saldo considera a entrada e a saída uma vez.",
+      "tip": "Uma corrida que você pagou como passageiro é gasto pessoal. Gasolina para trabalhar como motorista é custo da atividade."
+    },
+    {
+      "id": "contas",
+      "title": "6. Contas a pagar",
+      "menu": "Contas a pagar",
+      "visual": "bills",
+      "intro": "Aqui ficam contas que ainda não foram pagas: as próximas, as que vencem hoje e as atrasadas.",
+      "steps": [
+        {
+          "title": "Escolha o filtro",
+          "text": "Use Todas, Em atraso, Vence hoje ou A vencer para encontrar o que procura."
+        },
+        {
+          "title": "Confira valor e vencimento",
+          "text": "Um vencimento que já passou e não tem pagamento registrado aparece em atraso. Isso não significa que o sistema pagou a conta."
+        },
+        {
+          "title": "Depois de pagar, registre",
+          "text": "Na conta certa, toque em Registrar pagamento. Confira o resumo e confirme para atualizar o saldo."
+        },
+        {
+          "title": "Corrija se precisar",
+          "text": "Use Editar conta para ajustar identificação, valor ou vencimento. Se houver contas com o mesmo nome, confira a data antes de escolher."
+        }
+      ],
+      "example": "Pelo WhatsApp: “Tenho contas em atraso?” ou “Paguei o aluguel que vence dia 22/10. Registra o pagamento.”",
+      "tip": "Contas pendentes recebem lembretes no dia anterior e no vencimento, entre 9h e 21h, com WhatsApp e serviço ativos."
+    },
+    {
+      "id": "despesas",
+      "title": "7. Minhas despesas",
+      "menu": "Minhas despesas",
+      "visual": "expense",
+      "intro": "É o histórico dos seus gastos pessoais. Você pode ver para onde foi seu dinheiro, pesquisar e corrigir anotações.",
+      "steps": [
+        {
+          "title": "Anote o que aconteceu",
+          "text": "Para um gasto de agora, envie pelo WhatsApp ou pela IA: o que foi e quanto custou. Sem outra data informada, o lançamento usa hoje."
+        },
+        {
+          "title": "Confira no histórico",
+          "text": "Abra Minhas despesas. Use mês, categoria, contexto, classificação, viagem ou busca para encontrar uma anotação."
+        },
+        {
+          "title": "Entenda a situação",
+          "text": "Pago significa que o gasto já foi registrado como realizado. Previsto significa que ainda falta pagar e não saiu do saldo."
+        },
+        {
+          "title": "Ajuste ou arquive",
+          "text": "Editar corrige os dados. Arquivar retira o registro dos totais ativos; você pode encontrá-lo em Arquivadas e restaurar. Exportar CSV gera uma planilha CSV."
+        }
+      ],
+      "example": "“Acabei de gastar 25 reais de sorvete.” Confira o resumo e confirme. A IA escolhe a categoria sem perguntar.",
+      "tip": "Esqueceu um gasto de ontem? Diga “Ontem gastei 25 reais...” para manter a data correta."
+    },
+    {
+      "id": "fixas",
+      "title": "8. Despesas fixas e mensais",
+      "menu": "Despesas fixas",
+      "visual": "repeat",
+      "intro": "São contas que se repetem, como aluguel, carro ou internet. Uma conta mensal pode ter valor que muda; corrija o vencimento do mês quando souber o valor real.",
+      "steps": [
+        {
+          "title": "Cadastre pela tela",
+          "text": "Abra Despesas fixas no menu e toque em + Despesas fixas no alto. Escolha categoria, valor, primeiro vencimento e Repetir por. Identificação é opcional."
+        },
+        {
+          "title": "Escolha como vai pagar",
+          "text": "O cadastro aceita Pix, dinheiro, cartão, boleto, transferência e outro. Cada vencimento começa como Previsto."
+        },
+        {
+          "title": "Para repetir sem quantidade, peça à IA",
+          "text": "Pelo WhatsApp, informe finalidade, valor mensal e dia. Ela prepara uma regra contínua e mostra o resumo para confirmar."
+        },
+        {
+          "title": "Controle a repetição",
+          "text": "Na Agenda, Contas recorrentes mostra a regra. Cancelar recorrência interrompe os próximos vencimentos, depois da confirmação."
+        }
+      ],
+      "example": "“Pago meu carro todo dia 22, 1500 reais. Agenda para mim.” A conta se repete mensalmente até você cancelar.",
+      "tip": "O formulário repete pela quantidade de meses escolhida. A regra contínua da IA segue além dos primeiros 12 vencimentos. Dia 31 usa o último dia nos meses menores."
+    },
+    {
+      "id": "agenda",
+      "title": "9. Agenda e compromissos",
+      "menu": "Agenda",
+      "visual": "calendar",
+      "intro": "A Agenda reúne pagamentos futuros, parcelas e compromissos. Um compromisso não mexe no saldo; uma conta prevista só mexe quando o pagamento é registrado.",
+      "steps": [
+        {
+          "title": "Crie o compromisso",
+          "text": "Abra Agenda e toque em Novo compromisso. Informe o que vai acontecer, a data e o horário. O local é opcional."
+        },
+        {
+          "title": "Confira o resumo",
+          "text": "Toque em Conferir e continuar, leia e confirme. Pelo WhatsApp, informe os mesmos dados por texto ou áudio."
+        },
+        {
+          "title": "Receba os lembretes",
+          "text": "Compromissos confirmados com horário recebem avisos pelo WhatsApp 24 horas e 5 horas antes, com conexão e serviço ativos."
+        },
+        {
+          "title": "Mantenha sua agenda atualizada",
+          "text": "Você pode editar, concluir ou arquivar um compromisso. Os concluídos e arquivados deixam de enviar lembretes."
+        }
+      ],
+      "example": "“Agenda uma consulta dia 10 de novembro às 14h.” Para consultar: “Qual é minha agenda desta semana?”",
+      "tip": "Informe o horário se quiser lembretes. Se estiver faltando um dado essencial, a IA pergunta antes de preparar o resumo."
+    },
+    {
+      "id": "parcelas",
+      "title": "10. Compras futuras e parcelas",
+      "menu": "Pagamentos futuros",
+      "visual": "installments",
+      "intro": "Comprou agora, mas vai pagar depois? Registre como futuro. Assim você planeja os vencimentos sem descontar tudo do saldo de hoje.",
+      "steps": [
+        {
+          "title": "Informe o valor com clareza",
+          "text": "Diga se é o preço total da compra ou o valor de cada parcela. Isso muda a conta."
+        },
+        {
+          "title": "Diga quando começa",
+          "text": "Informe o primeiro vencimento ou a data de cada parcela. As parcelas preparadas começam como Previsto."
+        },
+        {
+          "title": "Leia os vencimentos",
+          "text": "Antes de confirmar, confira valor de cada parcela e datas no resumo. Pela tela de despesa, Compra parcelada abre esses campos."
+        },
+        {
+          "title": "Pague e registre cada uma",
+          "text": "Abra Agenda ou Contas a pagar e marque como paga apenas a parcela que você realmente pagou."
+        }
+      ],
+      "example": "“Comprei um celular de 900 reais em três vezes, primeira parcela dia 10 do mês que vem.” São 3 parcelas de R$ 300.",
+      "tip": "“Três parcelas de 900 reais” significa R$ 2.700 no total. Se o pedido estiver ambíguo, a IA esclarece antes de salvar."
+    },
+    {
+      "id": "reservas",
+      "title": "11. Reservas e poupança",
+      "menu": "Meu dinheiro: reservas",
+      "visual": "reserve",
+      "intro": "Uma reserva é dinheiro separado para guardar. O Anotei mostra esse valor separado do caixa usado no dia a dia.",
+      "steps": [
+        {
+          "title": "Cadastre a reserva",
+          "text": "Em Meu dinheiro, toque em Nova poupança / reserva. Informe nome, saldo inicial, data e a taxa que você conhece."
+        },
+        {
+          "title": "Escolha o período da taxa",
+          "text": "Informe se a taxa é ao mês ou ao ano. O rendimento exibido é uma estimativa com base no que você cadastrou."
+        },
+        {
+          "title": "Registre uma movimentação feita",
+          "text": "Depois de movimentar no banco, use Aporte / resgate e escolha a reserva, o valor e a data."
+        },
+        {
+          "title": "Entenda o saldo",
+          "text": "Aporte tira valor do caixa registrado e leva à reserva. Resgate devolve valor ao caixa. O aplicativo apenas anota a movimentação."
+        }
+      ],
+      "example": "Você pode pedir: “Qual meu saldo com as reservas?” ou “Quanto tenho guardado na poupança?”",
+      "tip": "Criar uma reserva e estimar rendimento não significa que esse dinheiro foi recebido ou transferido automaticamente."
+    },
+    {
+      "id": "viagens",
+      "title": "12. Viagens e gastos da família",
+      "menu": "Viagens",
+      "visual": "travel",
+      "intro": "Você pode juntar os gastos de uma viagem e separar o que é individual do que é da família, sem perder a categoria de cada compra.",
+      "steps": [
+        {
+          "title": "Dê um nome à viagem",
+          "text": "Ao registrar o gasto, use o campo Viagem ou fale o nome claramente para a IA. Exemplo: Férias em Recife."
+        },
+        {
+          "title": "Mantenha a categoria",
+          "text": "Restaurante continua Restaurante; hotel fica em Viagem / hospedagem. O nome da viagem organiza esses gastos em um grupo."
+        },
+        {
+          "title": "Informe o contexto quando quiser",
+          "text": "Você pode marcar Família ou Individual e classificar como Essencial, Opcional ou Não classificado."
+        },
+        {
+          "title": "Consulte o total",
+          "text": "Abra Viagens e use os filtros. Pelo WhatsApp, pergunte quanto gastou naquela viagem ou com a família no período desejado."
+        }
+      ],
+      "example": "“Gastei 80 reais no restaurante, na viagem Férias em Recife.” Depois: “Quanto gastei na viagem Férias em Recife?”",
+      "tip": "O nome de uma cidade ou restaurante sozinho não cria uma viagem. Diga que o gasto pertence à viagem."
+    },
+    {
+      "id": "whatsapp",
+      "title": "13. Use seu WhatsApp",
+      "menu": "WhatsApp",
+      "visual": "chat",
+      "intro": "Você fala com o contato da IA usando o seu próprio número autorizado. A mesma conta aparece no aplicativo e no WhatsApp.",
+      "steps": [
+        {
+          "title": "Confira seu número autorizado",
+          "text": "A administração cadastra seu número com DDD e envia o convite. No aplicativo, a aba WhatsApp mostra os números e a conexão."
+        },
+        {
+          "title": "Abra o contato da IA",
+          "text": "Na aba WhatsApp, use Abrir contato no WhatsApp. Envie as mensagens desse seu número autorizado para o contato da assistente."
+        },
+        {
+          "title": "Escreva ou grave um áudio",
+          "text": "Envie um pedido por mensagem. Diga o valor e a finalidade; para futuro ou compromisso, inclua data e, quando necessário, horário."
+        },
+        {
+          "title": "Confira o retorno",
+          "text": "Você pode consultar saldo, relatórios, contas e agenda. Para salvar uma alteração, a IA mostra o resumo e espera confirmação."
+        }
+      ],
+      "example": "“Qual meu saldo e tenho contas vencidas?” ou um áudio: “Ganhei 150 reais como garçom. Registra para mim.”",
+      "tip": "O assinante não precisa ler QR Code. Só a administração conecta a IA e cadastra números. Cada assinatura pode ter até dois números compartilhando a mesma conta."
+    },
+    {
+      "id": "confirmacao",
+      "title": "14. Confirme ou corrija",
+      "menu": "WhatsApp: 1 e 2",
+      "visual": "confirm",
+      "intro": "A IA prepara o lançamento antes de salvar. Isso permite conferir os dados e corrigir qualquer informação.",
+      "steps": [
+        {
+          "title": "Leia o resumo",
+          "text": "Confira finalidade, valor, data, situação e repetição. Ainda não foi salvo."
+        },
+        {
+          "title": "Se estiver certo, responda 1",
+          "text": "Toque em Confirmar ou responda 1. A gravação é informada na resposta. Se houver várias propostas, use o botão da proposta certa ou o código."
+        },
+        {
+          "title": "Para corrigir, responda 2",
+          "text": "Toque em Editar ou responda 2. Escreva a correção, como “O valor certo é 1600 reais”, “dia 25” ou “às 15h”."
+        },
+        {
+          "title": "Confira o novo resumo",
+          "text": "A IA mostra a versão corrigida e espera novamente 1 para salvar. Para desistir, envie CANCELAR seguido do código recebido."
+        }
+      ],
+      "example": "Pedido: R$ 1.500 todo dia 22. Resposta: 2. Correção: “O valor certo é 1600 reais”. Leia o novo resumo e responda 1.",
+      "tip": "A confirmação vale por 10 minutos. Se expirar, faça um novo pedido completo. O fluxo 1/2 aqui é para finanças e agenda; feedback usa 1 confirmar e 2 cancelar."
+    },
+    {
+      "id": "ia",
+      "title": "15. Converse com sua IA",
+      "menu": "Esfera da IA",
+      "visual": "orb",
+      "intro": "A esfera é sua assistente: ela pode explicar as telas, consultar seus registros e preparar lançamentos. Você pode escolher um nome para ela.",
+      "steps": [
+        {
+          "title": "Toque na esfera",
+          "text": "Ela fica perto do seu nome no aplicativo. Ao abrir a conversa, o modo de voz inicia; permita o microfone quando o navegador pedir."
+        },
+        {
+          "title": "Faça uma pergunta ou pedido",
+          "text": "Diga o que precisa. Exemplo: “Qual meu saldo?” ou “Como funciona Meu dinheiro?”. Para salvar, confira e confirme o resumo no painel."
+        },
+        {
+          "title": "Escolha voz ou texto",
+          "text": "Silenciar e usar texto desliga a voz e permite escrever. Pausar interrompe o microfone temporariamente; Retomar continua."
+        },
+        {
+          "title": "Personalize e encerre",
+          "text": "Para mudar o nome, encerre a conversa e use Um nome para sua IA. O nome vale no aplicativo e no WhatsApp. O X também encerra a conversa e desliga o microfone."
+        }
+      ],
+      "example": "“Lucy, me explica para que serve a aba Rendas complementares.” Ou: “Agenda minha consulta amanhã às 15h.”",
+      "tip": "A IA usa os registros da sua conta. No WhatsApp, os retornos são escritos, mesmo quando você faz o pedido por áudio."
+    },
+    {
+      "id": "feedback",
+      "title": "16. Dê seu feedback",
+      "menu": "Feedback",
+      "visual": "feedback",
+      "intro": "Sua opinião ajuda a melhorar o Anotei. Você pode relatar um problema, sugerir uma ideia ou deixar um elogio.",
+      "steps": [
+        {
+          "title": "Abra Feedback",
+          "text": "Escolha a área sobre a qual quer falar, como Visão geral, Meu dinheiro ou Outros."
+        },
+        {
+          "title": "Escolha o tipo",
+          "text": "Informe se é sugestão, problema ou elogio. Escreva o que aconteceu e o que você esperava."
+        },
+        {
+          "title": "Envie sua mensagem",
+          "text": "Depois de enviar, o feedback aparece na gestão para a equipe acompanhar."
+        },
+        {
+          "title": "Veja o retorno",
+          "text": "Consulte seu histórico de feedbacks e as respostas. Também pode perguntar pelo WhatsApp: “Quais são meus feedbacks?”."
+        }
+      ],
+      "example": "“Envie um feedback sobre Meu dinheiro: gostaria de ver uma explicação do saldo.” Pelo WhatsApp, confirme o envio antes de concluir.",
+      "tip": "No feedback pelo WhatsApp, 1 confirma o envio e 2 cancela. Nunca inclua sua senha, chave de acesso ou dados bancários sensíveis na mensagem."
+    },
+    {
+      "id": "assinatura",
+      "title": "17. Acesso, assinatura e celular",
+      "menu": "Seu acesso",
+      "visual": "access",
+      "intro": "Você entra com seu e-mail e sua senha. A tela de assinatura informa as condições atuais de acesso e o pagamento por Pix.",
+      "steps": [
+        {
+          "title": "Confira a tela de pagamento",
+          "text": "Verifique chave Pix, recebedor, valor e prazo exibidos. Faça o Pix no seu aplicativo de banco e confira o nome do recebedor."
+        },
+        {
+          "title": "Avise que pagou",
+          "text": "Use Já paguei - solicitar validação e informe o identificador ou uma observação. Aguarde a administração conferir o crédito e aprovar."
+        },
+        {
+          "title": "Renove quando necessário",
+          "text": "Se o prazo vencer, a tela de pagamento reaparece. Seus registros permanecem guardados para quando o acesso for renovado."
+        },
+        {
+          "title": "Tenha um atalho no celular",
+          "text": "No Android, abra o menu do navegador e procure Adicionar à tela inicial ou Instalar aplicativo. No iPhone, use Compartilhar e Adicionar à Tela de Início no Safari."
+        }
+      ],
+      "example": "Para o casal: a administração inclui o segundo número. No aplicativo, os dois usam o e-mail e a senha da mesma conta e veem os mesmos valores.",
+      "tip": "Só pedir validação do Pix não libera o acesso. A liberação depende da aprovação administrativa. Sair em um celular não desconecta a sessão do outro."
+    },
+    {
+      "id": "rotina",
+      "title": "18. Uma rotina fácil de manter",
+      "menu": "Seu checklist",
+      "visual": "routine",
+      "intro": "Você não precisa passar o dia preenchendo telas. Algumas anotações pequenas já deixam os números e a agenda mais claros.",
+      "steps": [
+        {
+          "title": "Quando receber dinheiro",
+          "text": "Anote o salário ou a renda extra que realmente entrou. Se houve custo para trabalhar, registre também."
+        },
+        {
+          "title": "Quando gastar ou comprar",
+          "text": "Diga quanto foi e o que comprou. Se vai pagar depois, informe o vencimento ou as parcelas. Confira e confirme a proposta."
+        },
+        {
+          "title": "Quando combinar um compromisso",
+          "text": "Anote data e horário na Agenda ou pelo WhatsApp. Corrija ou conclua quando o plano mudar."
+        },
+        {
+          "title": "Uma vez por semana",
+          "text": "Olhe Visão geral, Contas a pagar e Agenda. Confira se faltou alguma anotação e se os números refletem o que aconteceu."
+        }
+      ],
+      "example": "Três perguntas úteis: “Qual meu saldo?”, “Tenho contas em atraso?” e “Qual minha agenda desta semana?”.",
+      "tip": "Se algo parecer errado, procure o registro antes de lançar de novo. Você pode editar, arquivar ou pedir ajuda à sua IA."
+    }
+  ],
+  "glossary": [
+    {
+      "term": "Saldo atual",
+      "meaning": "Dinheiro registrado para usar agora, calculado a partir do saldo inicial e dos movimentos anotados."
+    },
+    {
+      "term": "Previsto",
+      "meaning": "Algo que ainda vai acontecer: conta a pagar ou renda que ainda não chegou."
+    },
+    {
+      "term": "Realizado / pago",
+      "meaning": "Entrada recebida ou gasto que já aconteceu e foi registrado."
+    },
+    {
+      "term": "Disponível do mês",
+      "meaning": "Saldo atual menos as contas pendentes consideradas para o mês."
+    },
+    {
+      "term": "Renda líquida da atividade",
+      "meaning": "Valor recebido no trabalho extra menos o custo para fazer esse trabalho."
+    },
+    {
+      "term": "Aporte / resgate",
+      "meaning": "Registrar dinheiro que foi para uma reserva ou voltou dela ao caixa."
+    },
+    {
+      "term": "Arquivar",
+      "meaning": "Retirar um registro dos totais ativos, mantendo a possibilidade de restaurar."
+    }
+  ]
+}

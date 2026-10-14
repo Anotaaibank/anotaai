@@ -11,3 +11,6 @@ artifacts/
 .next-validation-*/
 
 supabase/.temp/
+
+output/
+tmp/

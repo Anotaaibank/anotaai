@@ -38,7 +38,7 @@ export async function invitationForToken(value:unknown,now=Date.now()):Promise<l
 export function invitationText(invite:local.PersonalInvitation){
  if(localMode())return local.invitationText(invite);
  const token=unseal(invite.token_cipher,personalSecret(),'anotei-invitation:'+invite.id);
- return '*Bem-vindo ao Anotei na Hora!*\n\nCrie sua conta pessoal e cadastre seu salário e saldo atual:\n'+new URL('/cadastro/'+token,publicAppOrigin()).href+'\n\nSuas finanças ficam separadas das outras pessoas. Depois do cadastro, você poderá conversar comigo por áudio ou texto neste WhatsApp.\n\nO convite é individual e vale por 7 dias.';
+ return '*Bem-vindo ao Anotei na Hora!*\n\nCrie sua conta pessoal e cadastre seu salário e saldo atual:\n'+new URL('/cadastro/'+token,publicAppOrigin()).href+'\n\nSuas finanças ficam separadas das outras pessoas. Depois do cadastro, você poderá conversar comigo por áudio ou texto neste WhatsApp.\n\n*Como usar - manual ilustrado:*\n'+publicAppOrigin()+'/manual\n\nVocê pode ler online ou baixar o PDF.\n\nO convite é individual e vale por 7 dias.';
 }
 export async function invitationViews(owner:string){
  if(localMode())return local.localInvitationViews(owner);
