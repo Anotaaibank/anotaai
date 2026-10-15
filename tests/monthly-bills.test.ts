@@ -1,13 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
-import {quickMonthlyBillDraft,nextMonthlyDay} from '../lib/monthly-bills.ts';
-import {prepareFinanceDraft} from '../lib/finance-ai.ts';
+import {quickMonthlyBillDraft,nextMonthlyDay,recurringDay} from '../lib/monthly-bills.ts';
+import {prepareFinanceDraft,quickFinanceDraft} from '../lib/finance-ai.ts';
 import {readWhatsappEdit,signWhatsappEdit,quickEditedPlan} from '../lib/whatsapp-edit.ts';
 import {buildFinancePlan,financeSnapshot} from '../lib/finance.ts';
 import {financeDate} from '../lib/finance-date.ts';
 import {quickPlannedExpenseDraft} from '../lib/assistant-fast.ts';
 const today='2026-10-14',user=randomUUID(),sender='5511999999999',state={documents:[],expenses:[]},key='synthetic-edit-test-only';
+test('repetir valor e vencimento reforça uma conta; dias conflitantes ou contas distintas não são unidos',()=>{
+ const text='Agenda meu carro, 1500 reais todo dia 5, coloca isso como pagamento, todo dia cinco, 1500 reais.',draft=quickMonthlyBillDraft(text,today);assert.ok(draft);assert.equal(prepareFinanceDraft(draft,text,state,user,randomUUID(),today).expenses.length,12);
+ assert.throws(()=>recurringDay('Pago carro 1500 reais todo dia 5, todo dia 6'),/dias diferentes/);
+ const list='Pago carro 100 reais todo dia 5; pago internet 100 reais todo dia 20',items=quickFinanceDraft(list,today);assert.ok(items?.items);const plan=prepareFinanceDraft(items,list,state,user,randomUUID(),today);assert.equal(plan.documents.length,2);assert.equal(plan.expenses.length,24);
+});
 test('mensal com valor e dia não pergunta quantidade, não reparte o valor e não reduz caixa',()=>{
  for(const source of ['Pago meu carro todo dia 22 valor de 1500 reais agenda para mim.','Lança meu aluguel de 1200 reais todo dia 5.','Cadastra internet todo dia dez por 100 reais.','Agenda minha academia de 80 reais todo mês dia 15.']){
   const draft=quickMonthlyBillDraft(source,today);assert.ok(draft,source);const plan=prepareFinanceDraft(draft,source,state,user,randomUUID(),today);assert.equal(plan.expenses.length,12);assert.equal(plan.documents[0].document.kind,'BILL_RULE');assert.ok(plan.expenses.every(e=>e.payload.amount_cents===plan.documents[0].document.amount_cents&&e.payload.status==='PREVISTO'));assert.equal(financeSnapshot(state,today).balance_cents,0);

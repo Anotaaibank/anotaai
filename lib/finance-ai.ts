@@ -98,6 +98,7 @@ export function quickFinanceList(text:string,today:string):FinanceDraft|null{
  return {intent:'COMMAND',command:null,items,question:drafts.find(d=>d?.intent==='CLARIFY')?.question||'',confidence:'ALTA',target_excerpt:'',money_evidence:[],date_evidence:[],query:''};
 }
 export function multipleFinanceItems(text:string){
+ if(quickMonthlyBillDraft(text,brazilDay()))return false;
  if(financialAmountFragments(text).length>1||/\be\s+(?:marca|marque|me lembra|agende|ganhei|recebi)\b/i.test(text)&&/\b(?:anota|lanca|lança|gastei|marca|agenda|pago)\b/i.test(text))return true;
  const parts=fold(text).split(/;|\n|\s+e\s+(?=(?:eu\s+)?(?:pago|pagar|agenda|lanca|anota|registra)\b)/);
  return parts.filter(p=>/\b(?:pago|pagar|agenda\w*|lanc[ae]\w*|anot[ae]\w*|registra\w*)\b/.test(p)&&(monetaryLiterals(p).length>0||/\bdia\s+\d/.test(p))).length>=2||monetaryLiterals(text).length>=2&&!/\b(?:parcelas?|vezes|ganhei|recebi|ganho|faturei|rendeu)\b/.test(fold(text));
