@@ -55,11 +55,15 @@ O painel já consulta atualizações a cada dez segundos enquanto visível e ao 
 
 ## Verificação
 
+A validação final passou com **225 testes**, verificação de tipos e build. A base semântica contém **141 mensagens**. Na versão publicada, cinco verificações autenticadas passaram: conta mensal com valor e vencimento repetidos, compromisso de dia inteiro, lista parcialmente completa, simulação e consulta de pagamento. Nenhuma delas confirmou lançamentos ou enviou mensagens de WhatsApp. Os tempos observados foram de 374 a 632 ms para essas respostas do aplicativo; não incluem transcrição de áudio nem entrega pelo provedor de WhatsApp.
+
 A base em [anotei-language-cases.ts](../tests/fixtures/anotei-language-cases.ts) registra mensagem, contexto, intenção, entidades, operação, esclarecimento e efeito esperado. A matriz executa os leitores e a preparação real dos planos; não substitui as respostas por resultados do modelo simulados.
 
 Os testes de integração percorrem transcrição simulada, interpretação, resumo, resposta 1, gravação, calendário, correção, edição, conflito de revisão e replay. Outros casos verificam isolamento, assinatura, expiração, falha de ferramenta e webhook duplicado.
 
 No Supabase, [whatsapp-calendar-persistence.sql](../tests/sql/whatsapp-calendar-persistence.sql) verificou gravação pelo fluxo do WhatsApp, visibilidade pela mesma conta autenticada, doze vencimentos mensais, compromisso com data e hora, idempotência e bloqueio de outra conta. Toda a transação foi revertida. Nenhum dado de cliente ou mensagem real foi criado nesse teste.
+
+A inspeção visual automatizada do calendário unificado não pôde ser concluída porque o controle do navegador excedeu o tempo de resposta, inclusive numa aba nova. A composição dos registros e as datas/cores estão cobertas pelos testes; permanece essa limitação da conferência visual nesta entrega.
 
 ## Limitações reais
 
