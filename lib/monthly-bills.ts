@@ -7,10 +7,10 @@ export function nextMonthlyDay(day:number,today:string){for(const month of month
 export function quickMonthlyBillDraft(text:string,today:string):FinanceDraft|null{
  const s=fold(text);if(s.length>700||/[\n?]|\b(?:qual|quais|quanto|como|onde|empresa|loja propria|cnpj|estoque|clientes|contratos|nao|editar|corrigir|alterar|cancela\w*|semanal|semanas|anual|anos|parcelas|vezes|meses|ate|ontem|amanha|comecando|partir)\b/.test(s))return null;
  const recurring=recurringDay(text);if(!recurring)return null;
- let amount=monetaryLiterals(text);if(!amount.length){const withoutDay=s.replace(fold(recurring.excerpt),' ');amount=[...withoutDay.matchAll(/(?<![\w.,/-])\d+(?:[.,]\d+)*(?![\w.,/-])/g)].map(m=>m[0]);}
+ let amount=monetaryLiterals(text);if(!amount.length){const withoutDay=s.split(fold(recurring.excerpt)).join(' ');amount=[...withoutDay.matchAll(/(?<![\w.,/-])\d+(?:[.,]\d+)*(?![\w.,/-])/g)].map(m=>m[0]);}
  if(amount.length!==1||!(/\b(?:pago|pagar|agenda\w*|lanc[ae]\w*|registra\w*|cadastr\w*|anot[ae]\w*|mensal|parcela|prestacao|mensalidade|compromisso)\b/.test(s)))return null;
  let name=s.replace(fold(recurring.excerpt),' ').replace(amount[0],' ').replace(/\b(?:o valor e|o valor|valor e|a parcela e|a mensalidade e)\b/g,' ').replace(/\b(?:todo mes|mensalmente|mensal|por favor|pra mim|para mim|valor de|valor|reais|eu|meu|minha|tenho|um compromisso|uma despesa|um pagamento|pago|pagar|agenda\w*|lanc[ae]\w*|registra\w*|cadastr\w*|anot[ae]\w*|uma conta|conta|ai)\b/g,' ').replace(/^[\s,.!:;-]*(?:de |do |da |o |a )?/,'').replace(/[,.!:;-]+/g,' ').replace(/\s+/g,' ').trim().replace(/\s+(?:de|do|da|por|no|na|em|e|sao)$/,'');
- if(name.length<2||name.length>120||/\d|\be\b/.test(name))return null;name=name[0].toUpperCase()+name.slice(1);
+ name=name.replace(/\bde do\b/g,'do').replace(/\bde da\b/g,'da');if(name.length<2||name.length>120||/\d|\be\b/.test(name))return null;name=name[0].toUpperCase()+name.slice(1);
  for(const acronym of text.match(/\b[A-Z]{2,8}\b/g)||[])name=name.replace(new RegExp('\\b'+acronym+'\\b','gi'),acronym);
  return {intent:'COMMAND',command:{action:'expense_schedule',description:name,amount_cents:literalMoney(amount[0]),schedule_type:'MENSAL',amount_mode:'PARCELA',recurring:true,due_day:recurring.day,date:nextMonthlyDay(recurring.day,today),category:personalCategory('',name)},confidence:'ALTA',question:'',query:'',target_excerpt:'',money_evidence:[{field:'amount_cents',excerpt:amount[0]}],date_evidence:[{field:'date',excerpt:recurring.excerpt}]};
 }

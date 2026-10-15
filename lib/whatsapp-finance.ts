@@ -12,7 +12,7 @@ function numberChoice(text:string,rows:PendingRow[],user:string,sender:string,ke
  if(!valid.length)throw new AppError('Não há proposta válida aguardando resposta. Ela pode ter sido concluída, cancelada ou expirado. Envie um novo pedido.');
  return valid[0].confirmation_code!;
 }
-export function whatsappPending(plan:FinancePlan,user:string,sender:string,key:string,now=Date.now()){return {finance_confirmation:signFinance(plan,whatsappActor(user,sender),key,now),confirmation_code:plan.id.replaceAll('-','').slice(0,10).toUpperCase(),confirmation_used:false};}
+export function whatsappPending(plan:FinancePlan,user:string,sender:string,key:string,now=Date.now(),incomplete:string[]=[]){return {finance_confirmation:signFinance(plan,whatsappActor(user,sender),key,now,incomplete),confirmation_code:plan.id.replaceAll('-','').slice(0,10).toUpperCase(),confirmation_used:false};}
 export function whatsappFeedbackChoice(text:string,rows:PendingRow[],user:string,sender:string,key:string,now=Date.now()){
  const explicit=text.trim().match(/^(confirmar|cancelar)\s+([a-f0-9]{10})[.!]?$/i),choice=/^2[.!]?$/.test(text.trim())?'2':'1';
  const code=explicit?.[2].toUpperCase()||numberChoice(text,rows,user,sender,key,choice,now);if(!code)return null;
@@ -39,7 +39,7 @@ export function editedWhatsappPlan(text:string,rows:PendingRow[],user:string,sen
 }
 export function whatsappPlanReply(plan:FinancePlan,code?:string){
  const lines=plan.lines.filter(line=>line.trim()).map(line=>'• '+line.replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g,'$3/$2/$1'));
- return `*${code?'📝 Confira antes de salvar':'✅ Registrado'}*\n\n${plan.title}\n\n${lines.join('\n')}\n\n`+(code?`*1 — Confirmar*\n*2 — Editar*\n\nAinda não foi salvo. Responda em até 10 minutos.\nPara desistir: CANCELAR ${code}.\nSe houver várias propostas, use o botão ou envie CONFIRMAR ${code} / EDITAR ${code}.`:'Você já pode conferir no painel.');
+ return `*${code?'⏳ Aguardando confirmação — ainda não salvo':'✅ Registrado'}*\n\n${plan.title}\n\n${lines.join('\n')}\n\n`+(code?`*1 — Confirmar*\n*2 — Editar*\n\nAinda não foi salvo. Responda em até 10 minutos.\nPara desistir: CANCELAR ${code}.\nSe houver várias propostas, use o botão ou envie CONFIRMAR ${code} / EDITAR ${code}.`:'Você já pode conferir no painel.');
 }
 
 // A bare consent gets a deterministic instruction, never an automatic write or a new AI request.

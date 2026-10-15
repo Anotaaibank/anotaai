@@ -23,6 +23,8 @@ test('botão recebe ID exato; webhook continua bloqueando outro dono, grupo e me
  assert.equal(messageFromWebhook(value,phone)?.text,'CONFIRMAR '+row.confirmation_code);
  for(const changed of [{...value,owner:sender},{...value,message:{...value.message,isGroup:true}},{...value,message:{...value.message,fromMe:true}},{...value,message:{...value.message,buttonOrListid:'CONFIRMAR FAKE'}},{...value,message:{...value.message,buttonOrListId:'CANCELAR '+row.confirmation_code}}])assert.equal(messageFromWebhook(changed,phone),null);
  const {buttonOrListid,...legacy}=value.message;assert.equal(messageFromWebhook({...value,message:{...legacy,buttonOrListId:buttonOrListid}},phone)?.text,buttonOrListid);
+ for(const content of [{buttonsResponseMessage:{selectedButtonId:buttonOrListid}},{listResponseMessage:{singleSelectReply:{selectedRowId:buttonOrListid}}},{buttonReply:{selectedId:buttonOrListid}}])assert.equal(messageFromWebhook({...value,message:{...legacy,content}},phone)?.text,buttonOrListid);
+ assert.equal(messageFromWebhook({...value,message:{...value.message,content:{buttonsResponseMessage:{selectedButtonId:'CANCELAR '+row.confirmation_code}}}},phone),null);
 });
 test('botões preservam código e não repetem envio incerto; incompatibilidade usa texto com 1/2',async()=>{
  const previous=globalThis.fetch,calls:{url:string;body:any}[]=[],code='ABCDEF1234';let status=200;

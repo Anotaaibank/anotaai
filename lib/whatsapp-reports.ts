@@ -6,9 +6,12 @@ import {personalCategory} from './personal-expenses.ts';
 import {brazilDay,currency,object} from './model.ts';
 import {financeSnapshot,type FinanceState} from './finance.ts';
 import {expandedWhatsappQuery,multipleWhatsappReads} from './whatsapp-intents.ts';
+import {conversationReport} from './conversation-reports.ts';
+import {naturalReadQuery,normalizeAssistantText} from './conversation-language.ts';
 
 // Recognize only unambiguous reads. Writes and unusual filters keep the full interpreter.
-export function fastWhatsappQuery(text:string):string|null{
+export function fastWhatsappQuery(text:string,today=brazilDay()):string|null{
+ text=normalizeAssistantText(text);const semantic=naturalReadQuery(text,today);if(semantic)return semantic;
  if(monetaryLiterals(text).length)return null;
  const legacy=legacyWhatsappQuery(text),expanded=expandedWhatsappQuery(text);if(legacy){const old=JSON.parse(legacy);if(old.report==='balance_overdue'||!old.topic&&!old.report||old.category||old.trip||old.audience||old.nature)return legacy;}return expanded||legacy;
 }
@@ -55,6 +58,7 @@ function expenseAnswer(state:FinanceState,raw:Record<string,unknown>,today:strin
 }
 export function whatsappQueryAnswer(state:FinanceState,query:string,today=brazilDay(),source=''):string{
  let raw=object(JSON.parse(query||'{"topic":"resumo"}'));
+ const semantic=conversationReport(state,raw,today);if(semantic!==null)return semantic;
  if(raw.report==='multiple')return multipleWhatsappReads(raw).map(q=>whatsappQueryAnswer(state,JSON.stringify(q),today)).join('\n\n──────────\n\n');
  if(raw.report==='available'){if(Object.keys(raw).some(k=>k!=='report'))throw new Error('Confira a consulta de saldo.');const s=financeSnapshot(state,today);return block('💚 Sobra neste mês',[s.configured?`Saldo atual: ${currency(s.balance_cents)}\nContas a pagar até o fim do mês, incluindo atrasadas: ${currency(s.pending_month_cents)}\n${s.available_month_cents<0?'Falta':'Sobra'}: ${currency(Math.abs(s.available_month_cents))}`:'Cadastre o saldo inicial em Meu dinheiro para calcular quanto sobra.','O cálculo considera o dinheiro já recebido. Salário e rendas futuras ficam na previsão.']);}
  if(raw.report==='balance_overdue'){

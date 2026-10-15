@@ -7,7 +7,7 @@ import {continuedAppointment} from './appointment-language.ts';
 import {continuedMonthlyBill} from './monthly-bills.ts';
 
 type Turn={text:string;intent:FinanceDraft['intent'];answer:string};
-export type AssistantConversation={id:string;user:string;scope:'text'|'voice';expires:number;busy:boolean;turns:Turn[];incomplete?:string;query?:string;pending?:{plan:FinancePlan;source:string;confirmation:string;created:number};focus?:{ids:string[];kind:string;description:string;at:number;plan?:string};requests:Map<string,{text:string;result:unknown;created:number}>;manual?:{section:string;view:string;step:number}};
+export type AssistantConversation={id:string;user:string;scope:'text'|'voice';expires:number;busy:boolean;turns:Turn[];incomplete?:string;query?:string;pending?:{plan:FinancePlan;source:string;confirmation:string;created:number;incomplete?:string[]};focus?:{ids:string[];kind:string;description:string;at:number;plan?:string};requests:Map<string,{text:string;result:unknown;created:number}>;manual?:{section:string;view:string;step:number}};
 const duration=20*60*1000;
 export function createConversationStore(){
  const sessions=new Map<string,AssistantConversation>();
@@ -30,6 +30,7 @@ export function reconcileConversation(c:AssistantConversation,state:FinanceState
  const documents=p.documents.every(d=>{const row=state.documents.find(r=>r.id===d.document.id);return row&&(!d.expected||row.updated_at!==d.expected)&&Object.entries(d.document).every(([key,value])=>stable(row[key as keyof typeof row])===stable(value));});
  if(!expenses||!documents)return false;
  const entries=[...p.expenses.map(e=>({id:e.payload.id,kind:'EXPENSE',description:e.payload.description})),...p.documents.map(d=>({id:d.document.id,kind:d.document.kind,description:d.document.description}))];
+ if(c.pending?.incomplete?.length)c.incomplete=c.pending.incomplete[0];
  if(!c.focus||c.focus.plan!==p.id)c.focus={ids:entries.map(e=>e.id),kind:entries.length===1?entries[0].kind:'MULTIPLE',description:entries.length===1?entries[0].description:p.title,at:now,plan:p.id};return true;
 }
 export function contextualCorrection(text:string){return /^(?:na verdade|corrig(?:e|ir|a)|corrija|quis dizer|errei|o correto|era |foram |foi )/.test(fold(text));}

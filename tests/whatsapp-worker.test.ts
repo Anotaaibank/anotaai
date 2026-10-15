@@ -11,9 +11,43 @@ import {seal} from '../lib/secret-box.ts';
 import {appointmentReminders} from '../lib/whatsapp-reminder.ts';
 import {paymentReminders} from '../lib/payment-reminder.ts';
 import {localFeedbacks,saveLocalFeedback} from '../lib/commerce-local.ts';
+import {calendarEntries} from '../lib/agenda-calendar.ts';
 process.env.ANOTA_DATABASE_PATH=':memory:';
 async function modules(){const hooks=registerHooks({resolve(s,c,next){return next(s==='next/headers'?'next/headers.js':s,c);}});try{return {store:await import('../lib/whatsapp-store.ts'),worker:await import('../lib/whatsapp-worker.ts'),server:await import('../lib/whatsapp-server.ts')};}finally{hooks.deregister();}}
 const sender='5511999999999',phone='5511988888888';
+test('correção direta da proposta ainda não salva substitui o resumo e não altera registro anterior',async()=>{
+ const c=await context();try{globalThis.fetch=async()=>Response.json({id:randomUUID()});await c.message('Lança 80 reais de mercado');const corrected=await c.message('Na verdade 90');assert.equal(corrected.status,'ESCLARECER',corrected.reply);assert.match(corrected.reply,/90,00/);assert.equal(localFinanceState(c.user).expenses.length,0);assert.equal((await c.message('1')).status,'LANCADO');assert.equal(localFinanceState(c.user).expenses[0].amount_cents,9000);assert.equal(localFinanceState(c.user).expenses.length,1);}finally{c.restore();}
+});
+test('lista parcial confirma só os itens completos e completa o que faltou sem duplicar os anteriores',async()=>{
+ const c=await context();try{
+  globalThis.fetch=async()=>Response.json({id:randomUUID()});
+  const partial=await c.message('Lança 80 reais de mercado; pago meu carro todo dia 5');assert.equal(partial.status,'ESCLARECER',partial.reply);assert.match(partial.reply,/Não incluído/);assert.match(partial.reply,/valor mensal/);assert.equal(localFinanceState(c.user).expenses.length,0);
+  assert.equal((await c.message('1')).status,'LANCADO');assert.equal(localFinanceState(c.user).expenses.length,1);
+  const completed=await c.message('1500');assert.equal(completed.status,'ESCLARECER',completed.reply);assert.match(completed.reply,/1.500,00/);assert.equal((await c.message('1')).status,'LANCADO');assert.equal(localFinanceState(c.user).expenses.length,13);
+  const list=await c.message('Anota 80 de mercado, 40 de gasolina e marca dentista amanhã às 15h');assert.equal(list.status,'ESCLARECER',list.reply);assert.match(list.reply,/3 registros/);assert.equal((await c.message('1')).status,'LANCADO');assert.equal(localFinanceState(c.user).expenses.length,15);assert.equal(localFinanceState(c.user).documents.filter(d=>d.kind==='APPOINTMENT').length,1);
+ }finally{c.restore();}
+});
+test('áudio confirmado fica na mesma conta e no calendário: conta mensal, igreja e correção sem duplicar',async()=>{
+ const c=await context();try{
+  process.env.OPENAI_API_KEY='synthetic-only';let transcript='Agenda pra mim, todo dia cinco eu pago a parcela de mil e quinhentos reais do meu carro, do meu BID. Todo dia cinco, agenda pra mim, por favor.';
+  globalThis.fetch=async(url)=>{const path=String(url);if(path.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(path.endsWith('/audio/transcriptions'))return Response.json({text:transcript});assert.ok(/\/send\/(?:text|menu)$/.test(path),'Sem interpretação remota para pedido inequívoco');return Response.json({id:randomUUID()});};
+  const proposed=await c.message('','audio');assert.equal(proposed.status,'ESCLARECER',proposed.reply);assert.match(proposed.reply,/Aguardando confirmação/);assert.equal(localFinanceState(c.user).expenses.length,0);
+  assert.equal((await c.message('1')).status,'LANCADO');let state=localFinanceState(c.user);assert.equal(state.expenses.length,12);assert.ok(calendarEntries(state.documents,state.expenses,state.documents).some(e=>e.kind==='payable'&&e.date.endsWith('-05')));
+  transcript='Agenda pra mim um evento que eu vou ter na igreja, dia 7 de novembro, às 19 horas. Vou assistir o filme do The Chosen.';
+  const event=await c.message('','audio');assert.equal(event.status,'ESCLARECER',event.reply);assert.equal((await c.message('1')).status,'LANCADO');state=localFinanceState(c.user);let entries=calendarEntries(state.documents,state.expenses,state.documents);assert.ok(entries.some(e=>e.kind==='appointment'&&e.date==='2026-11-07'&&e.document?.details.time==='19:00'));
+  const corrected=await c.message('Na verdade às 20h');assert.equal(corrected.status,'ESCLARECER',corrected.reply);assert.equal((await c.message('1')).status,'LANCADO');state=localFinanceState(c.user);entries=calendarEntries(state.documents,state.expenses,state.documents);assert.equal(entries.filter(e=>e.kind==='appointment').length,1);assert.equal(entries.find(e=>e.kind==='appointment')?.document?.details.time,'20:00');
+ }finally{c.restore();}
+});
+test('consulta mantém categoria no mês passado e baixa encontra conta existente; conflito não anuncia sucesso',async()=>{
+ const c=await context();try{
+  globalThis.fetch=async()=>Response.json({id:randomUUID()});
+  add(c.user,{action:'expense_create',description:'Restaurante anterior',category:'Restaurante',amount_cents:10000,date:financeDate('ontem')});
+  await c.message('Quanto gastei com restaurante este mês?');const follow=await c.message('E no mês passado?');assert.equal(follow.status,'RESOLVIDO',follow.reply);assert.match(follow.reply,/Despesas pessoais|Gastos/);
+  const plan=add(c.user,{action:'expense_create',description:'Aluguel',amount_cents:120000,status:'PREVISTO',date:brazilDay()});const proposal=await c.message('Paguei o aluguel');assert.equal(proposal.status,'ESCLARECER',proposal.reply);
+  add(c.user,{action:'expense_update',target_id:plan.expenses[0].payload.id,amount_cents:125000});
+  const failed=await c.message('1');assert.notEqual(failed.status,'LANCADO');assert.doesNotMatch(failed.reply,/\*✅ Registrado\*/);assert.equal(localFinanceState(c.user).expenses.find(e=>e.id===plan.expenses[0].payload.id)?.status,'PREVISTO');
+ }finally{c.restore();}
+});
 function add(user:string,c:FinanceCommand){const p=buildFinancePlan(c,localFinanceState(user),user,randomUUID());applyLocalFinance(user,p,'MANUAL');return p;}
 async function context(){const old={storage:process.env.ANOTA_STORAGE,url:process.env.ANOTA_WHATSAPP_URL,key:process.env.OPENAI_API_KEY},transport=globalThis.fetch;process.env.ANOTA_STORAGE='local';process.env.ANOTA_WHATSAPP_URL='https://provider.example';delete process.env.OPENAI_API_KEY;const m=await modules(),user=registerLocal(randomUUID()+'@example.test','whatsapp-test-only','Teste').user.id;
  const bot:import('../lib/whatsapp-store.ts').Bot={user_id:user,phone,allowed_phones:[sender],enabled:true,status:'PRONTO',instance_id:'synthetic-instance',token_cipher:seal('synthetic-token',m.server.encryptionSecret(),'anota-ai-bot:'+user),hook_cipher:'unused-test',updated_at:new Date().toISOString()};await m.store.putBot(bot,null);

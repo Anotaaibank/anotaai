@@ -22,6 +22,7 @@ export function appointmentFacts(text:string,today:string):Facts|null{
  try{
   for(const pattern of [
    /\b\d{4}-\d{2}-\d{2}\b/g,
+   /\bdaqui a?\s*(?:\d+|[a-z ]+?)\s+dias?\b/g,
    /\b(?:dia\s+)?\d{1,2}[/-]\d{1,2}(?:[/-]\d{4})?\b/g,
    new RegExp('\\b(?:dia\\s+)?'+number+'\\s+(?:do|de|no)\\s+(?:mes\\s+)?(?:que vem|seguinte|proximo|atual|este mes|'+number+'|'+months+')(?:\\s+(?:de|do ano)\\s+\\d{4})?\\b','g'),
    new RegExp('\\b(?:dia\\s+)?'+number+'\\s+(?:de\\s+)?'+months+'(?:\\s+de\\s+\\d{4})?\\b','g'),
@@ -39,14 +40,14 @@ export function appointmentFacts(text:string,today:string):Facts|null{
 }
 export function naturalAppointmentDraft(text:string,today:string):FinanceDraft|null{
  const source=fold(text);if(text.length>900||source.includes('\n')||!command.test(source)||forbidden.test(source))return null;
- const facts=appointmentFacts(text,today);if(!facts?.date||!facts.time||facts.description.length<2||facts.description.length>160)return null;
+ const facts=appointmentFacts(text,today);if(!facts?.date||!facts.time&&/\bme lembr[ae]\b/.test(source)||facts.description.length>160)return null;
  if(/\b(?:e outr[oa]|tambem (?:agenda|marca)|outra? (?:reuniao|consulta|compromisso))\b/.test(fold(facts.description)))return null;
- return {intent:'COMMAND',command:{action:'appointment_upsert',description:facts.description,date:facts.date.value,time:facts.time.value},confidence:'ALTA',question:'',target_excerpt:'',query:'',money_evidence:[],date_evidence:[{field:'date',excerpt:facts.date.excerpt}]};
+ return {intent:'COMMAND',command:{action:'appointment_upsert',description:facts.description||'Compromisso',date:facts.date.value,...(facts.time?{time:facts.time.value}:{})},confidence:'ALTA',question:'',target_excerpt:'',query:'',money_evidence:[],date_evidence:[{field:'date',excerpt:facts.date.excerpt}]};
 }
 // Reuse literal facts only for a short complement or an unmistakable repetition
 // of the same incomplete appointment. Never carry them to another event or date.
 export function continuedAppointment(previous:string,current:string,today:string):{draft:FinanceDraft;source:string}|null{
- if(naturalAppointmentDraft(current,today))return null;
+ if(naturalAppointmentDraft(current,today)&&appointmentFacts(current,today)?.time)return null;
  if(!command.test(fold(previous))||forbidden.test(fold(previous))||forbidden.test(fold(current)))return null;
  const old=appointmentFacts(previous,today),next=appointmentFacts(current,today);if(!old||!next||!old.date)return null;
  if(next.date&&next.date.value!==old.date.value)return null;

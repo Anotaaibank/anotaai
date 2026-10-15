@@ -24,8 +24,10 @@ export function messageFromWebhook(value:unknown,phone:string,now=Date.now()):Bo
  if(!Number.isFinite(ms)||ms<now-600000||ms>now+60000)return null;
  const type=String(m.messageType||'').toLowerCase(),content=object(m.content);
  const audio=['audio','audiomessage','ptt','voice','voicemessage'].includes(type)||!!content.audioMessage;
- const choice=m.buttonOrListid??m.buttonOrListId;
- if(m.buttonOrListid&&m.buttonOrListId&&m.buttonOrListid!==m.buttonOrListId)return null;
+ const response=object(content.buttonsResponseMessage),list=object(object(content.listResponseMessage).singleSelectReply),buttonReply=object(content.buttonReply);
+ const choices=[m.buttonOrListid,m.buttonOrListId,response.selectedButtonId,response.selectedButtonID,list.selectedRowId,buttonReply.selectedId].filter((v):v is string=>typeof v==='string'&&!!v);
+ if(new Set(choices).size>1)return null;
+ const choice=choices[0];
  const button=typeof choice==='string'&&/^(?:CONFIRMAR|EDITAR|CANCELAR) [a-f0-9]{10}$/i.test(choice)?choice:'';
  const text=button||(typeof m.text==='string'?m.text.trim():typeof m.content==='string'&&!audio?m.content.trim():'');
  if(!audio&&!button&&!['conversation','extendedtextmessage','text'].includes(type)||!audio&&(!text||text.length>4000))return null;

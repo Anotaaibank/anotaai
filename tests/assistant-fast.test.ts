@@ -19,8 +19,9 @@ test('agenda completa preserva descrição, data falada e horário sem outra cha
   const draft=await extractFinance(text,state,'fake',today,transport),plan=prepareFinanceDraft(draft,text,state,randomUUID(),randomUUID(),today),appointment=plan.documents[0].document;
   assert.equal(appointment.kind,'APPOINTMENT');assert.equal(appointment.description,description);assert.equal(appointment.date,date);assert.equal(appointment.details.time,time);
  }
+ assert.equal((quickAppointmentDraft('Agende uma reunião dia 10 do mês 11.',today)?.command as {time?:string})?.time,undefined);
  assert.deepEqual(state,{documents:[],expenses:[]});
- for(const text of ['Agende uma reunião dia 10 do mês 11.','Agende uma reunião às 14 horas.','Agende uma reunião amanhã às 24 horas.','Agende uma reunião amanhã às 14 horas e outra às 16 horas.','Cancele a reunião amanhã às 14 horas.','Agenda uma reunião toda semana às 14 horas.'])assert.equal(quickAppointmentDraft(text,today),null,text);
+ for(const text of ['Agende uma reunião às 14 horas.','Agende uma reunião amanhã às 24 horas.','Agende uma reunião amanhã às 14 horas e outra às 16 horas.','Cancele a reunião amanhã às 14 horas.','Agenda uma reunião toda semana às 14 horas.'])assert.equal(quickAppointmentDraft(text,today),null,text);
 });
 test('sorvete e gastos comuns têm categoria e proposta sem chamada ao segundo modelo',async()=>{
  let calls=0;const transport:typeof fetch=async()=>{calls++;throw Error('Must not use the model');},state={documents:[],expenses:[]},user=randomUUID();

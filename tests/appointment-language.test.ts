@@ -40,7 +40,7 @@ test('complemento do mesmo compromisso preserva a hora dita, sem transferir dado
 });
 test('conversa no aplicativo completa um horário sem outra interpretação e mantém confirmação assinada',async()=>{
  let calls=0;const transport:typeof fetch=async()=>{calls++;return Response.json({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({intent:'CLARIFY',command:null,question:'Qual o horário?',confidence:'BAIXA',target_excerpt:'',money_evidence:[],date_evidence:[],query:''})}]}]});};
- const user=randomUUID(),secret='fixture-secret',first=await assistantTurn({user,state,key:'fixture',secret,text:'Agende uma consulta dia 7 do 11.',today,transport});assert.match(first.answer||'',/horário/);
+ const user=randomUUID(),secret='fixture-secret',first=await assistantTurn({user,state,key:'fixture',secret,text:'Me lembra de uma consulta dia 7 do 11.',today,transport});assert.match(first.answer||'',/horário/);
  const second=await assistantTurn({user,state,key:'fixture',secret,text:'Às 19 horas.',today,transport,conversation:first.conversation_id});assert.equal(calls,1);assert.ok(second.pending);assert.equal(readFinance(second.pending.confirmation,user,secret).documents[0].document.details.time,'19:00');assert.equal(state.documents.length,0);
 });
 test('transcrição mantém português, áudio original e contexto sem resumir nem completar dados',async()=>{
