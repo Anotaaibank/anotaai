@@ -62,7 +62,7 @@ export function naturalReadQuery(text:string,today:string):string|null{
 }
 export function naturalFinanceTurn(text:string,state:FinanceState,today:string,context:NaturalContext={}):FinanceDraft|null{
  const s=fold(text),guard=languageGuard(text);if(guard)return guard;
- if(/[;\n]/.test(text)||financialAmountFragments(text).length>1||/\be\s+(?:marca|marque|agende|anota|lanca|lança|registra|pago|pagar|paguei)\b/.test(s))return null;
+ if(/[;\n]/.test(text)||financialAmountFragments(text).length>1||/\be\s+(?:tambem\s+)?(?:marca|marque|agende|anota|lanca|lança|registra|pago|pagar|paguei)\b/.test(s))return null;
  const read=naturalReadQuery(text,today);if(read)return {...empty('QUERY'),query:read};
  if(context.query&&/^(?:e\s+)?(?:no |na |do |da |o |a )?(?:mes passado|passado|mes anterior|mes atual|este mes|hoje|amanha|esta semana)[?!. ]*$/.test(s)){
   const raw=JSON.parse(context.query),period=/passado|anterior/.test(s)?'mes_anterior':/semana/.test(s)?'semana_atual':/amanha/.test(s)?'amanha':/hoje/.test(s)?'hoje':'mes_atual';delete raw.from;delete raw.to;raw.period=period;return languageQuery(raw);
