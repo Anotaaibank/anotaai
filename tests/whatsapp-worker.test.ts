@@ -60,6 +60,17 @@ test('áudio real com dia 7 do 11 e 19 horas mostra resumo direto; repetição m
   await c.message('CONFIRMAR '+repetition.confirmation_code);assert.equal(localFinanceState(c.user).documents.length,1);
  }finally{c.restore();}
 });
+
+test('mensal sem símbolo de reais e consultas combinadas de hoje percorrem WhatsApp com confirmação',async()=>{
+ const c=await context();try{
+  process.env.OPENAI_API_KEY='synthetic-only';let transcript='Carro mensal 1500 todo dia 15';
+  globalThis.fetch=async(url)=>{const u=String(url);if(u.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(u.endsWith('/audio/transcriptions'))return Response.json({text:transcript});assert.ok(/\/send\/(?:text|menu)$/.test(u),'Sem chamada de interpretação para este pedido: '+u);return Response.json({id:randomUUID()});};
+  const monthly=await c.message('','audio');assert.equal(monthly.status,'ESCLARECER',monthly.reply);assert.match(monthly.reply,/1\.500,00/);assert.match(monthly.reply,/1 — Confirmar/);assert.equal(localFinanceState(c.user).expenses.length,0);await c.message('1');assert.equal(localFinanceState(c.user).expenses.length,12);
+  add(c.user,{action:'profile_upsert',profile:{opening_balance_cents:300000,opening_date:brazilDay()}});add(c.user,{action:'appointment_upsert',description:'Agenda de teste',date:brazilDay(),time:'19:00'});
+  const before=JSON.stringify(localFinanceState(c.user));transcript='Qual meu saldo e minha agenda de hoje?';const answer=await c.message('','audio');assert.equal(answer.status,'RESOLVIDO',answer.reply);assert.match(answer.reply,/3\.000,00/);assert.match(answer.reply,/Agenda de teste/);assert.equal(JSON.stringify(localFinanceState(c.user)),before);
+  const today=await c.message('Eu tenho uma conta para pagar hoje?');assert.equal(today.status,'RESOLVIDO',today.reply);assert.match(today.reply,/Contas a pagar/);
+ }finally{c.restore();}
+});
 test('configuração salva cem números na conta, conserva a conexão e revoga quem foi removido',async()=>{
  const c=await context(),previousManager=process.env.ANOTA_MANAGER_USER_IDS;try{
   await assert.rejects(c.server.saveBot({user:{id:c.user,name:'Teste',email:'test@example.test'},token:'fixture'},{phone,allowed_phones:[sender],enabled:true,expected_updated_at:c.bot.updated_at}),/exclusiva da gestão/);

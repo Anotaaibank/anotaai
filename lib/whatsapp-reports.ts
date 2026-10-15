@@ -1,13 +1,18 @@
-import {fold} from './finance-date.ts';
+import {fold,monetaryLiterals} from './finance-date.ts';
 import {financeReport,financeQuery} from './finance-report.ts';
 import {assistantQuery} from './assistant-query.ts';
 import {expenseReport} from './assistant.ts';
 import {personalCategory} from './personal-expenses.ts';
 import {brazilDay,currency,object} from './model.ts';
 import {financeSnapshot,type FinanceState} from './finance.ts';
+import {expandedWhatsappQuery,multipleWhatsappReads} from './whatsapp-intents.ts';
 
 // Recognize only unambiguous reads. Writes and unusual filters keep the full interpreter.
 export function fastWhatsappQuery(text:string):string|null{
+ if(monetaryLiterals(text).length)return null;
+ const legacy=legacyWhatsappQuery(text),expanded=expandedWhatsappQuery(text);if(legacy){const old=JSON.parse(legacy);if(old.report==='balance_overdue'||!old.topic&&!old.report||old.category||old.trip||old.audience||old.nature)return legacy;}return expanded||legacy;
+}
+function legacyWhatsappQuery(text:string):string|null{
  const s=fold(text);if(s.length>500||/\d|\b(?:empresas?|lojas?|clientes?|contratos?|estoque|juridico|cnpj|lanc\w*|anot\w*|registr\w*|agendar|agende|agendamento|agenda (?:pra|para|um|uma|meu|minha)|cadast\w*|alter\w*|corrig\w*|exclu\w*|cancel\w*|paguei|ganhei|recebi|comprei|vou pagar|como|onde|aba|tela|viagem|ferias|familia|esposa|marido|filh\w*|opcional|essencial|ontem|janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\b/.test(s))return null;
  if(/\b(?:paga|pague|quitar|quite|baixa|dar baixa|marcar como pago|marca como pago|marque como pago|receber agora)\b/.test(s))return null;
  if(/\b(?:antes|depois|entre|exceto|semana passada|ano passado|ano atual|ultimo ano)\b/.test(s))return null;
@@ -50,6 +55,8 @@ function expenseAnswer(state:FinanceState,raw:Record<string,unknown>,today:strin
 }
 export function whatsappQueryAnswer(state:FinanceState,query:string,today=brazilDay(),source=''):string{
  let raw=object(JSON.parse(query||'{"topic":"resumo"}'));
+ if(raw.report==='multiple')return multipleWhatsappReads(raw).map(q=>whatsappQueryAnswer(state,JSON.stringify(q),today)).join('\n\n──────────\n\n');
+ if(raw.report==='available'){if(Object.keys(raw).some(k=>k!=='report'))throw new Error('Confira a consulta de saldo.');const s=financeSnapshot(state,today);return block('💚 Sobra neste mês',[s.configured?`Saldo atual: ${currency(s.balance_cents)}\nContas a pagar até o fim do mês, incluindo atrasadas: ${currency(s.pending_month_cents)}\n${s.available_month_cents<0?'Falta':'Sobra'}: ${currency(Math.abs(s.available_month_cents))}`:'Cadastre o saldo inicial em Meu dinheiro para calcular quanto sobra.','O cálculo considera o dinheiro já recebido. Salário e rendas futuras ficam na previsão.']);}
  if(raw.report==='balance_overdue'){
   if(Object.keys(raw).some(key=>!['report','period','kind'].includes(key)))throw new Error('Confira os filtros da consulta financeira.');
   const overdue={topic:'atrasos',period:raw.period||'total',...(raw.kind?{kind:raw.kind}:{})};
@@ -60,13 +67,14 @@ export function whatsappQueryAnswer(state:FinanceState,query:string,today=brazil
  if(raw.report==='variable'){const {report,...filters}=raw;void report;return expenseAnswer({...state,expenses:state.expenses.filter(row=>row.kind==='PESSOAL')},filters,today).replace('Despesas pessoais','Despesas variáveis');}
  if(['pagamentos','atrasos'].includes(String(raw.topic))&&!raw.kind){if(/despesas? fixas?|contas? fixas?/.test(fold(source)))raw.kind='MENSAL';else if(/despesas? variaveis|contas? variaveis/.test(fold(source)))raw.kind='PESSOAL';}
  if(raw.report==='overdraft'){const s=financeSnapshot(state,today);return block('🏦 Cheque especial',[`Limite cadastrado: ${currency(s.profile.overdraft_limit_cents)}\nTaxa informada: ${s.profile.overdraft_monthly_rate}% ao mês.`,s.configured?'Saldo atual registrado: '+currency(s.balance_cents)+'.':'Cadastre seu saldo inicial em Meu dinheiro para acompanhar o caixa.','O limite não é dinheiro recebido.']);}
- if(raw.report==='fixed'||!['pagamentos','atrasos'].includes(String(raw.topic))&&/despesas? fixas?|contas? fixas?/.test(fold(source))){
+ if(raw.report==='fixed'||(!raw.topic||raw.topic==='gastos')&&/despesas? fixas?|contas? fixas?/.test(fold(source))){
   if(raw.report!=='fixed')raw=object(JSON.parse(assistantQuery(JSON.stringify(raw),today)));
   const q=financeQuery({topic:'pagamentos',period:raw.period||'mes_atual',...(raw.from?{from:raw.from,to:raw.to}:{})},today),rows=state.expenses.filter(e=>e.kind==='MENSAL'),filter={period:'personalizado',from:q.from,to:q.to};
   const filters=Object.fromEntries(['category','trip','audience','nature','search'].filter(k=>raw[k]!==undefined&&raw[k]!==null).map(k=>[k,raw[k]]));
   const paid=expenseReport(rows.filter(e=>e.entry_date<=today),{...filter,...filters}),pending=expenseReport(rows,{...filter,...filters,status:'PREVISTO'}),onlyPending=raw.status==='PREVISTO',onlyPaid=raw.status==='REALIZADO';
   const items=[...(onlyPending?[]:paid.rows),...(onlyPaid?[]:pending.rows)].sort((a,b)=>a.entry_date.localeCompare(b.entry_date));
-  return block('📅 Despesas fixas',[periodLabel(q),[...(onlyPending?[]:[`Pagas: ${currency(paid.amount_cents)} (${paid.count}).`]),...(onlyPaid?[]:[`A pagar: ${currency(pending.amount_cents)} (${pending.count}).`])].join('\n'),items.slice(0,15).map(e=>`• ${dateLabel(e.entry_date)} · ${e.description}: ${currency(e.amount_cents)} · ${pending.rows.some(p=>p.id===e.id)?'a pagar':'paga'}.`).join('\n'),(onlyPending?0:paid.count)+(onlyPaid?0:pending.count)>15?'Confira os demais registros em Despesas fixas. Os totais incluem todos.':'']);
+  const rules=q.period==='mes_atual'&&!onlyPaid&&!onlyPending&&!Object.keys(filters).length?state.documents.filter(d=>d.kind==='BILL_RULE'&&d.active):[];
+  return block('📅 Despesas fixas',[periodLabel(q),rules.length?'*Contas recorrentes ativas · valor por mês*\n'+rules.slice(0,15).map(d=>`• ${d.description}: ${currency(d.amount_cents)} · dia ${String(d.details.day)} · início ${dateLabel(d.date)}.`).join('\n'):'',[...(onlyPending?[]:[`Pagas no período: ${currency(paid.amount_cents)} (${paid.count}).`]),...(onlyPaid?[]:[`A pagar no período: ${currency(pending.amount_cents)} (${pending.count}).`])].join('\n'),items.slice(0,15).map(e=>`• ${dateLabel(e.entry_date)} · ${e.description}: ${currency(e.amount_cents)} · ${pending.rows.some(p=>p.id===e.id)?'a pagar':'paga'}.`).join('\n'),(onlyPending?0:paid.count)+(onlyPaid?0:pending.count)>15||rules.length>15?'Confira os demais registros em Despesas fixas. Os totais incluem todos.':'']);
  }
  raw=object(JSON.parse(assistantQuery(JSON.stringify(raw),today,source)));
  if(!raw.topic)return expenseAnswer(state,raw,today);

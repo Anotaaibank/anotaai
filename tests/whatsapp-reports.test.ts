@@ -18,7 +18,7 @@ test('consultas comuns do WhatsApp escolhem os leitores sem usar IA',()=>{
  for(const [text,topic] of [['Qual é meu salário fixo?','salario'],['Qual é meu saldo na conta?','saldo'],['Quanto tenho de contas a pagar?','pagamentos'],['Quanto tenho de rendas complementares?','rendas'],['Quanto tenho de contas a pagar no mês inteiro?','pagamentos'],['Me faz um relatório geral de quanto eu gastei até o momento.','gastos'],['Me faz um relatório geral de qual é meu saldo atual.','saldo'],['Qual é minha agenda desta semana?','agenda'],['Quanto tenho de reservas?','reservas'],['Quanto posso investir?','investir'],['Qual é minha projeção?','projecao'],['Me manda um resumo financeiro.','resumo']]){const raw=fastWhatsappQuery(text);assert.ok(raw,text);assert.equal(JSON.parse(raw).topic,topic,text);}
 });
 test('comandos, escopo empresarial, datas explícitas e filtros especiais não perdem informações no caminho rápido',()=>{
- for(const text of ['Agenda pra mim meu evento dia 10 do mês 11 às 14 horas.','Agende minha reunião amanhã.','Gastei 25 reais de sorvete.','Qual é meu saldo da loja?','Quanto gastei com minha família?','Quanto gastei na viagem Férias?','Quanto gastei em setembro?','Quanto gastei ontem?','Qual meu saldo e meu salário?','Como eu cadastro meu salário?'])assert.equal(fastWhatsappQuery(text),null,text);
+ for(const text of ['Agenda pra mim meu evento dia 10 do mês 11 às 14 horas.','Agende minha reunião amanhã.','Gastei 25 reais de sorvete.','Qual é meu saldo da loja?','Quanto gastei com minha família?','Quanto gastei na viagem Férias?','Quanto gastei em setembro?','Quanto gastei ontem?','Como eu cadastro meu salário?'])assert.equal(fastWhatsappQuery(text),null,text);
  assert.equal(JSON.parse(fastWhatsappQuery('Quanto gastei com gasolina neste mês?')!).category,'Combustível');
 });
 test('relatórios escritos preservam os cálculos do painel e não alteram dados',()=>{
@@ -36,7 +36,7 @@ test('despesa pessoal exclui custo de renda extra e usa blocos curtos no WhatsAp
  for(const topic of ['agenda','pagamentos'])assert.doesNotMatch(whatsappQueryAnswer({documents:[],expenses:[]},JSON.stringify({topic,period:'mes_atual'}),today),/\.\./);
 });
 test('despesas fixas usam cadastro mensal, sem classificar aluguel avulso como recorrente',()=>{
- const {state}=fixture(),report=whatsappQueryAnswer(state,fastWhatsappQuery('Me manda um relatório das despesas fixas deste mês.')!,today);assert.match(report,/A pagar:.*1\.000,00 \(1\)/);assert.doesNotMatch(report,/Aluguel avulso|novembro/);
+ const {state}=fixture(),report=whatsappQueryAnswer(state,fastWhatsappQuery('Me manda um relatório das despesas fixas deste mês.')!,today);assert.match(report,/A pagar no período:.*1\.000,00 \(1\)/);assert.doesNotMatch(report,/Aluguel avulso|novembro/);
  const empty=whatsappQueryAnswer(state,JSON.stringify({report:'fixed',period:'mes_atual',category:'Água'}),today);assert.match(empty,/0,00 \(0\)/);assert.doesNotMatch(empty,/Aluguel mensal/);
  const filtered=whatsappQueryAnswer(state,JSON.stringify({topic:'gastos',period:'mes_atual',filters:{category:'Água'}}),today,'Relatório das despesas fixas de água');assert.doesNotMatch(filtered,/Aluguel mensal/);assert.match(filtered,/0,00 \(0\)/);
 });

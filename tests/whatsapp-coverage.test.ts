@@ -36,7 +36,7 @@ test('saldo e contas vencidas na mesma mensagem retornam as duas consultas sem I
  assert.equal(JSON.stringify(state),before);
  assert.throws(()=>whatsappQueryAnswer(state,JSON.stringify({report:'balance_overdue',user_id:randomUUID()}),today));
  assert.throws(()=>whatsappQueryAnswer(state,JSON.stringify({report:'balance_overdue',kind:'LOJA'}),today));
- assert.equal(fastWhatsappQuery('Qual meu saldo e salário e contas vencidas?'),null);
+ const multiple=fastWhatsappQuery('Qual meu saldo e salário e contas vencidas?')!;assert.equal(JSON.parse(multiple).report,'multiple');const combined=whatsappQueryAnswer(state,multiple,today);assert.match(combined,/Saldo da conta/);assert.match(combined,/Salário fixo/);assert.match(combined,/Contas em atraso/);
  assert.equal(fastWhatsappQuery('Pague minhas contas vencidas e veja o saldo.'),null);
  for(const text of ['Quanto eu gastei total esse mês?','Qual o total de gastos desse mês?'])assert.equal(JSON.parse(fastWhatsappQuery(text)!).period,'mes_atual');
 });

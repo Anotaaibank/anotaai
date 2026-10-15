@@ -4,6 +4,7 @@ import {credentials,statusBot} from './whatsapp-server.ts';
 import {extractFinance,prepareFinanceDraft,quickFinanceDraft} from './finance-ai.ts';
 import {financeStateForBot,financeSecret,applyFinanceForBot,appointmentsForBot} from './finance-server.ts';
 import {fastWhatsappQuery,whatsappQueryAnswer} from './whatsapp-reports.ts';
+import {multipleWhatsappReads} from './whatsapp-intents.ts';
 import {appointmentReminders,currentReminder,reminderPrefix} from './whatsapp-reminder.ts';
 import {paymentReminders,currentPaymentReminder,paymentReminderPrefix} from './payment-reminder.ts';
 import {whatsappPending,confirmedWhatsappPlan,cancelledWhatsappPlan,editedWhatsappPlan,whatsappConfirmationHint,whatsappPlanReply} from './whatsapp-finance.ts';
@@ -11,6 +12,7 @@ import {editingPrefix,signWhatsappEdit,readWhatsappEdit,quickEditedPlan} from '.
 import {expandMonthlyBillsForBot} from './monthly-bills-server.ts';
 import {transcribeExpense} from './whatsapp-ai.ts';
 import {continuedAppointment} from './appointment-language.ts';
+import {continuedMonthlyBill} from './monthly-bills.ts';
 import {expenseStatusQuestion} from './expense-context.ts';
 import {brazilDay,object} from './model.ts';
 import {stableId} from './finance.ts';
@@ -44,7 +46,7 @@ async function propose(row:Inbox,b:Bot,draft:Parameters<typeof prepareFinanceDra
  const plan=prepareFinanceDraft(draft,source,state,row.user_id,row.id);if(plan.title==='Agendar / alterar compromisso'&&plan.documents.some(d=>!d.document.details.time&&!d.document.details.done))throw new Error('Qual é o horário do compromisso? Preciso dele para enviar os lembretes.');
  const pending=whatsappPending(plan,row.user_id,row.sender,financeSecret());await patchMessage(row,{status:'ESCLARECER',...pending,reply:whatsappPlanReply(plan,pending.confirmation_code)});await reply(row,b);
 }
-async function answerForBot(user:string,query:string,source:string){const raw=object(JSON.parse(query));if(raw.report==='feedback'){if(Object.keys(raw).some(key=>key!=='report'))throw new Error('Confira o pedido sobre seus feedbacks.');return feedbackAnswer(await feedbacksForBot(user));}return whatsappQueryAnswer(await financeStateForBot(user),query,undefined,source);}
+async function answerForBot(user:string,query:string,source:string){const raw=object(JSON.parse(query));if(raw.report==='multiple'){const queries=multipleWhatsappReads(raw);for(const q of queries)if(q.report==='feedback'&&Object.keys(q).some(k=>k!=='report'))throw new Error('Confira o pedido sobre seus feedbacks.');const [state,feedbacks]=await Promise.all([financeStateForBot(user),queries.some(q=>q.report==='feedback')?feedbacksForBot(user):Promise.resolve([])]);return queries.map(q=>q.report==='feedback'?feedbackAnswer(feedbacks):whatsappQueryAnswer(state,JSON.stringify(q))).join('\n\n──────────\n\n');}if(raw.report==='feedback'){if(Object.keys(raw).some(key=>key!=='report'))throw new Error('Confira o pedido sobre seus feedbacks.');return feedbackAnswer(await feedbacksForBot(user));}return whatsappQueryAnswer(await financeStateForBot(user),query,undefined,source);}
 export async function processMessage(row:Inbox){
  // The signed webhook already checked the instance owner/phone. Do not add a remote status lookup to every read.
  const b=await getBot(row.user_id);if(!b||!b.enabled||b.status!=='PRONTO'||!b.allowed_phones.includes(row.sender)){await patchMessage(row,{status:'ERRO',reply:'A conexão não está autorizada. Confira o painel.'});return;}
@@ -71,7 +73,7 @@ export async function processMessage(row:Inbox){
   const hint=whatsappConfirmationHint(transcript,recent,row.user_id,row.sender,financeSecret());
   if(hint){await patchMessage(row,{status:'RESOLVIDO',reply:hint});await reply(row,b);return;}
   if(/^confirmar\b/i.test(transcript))throw new Error('Envie CONFIRMAR seguido do código exato da proposta.');
-  const incomplete=recent.find(r=>r.status==='ESCLARECER'&&!r.finance_confirmation&&!r.confirmation_used)?.transcript,continuation=incomplete?continuedAppointment(incomplete,transcript,brazilDay()):null;
+  const incomplete=recent.find(r=>r.status==='ESCLARECER'&&!r.finance_confirmation&&!r.confirmation_used)?.transcript,continuation=incomplete?(continuedAppointment(incomplete,transcript,brazilDay())||continuedMonthlyBill(incomplete,transcript,brazilDay())):null;
   if(continuation){await propose(row,b,continuation.draft,continuation.source,await financeStateForBot(row.user_id));await patchMessage(row,{transcript:continuation.source});return;}
   const local=quickFinanceDraft(transcript,brazilDay());if(local){await propose(row,b,local,transcript,await financeStateForBot(row.user_id));return;}
   if(!key)throw new Error('A interpretação de comandos ainda precisa ser ativada.');
