@@ -327,3 +327,12 @@ O log local mostrou a primeira chamada de `/api/assistant/finance` com HTTP 200 
 - Migração `20261015141044_plans_usage_customer_details.sql` aplicada somente ao projeto Anotei `yqbbbqkouedhrunazpqd`. Testes SQL versionados em `tests/sql/subscription-plans.sql`, executados com rollback: limites e resto de cinco segundos, duas linhas na mesma conta, Pix/upgrade, repetição idempotente, tentativa após falha, contagem de voz, virada de período e bloqueio de leitura de CPF de outro usuário. Advisors: zero erros e nenhum novo aviso de segurança; novo INFO corresponde à tabela de uso acessível apenas ao servidor, com RLS e sem políticas para clientes.
 - Typecheck e 185 testes aprovados. Build local aprovado; Docker no Easypanel também compilou, validou tipos e aprovou 185 testes. Publicação `0e289b5` confirmada no serviço `icom/anotei`. Verificação online: rota de uso autenticada, gestão com nomes/autorização, telefone inválido recusado, tentativa de preço adulterado recusada, escrita do medidor recusada, campos do cadastro renderizados e manual/PDF iguais aos arquivos validados. Não foram enviados WhatsApps nem criados assinantes ou pagamentos de teste.
 - Manual online/PDF atualizado para 21 páginas, incluindo Meu uso, planos e dados de cadastro; renderização da nova página conferida.
+
+
+## Reenvio de links e desativação — 15 de outubro de 2026
+
+- Gestão exibe ações junto ao nome em cartões responsivos: Reenviar link, Desativar assinante e Reativar contato. Último status e horário vêm da fila real de reenvios; aceite do provedor não é confirmação de entrega.
+- Remoção reversível bloqueia a conta e os dois números, cancela filas pendentes, cancela a assinatura e preserva o histórico. Pagamento posterior não contorna o bloqueio administrativo; reativar não renova a assinatura.
+- Reenvio mantém identificador idempotente e exige confirmação específica de não recebimento para envios incertos. Envios em andamento não são repetidos.
+- 187 testes passaram. Migração validada em transação revertida com contatos fictícios: isolamento do gestor, casal, cancelamento da fila, reativação e bloqueio mesmo após aprovação Pix. Migração aplicada no Supabase próprio, sem novos alertas de segurança.
+- João Santos (final 8876) estava sem autorização e com envio incerto. A autorização foi restaurada e uma única tentativa foi aceita pelo provedor. Entrega no aparelho não confirmada.

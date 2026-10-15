@@ -11,7 +11,7 @@ export async function processCloudInvitations(now=Date.now()){
   const master=await rawPersonalBot(invite.owner_id);if(!master?.enabled||master.shared_owner_id||master.status!=='PRONTO'||!master.allowed_phones.includes(invite.phone))continue;
   const claimed=await service<PersonalInvitation[]>('anota_whatsapp_invitations?id=eq.'+invite.id+'&send_status=eq.NAO_ENVIADO&active=eq.1&user_id=is.null','PATCH',{send_status:'ENVIANDO'});if(!claimed[0])continue;
   let status:'ACEITO'|'INCERTO'|'FALHOU'='INCERTO';
-  try{const current=await rawPersonalBot(invite.owner_id);if(current?.enabled&&current.status==='PRONTO'&&!current.shared_owner_id&&current.allowed_phones.includes(invite.phone)){const connection=credentials(current);status=await sendText(connection.url,connection.token,invite.phone,invitationText(invite));}else status='FALHOU';}catch{}
+  try{const current=await rawPersonalBot(invite.owner_id),[active]=await service<PersonalInvitation[]>('anota_whatsapp_invitations?id=eq.'+invite.id+'&active=eq.1&send_status=eq.ENVIANDO');if(active&&current?.enabled&&current.status==='PRONTO'&&!current.shared_owner_id&&current.allowed_phones.includes(invite.phone)){const connection=credentials(current);status=await sendText(connection.url,connection.token,invite.phone,invitationText(active));}else status='FALHOU';}catch{}
   await service('anota_whatsapp_invitations?id=eq.'+invite.id+'&send_status=eq.ENVIANDO','PATCH',{send_status:status,updated_at:new Date(now).toISOString()});count++;
  }
  const links=await service<AccessLink[]>('anota_whatsapp_access_links?status=eq.NAO_ENVIADO&order=created_at&limit=3');

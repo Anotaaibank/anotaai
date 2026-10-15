@@ -28,6 +28,7 @@ export async function createPersonalInvitation(owner:string,rawPhone:unknown,exp
  const label=name===undefined?'':subscriberName(name);if(!validPlan(plan))throw new AppError('Escolha um plano disponível.');
  if(localMode())return local.createPersonalInvitation(owner,rawPhone,expected,now,label,plan);
  publicAppOrigin();const phone=phoneBR(rawPhone),prior=(await personalInvitations(owner)).find(i=>i.phone===phone),id=prior?.id||randomUUID(),token=randomBytes(32).toString('base64url');
+ if(prior&&!prior.active)throw new AppError('Este assinante está desativado. Abra Assinantes e use Reativar contato.',409);
  if(!prior&&!label)throw new AppError('Informe nome e sobrenome do novo assinante.');
  try{return await service<local.PersonalInvitation>('rpc/anota_create_invitation','POST',{p_owner:owner,p_phone:phone,p_expected:expected,p_candidate:{id,token_hash:invitationHash(token),token_cipher:seal(token,personalSecret(),'anotei-invitation:'+id),subscriber_name:label,plan_code:plan}});}catch(error){if(retry<1&&error instanceof AppError&&error.status===409){const current=await rawPersonalBot(owner);if(current&&current.updated_at!==expected)return createPersonalInvitation(owner,rawPhone,current.updated_at,now,name,plan,retry+1);}throw error;}
 }
