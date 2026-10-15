@@ -336,3 +336,11 @@ O log local mostrou a primeira chamada de `/api/assistant/finance` com HTTP 200 
 - Reenvio mantém identificador idempotente e exige confirmação específica de não recebimento para envios incertos. Envios em andamento não são repetidos.
 - 187 testes passaram. Migração validada em transação revertida com contatos fictícios: isolamento do gestor, casal, cancelamento da fila, reativação e bloqueio mesmo após aprovação Pix. Migração aplicada no Supabase próprio, sem novos alertas de segurança.
 - João Santos (final 8876) estava sem autorização e com envio incerto. A autorização foi restaurada e uma única tentativa foi aceita pelo provedor. Entrega no aparelho não confirmada.
+
+
+## Canal de comunicação com assinantes — 15 de outubro de 2026
+
+- Gestão possui Comunicação: busca por nome/número, filtro de plano e situação, seleção individual ou todos os resultados, mensagem de até 2.000 caracteres e prévia imutável de destinatários antes da confirmação. O envio usa o WhatsApp principal de cada conta cadastrada e autorizada; contatos desativados e convites sem cadastro ficam fora.
+- Fila própria com espaçamento de três segundos por canal, sem bloquear as respostas financeiras. Conexão e autorização são verificadas novamente antes do envio; pedidos idempotentes, confirmação com prazo de 15 minutos e cancelamento dos pendentes. Envio incerto não é repetido automaticamente.
+- Histórico dos últimos 20 comunicados com paginação dos destinatários e status individual. Aceite do provedor não é apresentado como entrega confirmada. Apenas gestores autenticados podem preparar, confirmar, cancelar ou ler o histórico.
+- Typecheck e 190 testes passaram. Testes SQL com dados fictícios em transação revertida validaram isolamento entre gestores, ausência de disparo antes da confirmação, idempotência, bloqueio de destinatários removidos, prazo, cancelamento e recuperação sem repetir envios após falha do worker. Nenhum comunicado real foi enviado durante os testes.

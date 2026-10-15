@@ -24,6 +24,7 @@ import {whatsappFeedbackChoice} from './whatsapp-finance.ts';
 
 import {sendText} from './whatsapp.ts';
 import {processInvitations} from './whatsapp-invitations.ts';
+import {processCommunications} from './communications-worker.ts';
 import {reserveUsage,settleUsage,type UsageReservation} from './subscription-usage.ts';
 import {audioDurationSeconds} from './audio-duration.ts';
 import {localMode} from './server.ts';
@@ -85,7 +86,7 @@ export async function processReminders(now=Date.now()){
  const sweep=reminders.anoteiReminderSweep??={next:0,running:false};if(sweep.running||sweep.next>now)return 0;sweep.running=true;let queued=0;
  try{await expireVoiceCalls().catch(()=>{});for(const row of await pendingReplies(true)){const b=await getBot(row.user_id);if(b)await reply(row,b,now);else await patchMessage(row,{reply_status:'CANCELADO'});}for(const b of await reminderBots()){try{let state=await financeStateForBot(b.user_id);if(state.documents.some(d=>d.kind==='BILL_RULE'&&d.active)&&await expandMonthlyBillsForBot(b.user_id,now))state=await financeStateForBot(b.user_id);for(const r of [...appointmentReminders(state.documents,b.allowed_phones,now),...paymentReminders(state.expenses,b.allowed_phones,now)]){const row=await enqueueReminder(b,r,now);if(row){queued++;await reply(row,b,now);}}}catch{/* Leave existing outbox entries intact; another account must not block this sweep. */}}sweep.next=now+60000;return queued;}finally{sweep.running=false;}
 }
-const ticks=globalThis as unknown as {anoteiWhatsappTicks?:Map<string,Promise<{processed?:number;reminders?:number;invitations?:number}>>};
-export function runWhatsappTick(task:'messages'|'reminders'|'invitations'='messages'){
- const active=ticks.anoteiWhatsappTicks??=new Map();let work=active.get(task);if(!work){work=(async()=>{try{return task==='messages'?{processed:await processQueue(3)}:task==='invitations'?{invitations:await processInvitations()}:{reminders:await processReminders()};}finally{active.delete(task);}})();active.set(task,work);}return work;
+const ticks=globalThis as unknown as {anoteiWhatsappTicks?:Map<string,Promise<{processed?:number;reminders?:number;invitations?:number;communications?:number}>>};
+export function runWhatsappTick(task:'messages'|'reminders'|'invitations'|'communications'='messages'){
+ const active=ticks.anoteiWhatsappTicks??=new Map();let work=active.get(task);if(!work){work=(async()=>{try{return task==='communications'?{communications:await processCommunications()}:task==='messages'?{processed:await processQueue(3)}:task==='invitations'?{invitations:await processInvitations()}:{reminders:await processReminders()};}finally{active.delete(task);}})();active.set(task,work);}return work;
 }

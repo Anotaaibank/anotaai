@@ -28,7 +28,7 @@ function startWorker(env){
   }catch{console.error('Worker sem conexão:',task,'A fila permanece no banco.');}
   finally{running.delete(task);}
  }
- for(const [task,interval] of [['messages',1000],['reminders',30000],['invitations',5000]]){
+ for(const [task,interval] of [['messages',1000],['reminders',30000],['invitations',5000],['communications',3000]]){
   void tick(task);
   setInterval(()=>void tick(task),interval);
  }
