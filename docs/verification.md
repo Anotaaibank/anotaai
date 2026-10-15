@@ -351,3 +351,11 @@ O log local mostrou a primeira chamada de `/api/assistant/finance` com HTTP 200 
 - Assinaturas ativas ou de teste não podem ser salvas manualmente sem data de validade. O campo da gestão fica obrigatório nessas situações e a API recusa tentativas de omitir a data. Cancelamentos continuam admitindo data vazia.
 - Luiz Lázaro (final 7330) tinha cadastro completo, WhatsApp autorizado e situação TESTE, mas renovação nula. A liberação administrativa de teste foi completada por 30 dias, até 13/11/2026. A função real de autorização confirmou acesso permitido. Nenhuma senha foi alterada nem pagamento aprovado.
 - Testes de regressão cobrem recusa de validade vazia em ATIVA e TESTE e aceitação de cancelamento sem renovação.
+
+
+## Login único e senha simplificada — 15 de outubro de 2026
+
+- A conta existente de Bruno Lira foi validada com o mesmo login em gestão, despesas e finanças pessoais. E-mail confirmado, perfil de gestor isento e acesso aos dois ambientes. Nenhuma senha existente foi alterada.
+- Cadastro passa de dez para seis caracteres, aceitando somente números e sem exigir letras ou símbolos. Confirmação da senha e controle de visibilidade são mantidos, inclusive no cadastro geral. Seis corresponde à configuração atual do Supabase; tentativa de configurar quatro foi recusada por ausência de project_admin_write no acesso temporário.
+- Painel pessoal apresenta atalho Gestão de assinantes apenas para gestores, calculado no servidor. A gestão mantém o atalho Abrir Anotei. As permissões de assinantes comuns permanecem exclusivas da própria conta.
+- Typecheck e 193 testes passaram. Criação e entrada com seis números foram verificadas em uma conta fictícia do autenticador, removida ao terminar, sem mensagens ou alteração de senha de clientes. Manual online e PDF acompanham o novo critério.

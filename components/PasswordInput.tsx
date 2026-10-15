@@ -2,6 +2,7 @@
 
 import {useEffect, useState} from 'react';
 import {Eye, EyeOff} from 'lucide-react';
+import {minimumPasswordLength} from '@/lib/registration-password';
 
 export default function PasswordInput({register, disabled, name='password', label='Senha'}: {register: boolean; disabled: boolean; name?:string; label?:string}) {
   const [visible, setVisible] = useState(false);
@@ -12,7 +13,7 @@ export default function PasswordInput({register, disabled, name='password', labe
     <label htmlFor={id}>{label}</label>
     <div className="login-password-control">
       <input id={id} name={name} type={visible ? 'text' : 'password'} required
-        minLength={register ? 10 : 1} maxLength={128}
+        minLength={register ? minimumPasswordLength : 1} maxLength={128}
         autoComplete={register ? 'new-password' : 'current-password'} disabled={disabled}/>
       <button type="button" className="login-password-toggle" disabled={disabled}
         aria-label={(visible ? 'Ocultar ' : 'Mostrar ')+label.toLowerCase()} aria-pressed={visible}

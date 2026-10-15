@@ -16,7 +16,7 @@
         },
         {
           "title": "Crie sua conta",
-          "text": "Preencha nome completo, CPF, endereço e e-mail. Crie uma senha com pelo menos 10 caracteres e repita em Confirmar senha. O olhinho mostra ou esconde a senha."
+          "text": "Preencha nome completo, CPF, endereço e e-mail. Crie uma senha com pelo menos 6 caracteres (podem ser só números) e repita em Confirmar senha. O olhinho mostra ou esconde a senha."
         },
         {
           "title": "Informe seus valores de partida",

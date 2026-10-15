@@ -17,7 +17,7 @@ export function registrationMoney(raw:unknown,negative=false){
 export function registerPersonalInvitation(input:Record<string,unknown>,today=brazilDay()){
  confirmedRegistrationPassword(input.password,input.password_confirmation);
  const details=registrationDetails(input);
- if(typeof input.email!=='string'||! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email.trim())||input.email.length>254||typeof input.name!=='string'||input.name.trim().length<2||input.name.length>80||typeof input.password!=='string'||input.password.length<10||input.password.length>128)throw new AppError('Confira nome, e-mail e uma senha de pelo menos 10 caracteres.');
+ if(typeof input.email!=='string'||! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email.trim())||input.email.length>254||typeof input.name!=='string'||input.name.trim().length<2||input.name.length>80)throw new AppError('Confira nome e e-mail.');
  const invite=invitationForToken(input.invitation);if(!invite)throw new AppError('Este convite foi utilizado, expirou ou foi cancelado. Peça um novo link.',409);
  const profile=profileInput({salary_cents:registrationMoney(input.salary),opening_balance_cents:registrationMoney(input.balance,true),opening_date:today,salary_day:Number(input.salary_day||5)},today);
  return registerLocal(String(input.email).trim().toLowerCase(),String(input.password),String(input.name).trim(),input.assistant_name,user=>{

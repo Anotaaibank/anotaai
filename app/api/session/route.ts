@@ -9,11 +9,13 @@ import {readReferral,referralCookie} from '@/lib/commerce-referral';
 import {registerPersonalInvitation} from '@/lib/invitation-registration';
 import {registerCloudInvitation} from '@/lib/invitation-registration-cloud';
 import {authFetch,loginCloud,createCloudSession,logoutCloud,type CloudTokens} from '@/lib/cloud-auth';
+import {confirmedRegistrationPassword} from '@/lib/registration-password';
 export const runtime='nodejs';
 export async function GET(){try{const {user}=await authorizeIdentity();return json({user});}catch(e){return failure(e);}}
 export async function POST(req:Request){try{
  sameOrigin(req);const input=object(await body(req)),email=typeof input.email==='string'?input.email.trim().toLowerCase():'',password=input.password,name=typeof input.name==='string'?input.name.trim():'';
- if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||typeof password!=='string'||password.length>128||password.length<(input.action==='register'?10:1)||input.action==='register'&&(name.length<2||name.length>80))throw new AppError('Confira nome, e-mail e senha. Para criar a conta, use pelo menos 10 caracteres na senha.');
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||typeof password!=='string'||password.length>128||password.length<1||input.action==='register'&&(name.length<2||name.length>80))throw new AppError('Confira nome, e-mail e senha.');
+ if(input.action==='register')confirmedRegistrationPassword(password,input.password_confirmation);
  throttleLocal('login:'+email,10,600000);let token:string,user;const referral=(await cookies()).get(referralCookie)?.value;
  if(input.invitation&&input.action!=='register')throw new AppError('Use o cadastro pessoal do convite.',400);
  if(localMode()){const origin=referral?readReferral(referral,campaignSecret()):null;const result=input.action==='register'?(input.invitation?registerPersonalInvitation({...input,email,password,name}):registerLocal(email,password,name,assistantName(input.assistant_name),origin?userId=>{attributeLocalRegistration(userId,origin);}:undefined)):loginLocal(email,password);token=result.token;user=result.user;}
