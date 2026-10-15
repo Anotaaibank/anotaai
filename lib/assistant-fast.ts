@@ -1,10 +1,12 @@
 import {fold,literalMoney,monetaryLiterals,financeDate} from './finance-date.ts';
 import {personalCategory} from './personal-expenses.ts';
 import type {FinanceDraft} from './finance-ai.ts';
+import {naturalAppointmentDraft,appointmentFacts} from './appointment-language.ts';
 
-// A complete single appointment can be prepared from literal date/time evidence.
-// Edits, locations, ambiguous times and combined requests retain the full interpreter.
-export function quickAppointmentDraft(text:string,today:string):FinanceDraft|null{
+// Complete single appointments use literal date/time evidence in natural order.
+// Edits, ambiguous times and combined requests retain the full interpreter.
+export function quickAppointmentDraft(text:string,today:string):FinanceDraft|null{if(!appointmentFacts(text,today))return null;return legacyAppointmentDraft(text,today)||naturalAppointmentDraft(text,today);}
+function legacyAppointmentDraft(text:string,today:string):FinanceDraft|null{
  const original=text.normalize('NFC').trim(),source=fold(original).replace(/[, ]*por favor[.! ]*$/,'');
  if(source.length>400||/[?\n]|\b(?:empresas?|lojas?|clientes?|contratos?|estoque|juridico|cnpj|pagar|pagamento|reais|recorr\w*|mensal|todo|toda|semanal|alter\w*|edit\w*|corrig\w*|cancel\w*|arquiv\w*|nao)\b/.test(source))return null;
  const m=source.match(/^(?:por favor[, ]+)?(?:agenda|agende|agendar|marca|marque|me lembra|me lembre)(?:\s+(?:pra mim|para mim|ai))?[, ]+(?:eu tenho\s+)?(?:(?:um|uma|o|a|do|da)\s+)?(.+?)\s+(?:no |na |para |em )?((?:dia .+?)|(?:\d{1,4}[/-].+?)|(?:amanha|hoje|depois de amanha)|(?:(?:proxima |proximo |nesta |neste |essa |esse )?(?:segunda|terca|quarta|quinta|sexta|sabado|domingo)(?:-feira)?))\s+as\s+(\d{1,2})(?:(?::|h)(\d{2}))?(?:\s*(?:h|horas?))?[.! ]*$/d);

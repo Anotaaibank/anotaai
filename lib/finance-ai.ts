@@ -8,6 +8,7 @@ import {personalCategories,personalCategory} from './personal-expenses.ts';
 import {expenseContext} from './expense-context.ts';
 import {quickExpenseDraft,quickAppointmentDraft,quickPlannedExpenseDraft} from './assistant-fast.ts';
 import {quickMonthlyBillDraft,recurringDay,nextMonthlyDay} from './monthly-bills.ts';
+import {appointmentFacts} from './appointment-language.ts';
 export type FinanceDraftItem={source:string;command:FinanceCommand|null;target_excerpt:string;money_evidence:{field:string;excerpt:string}[];date_evidence:{field:string;excerpt:string}[]};
 export type FinanceDraft={intent:'COMMAND'|'QUERY'|'CLARIFY'|'OUTSIDE'|'HELP';command:FinanceCommand|string|null;items?:FinanceDraftItem[]|null;question:string;confidence:'ALTA'|'BAIXA';target_excerpt:string;money_evidence:{field:string;excerpt:string}[];date_evidence:{field:string;excerpt:string}[];query:string};
 const evidence={type:'array',items:{type:'object',additionalProperties:false,properties:{field:{type:'string'},excerpt:{type:'string'}},required:['field','excerpt']}};
@@ -45,6 +46,7 @@ export function draftCommand(d:FinanceDraft,text:string,state:FinanceState,today
  c=Object.fromEntries(Object.entries(c).filter(([k])=>k==='action'||actionFields[c.action].includes(k))) as FinanceCommand;
  // An edit is a patch, not a copy of the model's view of the whole record.
  const sourceText=fold(text),targetExpense=state.expenses.find(e=>e.id===c.target_id),targetDocument=state.documents.find(d=>d.id===c.target_id);
+ if(c.action==='appointment_upsert'&&!c.target_id){const facts=appointmentFacts(text,today);if(!facts)throw new AppError('Confira a data e o horário: há uma data inválida ou informações diferentes no pedido.');if(facts.date){c.date=facts.date.value;d={...d,date_evidence:[...(d.date_evidence||[]).filter(e=>e.field!=='date'),{field:'date',excerpt:facts.date.excerpt}]};}if(facts.time)c.time=facts.time.value;else if(c.time)throw new AppError('Qual é o horário do compromisso?');}
  if(c.action==='profile_upsert')c={action:c.action,profile:c.profile};
  if(['expense_archive','expense_restore','document_archive','document_restore'].includes(c.action))c={action:c.action,target_id:c.target_id};
  if(c.action==='expense_pay')c={action:c.action,target_id:c.target_id,date:c.date,...(c.amount_cents!==undefined&&c.amount_cents!==targetExpense?.amount_cents?{amount_cents:c.amount_cents}:{})};

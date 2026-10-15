@@ -46,6 +46,20 @@ test('gestor com convite próprio vinculado acessa a agenda pelo WhatsApp sem pe
   const saved=await c.message('1');assert.equal(saved.status,'LANCADO',saved.reply);assert.equal(localFinanceState(c.user).documents.length,1);assert.equal(localFinanceState(c.user).documents[0].kind,'APPOINTMENT');assert.equal(localFinanceState(c.user).expenses.length,0);
  }finally{if(oldPublic===undefined)delete process.env.ANOTA_PUBLIC_URL;else process.env.ANOTA_PUBLIC_URL=oldPublic;c.restore();}
 });
+
+test('áudio real com dia 7 do 11 e 19 horas mostra resumo direto; repetição mantém a hora e 1 salva uma vez',async()=>{
+ const c=await context();try{
+  process.env.OPENAI_API_KEY='synthetic-only';let transcript='Agenda para mim um compromisso no próximo dia 7 do 11, 7 do mês que vem, um compromisso na igreja, às 19 horas, assistir o filme The Chosen, por favor.',transcriptions=0;
+  globalThis.fetch=async(url,init)=>{const u=String(url);if(u.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(u.endsWith('/audio/transcriptions')){transcriptions++;assert.match(String((init?.body as FormData).get('prompt')),/horários/);return Response.json({text:transcript});}assert.ok(/\/send\/(?:text|menu)$/.test(u),'Não deve chamar intérprete remoto: '+u);return Response.json({id:randomUUID()});};
+  const proposal=await c.message('','audio');assert.equal(proposal.status,'ESCLARECER',proposal.reply);assert.match(proposal.reply,/19:00/);assert.match(proposal.reply,/The Chosen/);assert.match(proposal.reply,/1 — Confirmar/);assert.equal(localFinanceState(c.user).documents.length,0);
+  // Reproduce an unresolved old request whose transcript had the time, but no proposal was issued.
+  await c.store.patchMessage(proposal,{finance_confirmation:'',confirmation_code:'',reply:'Informe a data completa.'});
+  transcript='Não, eu quero que você agende um compromisso pra mim, dia 7 do 11, eu tenho um compromisso na igreja, assistir o filme The Chosen.';
+  const repetition=await c.message('','audio');assert.equal(repetition.status,'ESCLARECER',repetition.reply);assert.match(repetition.reply,/19:00/);assert.match(repetition.reply,/The Chosen/);assert.equal(transcriptions,2);assert.equal(localFinanceState(c.user).documents.length,0);
+  const saved=await c.message('1');assert.equal(saved.status,'LANCADO',saved.reply);const events=localFinanceState(c.user).documents;assert.equal(events.length,1);assert.equal(events[0].date,financeDate('dia 7 do 11',brazilDay(),true));assert.equal(events[0].details.time,'19:00');assert.match(events[0].description,/The Chosen/);
+  await c.message('CONFIRMAR '+repetition.confirmation_code);assert.equal(localFinanceState(c.user).documents.length,1);
+ }finally{c.restore();}
+});
 test('configuração salva cem números na conta, conserva a conexão e revoga quem foi removido',async()=>{
  const c=await context(),previousManager=process.env.ANOTA_MANAGER_USER_IDS;try{
   await assert.rejects(c.server.saveBot({user:{id:c.user,name:'Teste',email:'test@example.test'},token:'fixture'},{phone,allowed_phones:[sender],enabled:true,expected_updated_at:c.bot.updated_at}),/exclusiva da gestão/);

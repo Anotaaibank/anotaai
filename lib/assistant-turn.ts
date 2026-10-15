@@ -19,12 +19,12 @@ export async function assistantTurn(o:Options):Promise<Result>{
  const replay=c.requests.get(requestId);if(replay){if(replay.text!==o.text)throw new AppError('Essa mensagem já foi usada com outro pedido.',409);if(now-replay.created>=600000)throw new AppError('O resumo expirou. Envie o pedido novamente.');if(c.pending?.plan.id===requestId&&reconcileConversation(c,o.state,now))return {...base,answer:'Esse lançamento já está registrado. Confira o histórico antes de repetir.'};if((replay.result as Result).pending)return replay.result as Result;}
  c.busy=true;
  try{
-  const resolved=resolveAssistantSource(c,o.text,o.state,now);
+  const resolved=resolveAssistantSource(c,o.text,o.state,now,today);
   if(resolved.answer)return {...base,answer:resolved.answer};
   if(c.pending&&now-c.pending.created<60000&&c.pending.source===resolved.source){if(reconcileConversation(c,o.state,now))return {...base,answer:'Esse lançamento já está registrado. Confira o histórico antes de repetir.'};return {...base,pending:{title:c.pending.plan.title,lines:c.pending.plan.lines,confirmation:c.pending.confirmation}};}
   const next=/^(?:e agora|ja abri|ja fiz|pronto|continue|continuar|proximo(?: passo)?)[.!? ]*$/.test(fold(o.text));
   if(next&&c.turns.at(-1)?.intent==='HELP'&&c.manual){const guide=assistantManual({mode:'PASSOS',step:c.manual.section===section&&c.manual.view===view?c.manual.step:1},section,view);c.manual={section,view,step:guide.next_step??guide.suggested_step};const answer=guide.answer;rememberTurn(c,o.text,{intent:'HELP'} as FinanceDraft,answer);return {...base,answer};}
-  const query=conversationQuery(c,o.text),draft:FinanceDraft=query?{intent:'QUERY',command:null,question:'',confidence:'ALTA',target_excerpt:'',money_evidence:[],date_evidence:[],query}:await extractFinance(resolved.source,o.state,o.key,today,o.transport??fetch,o.name,section,{...conversationContext(c),current_view:{section,form:view},guide:assistantManual({mode:'PASSOS'},section,view)});
+  const query=conversationQuery(c,o.text),draft:FinanceDraft=resolved.draft||(query?{intent:'QUERY',command:null,question:'',confidence:'ALTA',target_excerpt:'',money_evidence:[],date_evidence:[],query}:await extractFinance(resolved.source,o.state,o.key,today,o.transport??fetch,o.name,section,{...conversationContext(c),current_view:{section,form:view},guide:assistantManual({mode:'PASSOS'},section,view)}));
   let result:Result;
   if(draft.intent==='QUERY'||draft.intent==='HELP'||draft.intent==='CLARIFY'||draft.intent==='OUTSIDE'){
    if(draft.intent==='QUERY')draft.query=assistantQuery(draft.query,today,o.text);

@@ -10,6 +10,7 @@ import {whatsappPending,confirmedWhatsappPlan,cancelledWhatsappPlan,editedWhatsa
 import {editingPrefix,signWhatsappEdit,readWhatsappEdit,quickEditedPlan} from './whatsapp-edit.ts';
 import {expandMonthlyBillsForBot} from './monthly-bills-server.ts';
 import {transcribeExpense} from './whatsapp-ai.ts';
+import {continuedAppointment} from './appointment-language.ts';
 import {expenseStatusQuestion} from './expense-context.ts';
 import {brazilDay,object} from './model.ts';
 import {stableId} from './finance.ts';
@@ -70,6 +71,8 @@ export async function processMessage(row:Inbox){
   const hint=whatsappConfirmationHint(transcript,recent,row.user_id,row.sender,financeSecret());
   if(hint){await patchMessage(row,{status:'RESOLVIDO',reply:hint});await reply(row,b);return;}
   if(/^confirmar\b/i.test(transcript))throw new Error('Envie CONFIRMAR seguido do código exato da proposta.');
+  const incomplete=recent.find(r=>r.status==='ESCLARECER'&&!r.finance_confirmation&&!r.confirmation_used)?.transcript,continuation=incomplete?continuedAppointment(incomplete,transcript,brazilDay()):null;
+  if(continuation){await propose(row,b,continuation.draft,continuation.source,await financeStateForBot(row.user_id));await patchMessage(row,{transcript:continuation.source});return;}
   const local=quickFinanceDraft(transcript,brazilDay());if(local){await propose(row,b,local,transcript,await financeStateForBot(row.user_id));return;}
   if(!key)throw new Error('A interpretação de comandos ainda precisa ser ativada.');
   const previous=recent.find(r=>r.status==='ESCLARECER'&&!r.finance_confirmation&&!r.confirmation_used)?.transcript||'',source=previous&&/^(?:[\dR$]|(?:é|foi|o valor|amanhã|hoje|dia|às|as)\b)/i.test(transcript)?previous+'\nComplemento: '+transcript:transcript;const state=await financeStateForBot(row.user_id),name=await assistantNameForBot(row.user_id),draft=await extractFinance(source,state,key,undefined,undefined,name,'resumo',{channel:'whatsapp'});

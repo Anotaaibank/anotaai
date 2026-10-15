@@ -3,6 +3,7 @@ import {AppError,uuid} from './model.ts';
 import {fold,literalMoney} from './finance-date.ts';
 import type {FinancePlan,FinanceState} from './finance.ts';
 import type {FinanceDraft} from './finance-ai.ts';
+import {continuedAppointment} from './appointment-language.ts';
 
 type Turn={text:string;intent:FinanceDraft['intent'];answer:string};
 export type AssistantConversation={id:string;user:string;scope:'text'|'voice';expires:number;busy:boolean;turns:Turn[];incomplete?:string;query?:string;pending?:{plan:FinancePlan;source:string;confirmation:string;created:number};focus?:{ids:string[];kind:string;description:string;at:number;plan?:string};requests:Map<string,{text:string;result:unknown;created:number}>;manual?:{section:string;view:string;step:number}};
@@ -31,8 +32,9 @@ export function reconcileConversation(c:AssistantConversation,state:FinanceState
  if(!c.focus||c.focus.plan!==p.id)c.focus={ids:entries.map(e=>e.id),kind:entries.length===1?entries[0].kind:'MULTIPLE',description:entries.length===1?entries[0].description:p.title,at:now,plan:p.id};return true;
 }
 export function contextualCorrection(text:string){return /^(?:na verdade|corrig(?:e|ir|a)|corrija|quis dizer|errei|o correto|era |foram |foi )/.test(fold(text));}
-export function resolveAssistantSource(c:AssistantConversation,text:string,state:FinanceState,now=Date.now()){
+export function resolveAssistantSource(c:AssistantConversation,text:string,state:FinanceState,now=Date.now(),today=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo'}).format(new Date())):{source:string;answer?:string;target?:string;draft?:FinanceDraft}{
  reconcileConversation(c,state,now);const value=fold(text);
+ if(c.incomplete){const continuation=continuedAppointment(c.incomplete,text,today);if(continuation)return continuation;}
  if(contextualCorrection(text)){
   const focus=c.focus;
   let amountOnly=false;try{amountOnly=literalMoney(value.replace(/^(?:na verdade[, ]*)?(?:(?:foram|era|foi|gastei)\s+)?/,'').replace(/[.!?]$/,''))>0;}catch{}

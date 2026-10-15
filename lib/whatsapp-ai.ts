@@ -6,8 +6,9 @@ const schema={type:'object',additionalProperties:false,properties:{intent:{type:
 export async function transcribeExpense(bytes:Uint8Array,mime:string,key:string,transport:typeof fetch=fetch){
  const extension=mime.includes('mpeg')?'mp3':mime.includes('wav')?'wav':mime.includes('mp4')?'mp4':mime.includes('webm')?'webm':'ogg';
  const form=new FormData();form.set('file',new Blob([new Uint8Array(bytes)],{type:mime}),'audio.'+extension);form.set('model','gpt-4o-mini-transcribe');form.set('language','pt');form.set('response_format','json');
+ form.set('prompt','Mensagem em português brasileiro para uma agenda e organização financeira pessoal. Transcreva fielmente toda a fala, incluindo dias, meses, horários, valores, nomes próprios e títulos. Preserve expressões como dia sete do onze, mês que vem, dezenove horas e sete da noite. Não resuma, não complete dados ausentes e não responda ao pedido.');
  const r=await transport('https://api.openai.com/v1/audio/transcriptions',{method:'POST',headers:{Authorization:`Bearer ${key}`},body:form,signal:AbortSignal.timeout(30000),redirect:'error'});
- if(!r.ok)throw new Error('Não consegui transcrever o áudio. Envie novamente por texto, com o valor e a despesa.');
+ if(!r.ok)throw new Error('Não consegui transcrever o áudio. Tente novamente ou escreva seu pedido.');
  const d=await r.json() as {text?:unknown};if(typeof d.text!=='string'||!d.text.trim()||d.text.length>4000)throw new Error('Não consegui entender o áudio. Envie uma mensagem curta com o seu pedido.');return d.text.trim();
 }
 export async function extractExpense(text:string,today:string,key:string,previous='',transport:typeof fetch=fetch):Promise<ExpenseDraft>{
