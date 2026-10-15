@@ -16,7 +16,7 @@
         },
         {
           "title": "Crie sua conta",
-          "text": "Preencha nome e e-mail. Crie uma senha de pelo menos 10 caracteres e repita em Confirmar senha. O olhinho mostra ou esconde o que você digitou."
+          "text": "Preencha nome completo, CPF, endereço e e-mail. Crie uma senha com pelo menos 10 caracteres e repita em Confirmar senha. O olhinho mostra ou esconde a senha."
         },
         {
           "title": "Informe seus valores de partida",
@@ -444,7 +444,7 @@
       "steps": [
         {
           "title": "Confira a tela de pagamento",
-          "text": "Verifique chave Pix, recebedor, valor e prazo exibidos. Faça o Pix no seu aplicativo de banco e confira o nome do recebedor."
+          "text": "Escolha Básico por R$ 49,90 ou Ilimitado por R$ 99,90 a cada 30 dias. Confira a chave Pix, o recebedor e o valor do plano antes de pagar no banco."
         },
         {
           "title": "Avise que pagou",
@@ -488,6 +488,33 @@
       ],
       "example": "Três perguntas úteis: “Qual meu saldo?”, “Tenho contas em atraso?” e “Qual minha agenda desta semana?”.",
       "tip": "Se algo parecer errado, procure o registro antes de lançar de novo. Você pode editar, arquivar ou pedir ajuda à sua IA."
+    },
+    {
+      "id": "meu-uso",
+      "title": "19. Acompanhe sua franquia",
+      "menu": "Meu uso",
+      "visual": "access",
+      "intro": "Veja quanto utilizou e o que ainda pode usar. Este acompanhamento aparece somente no aplicativo.",
+      "steps": [
+        {
+          "title": "Abra Meu uso",
+          "text": "Toque em Meu uso no menu. Há também um resumo na Visão geral."
+        },
+        {
+          "title": "Confira o plano Básico",
+          "text": "A cada 30 dias: 150 pedidos por texto/WhatsApp, 10 minutos de áudios no WhatsApp e 10 minutos de voz no aplicativo. Os dois números dividem a franquia."
+        },
+        {
+          "title": "Entenda a contagem",
+          "text": "A voz conta da conexão ao encerramento, inclusive pausas. No WhatsApp, conta a duração do áudio. Confirmações por texto e lembretes não gastam pedidos."
+        },
+        {
+          "title": "Veja a renovação ou mude de plano",
+          "text": "Veja a data de renovação. O Ilimitado não tem teto mensal. Para mudar, escolha o plano e aguarde a aprovação do Pix."
+        }
+      ],
+      "example": "Usou 2 minutos de voz no Básico? Restam 8 minutos, compartilhados pelos dois números.",
+      "tip": "Consulte o uso somente no aplicativo. Preencher as telas manualmente não gasta pedidos à IA."
     }
   ],
   "glossary": [

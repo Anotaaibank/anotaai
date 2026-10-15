@@ -1,0 +1,61 @@
+insert into auth.users(id,email,aud,role,created_at,updated_at) values
+ ('d1111111-1111-4111-8111-111111111111','plans-manager@example.invalid','authenticated','authenticated',now(),now()),
+ ('d2222222-2222-4222-8222-222222222222','plans-one@example.invalid','authenticated','authenticated',now(),now()),
+ ('d3333333-3333-4333-8333-333333333333','plans-two@example.invalid','authenticated','authenticated',now(),now());
+insert into public.anota_access_accounts values('d1111111-1111-4111-8111-111111111111',true);
+update public.anota_pix_settings set pix_key='fixture@example.invalid',receiver='Recebedor de teste',enforce_access=true;
+insert into public.anota_whatsapp_bots(user_id,phone,allowed_phones,enabled,status,hook_cipher) values('d1111111-1111-4111-8111-111111111111','5511999999989',array['5511996666688'],true,'PRONTO','fixture');
+do $$declare actor uuid:='d1111111-1111-4111-8111-111111111111';u uuid:='d2222222-2222-4222-8222-222222222222';other uuid:='d3333333-3333-4333-8333-333333333333';i public.anota_whatsapp_invitations;p public.anota_pix_payments;rev timestamptz;plan jsonb;r jsonb;id uuid;today date:=(now() at time zone 'America/Sao_Paulo')::date;summary jsonb;
+begin
+ select updated_at into rev from public.anota_whatsapp_bots where user_id=actor;
+ i:=public.anota_create_invitation(actor,'5511996666681',rev,jsonb_build_object('id',gen_random_uuid(),'token_hash',repeat('c',64),'token_cipher',repeat('x',40),'subscriber_name','Pessoa Teste','plan_code','BASICO'));
+ if i.subscriber_name<>'Pessoa Teste' then raise exception 'NAME_NOT_SAVED';end if;
+ begin perform public.anota_create_invitation(actor,'5511996666682',rev,jsonb_build_object('id',gen_random_uuid(),'token_hash',repeat('d',64),'token_cipher',repeat('x',40)));raise exception 'STALE_NOT_BLOCKED';exception when others then if sqlerrm<>'ANOTA_CHANGED' then raise;end if;end;
+ plan:=jsonb_build_object('id',gen_random_uuid(),'title','Perfil pessoal','lines','[]'::jsonb,'checks','[]'::jsonb,'expenses','[]'::jsonb,'documents',jsonb_build_array(jsonb_build_object('expected',null,'document',jsonb_build_object('id',gen_random_uuid(),'kind','PROFILE','description','Perfil pessoal','date',today,'amount_cents',0,'status','REALIZADO','active',true,'details',jsonb_build_object('salary_cents',10000,'salary_day',5,'opening_balance_cents',20000,'opening_date',today,'overdraft_limit_cents',0,'overdraft_monthly_rate',0,'safety_buffer_cents',0)))));
+ perform public.anota_register_customer(i.token_hash,u,'fixture',plan,jsonb_build_object('full_name','Pessoa Teste','cpf','52998224725','postal_code','01001000','street','Rua de Teste','address_number','1','complement','','neighborhood','Centro','city','São Paulo','state','SP'));perform set_config('anotei.registration_user','',true);
+ if not exists(select 1 from public.anota_customer_details where user_id=u) then raise exception 'DETAILS_NOT_SAVED';end if;
+ p:=public.anota_request_pix(u,gen_random_uuid(),'Pix sintético básico','BASICO');if p.amount_cents<>4990 or public.anota_access_allowed(u) then raise exception 'PIX_BASIC_PRICE_OR_GATE';end if;
+ p:=public.anota_review_pix(actor,p.id,true);if not public.anota_access_allowed(u) then raise exception 'APPROVAL_FAILED';end if;
+ perform public.anota_named_household(actor,u,array['5511996666681','5511996666682'],'Outra Pessoa');
+ if public.anota_personal_recipient(actor,'5511996666682')<>u then raise exception 'COUPLE_ROUTING';end if;
+ begin perform public.anota_create_invitation(actor,'5511996666682',(select updated_at from public.anota_whatsapp_bots where user_id=actor),jsonb_build_object('id',gen_random_uuid(),'token_hash',repeat('e',64),'token_cipher',repeat('x',40)));raise exception 'SECOND_PHONE_DUPLICATED';exception when others then if sqlerrm<>'ANOTA_PHONE_ASSIGNED' then raise;end if;end;
+ for n in 1..150 loop id:=gen_random_uuid();r:=public.anota_usage_take(u,'REQUEST',id,1,repeat('a',64));if r ? 'error' then raise exception 'EARLY_REQUEST_LIMIT';end if;
+  if n=1 then perform public.anota_usage_settle(u,id,'REQUEST',0);r:=public.anota_usage_take(u,'REQUEST',id,1,repeat('a',64));if r ? 'duplicate' then raise exception 'FAILED_REQUEST_CANNOT_RETRY';end if;end if;
+  perform public.anota_usage_settle(u,id,'REQUEST',1,'{"ok":true}');end loop;
+ if public.anota_usage_take(u,'REQUEST',gen_random_uuid(),1,repeat('a',64))->>'error'<>'LIMIT' then raise exception 'REQUEST_QUOTA_BYPASS';end if;
+ r:=public.anota_usage_take(u,'REQUEST',id,1,repeat('a',64));if not(r->>'duplicate')::boolean or r->'result'->>'ok'<>'true' then raise exception 'REPLAY_NOT_CACHED';end if;
+ if public.anota_usage_take(u,'REQUEST',id,1,repeat('b',64))->>'error'<>'REUSED' then raise exception 'REPLAY_DIFFERENT_CONTENT';end if;
+ r:=public.anota_usage_take(u,'WHATSAPP',gen_random_uuid(),600,repeat('a',64));if (r->>'granted')::integer<>600 then raise exception 'AUDIO_ALLOC_FAILED';end if;
+ if public.anota_usage_take(u,'WHATSAPP',gen_random_uuid(),1,repeat('a',64))->>'error'<>'LIMIT' then raise exception 'AUDIO_QUOTA_BYPASS';end if;
+ id:=gen_random_uuid();r:=public.anota_usage_take(u,'VOICE',id,300,repeat('a',64));if (r->>'granted')::integer<>300 then raise exception 'VOICE_ALLOC_FAILED';end if;
+ if public.anota_usage_take(u,'VOICE',gen_random_uuid(),300,repeat('a',64))->>'error'<>'BUSY' then raise exception 'VOICE_OVERLAP';end if;
+ perform public.anota_usage_settle(u,id,'VOICE',0);if (public.anota_usage_summary(u)->>'voice_seconds')::integer<>0 then raise exception 'FAILED_VOICE_NOT_REFUNDED';end if;
+ r:=public.anota_usage_take(u,'VOICE',id,300,repeat('a',64));perform public.anota_usage_bind_voice(u,id,'rtc_fixture');
+ update public.anota_usage_events set started_at=clock_timestamp()-interval '8 seconds' where user_id=u and kind='VOICE' and event_id=id;
+ perform public.anota_usage_settle(u,id,'VOICE',300);
+ if (public.anota_usage_summary(u)->>'voice_seconds')::integer not between 8 and 9 then raise exception 'ELAPSED_VOICE_NOT_RECORDED';end if;
+ update public.anota_usage_events set amount=0 where user_id=u and kind='VOICE' and event_id=id;
+ insert into public.anota_usage_events(user_id,kind,event_id,period_start,amount,fingerprint,is_open) values(u,'VOICE',gen_random_uuid(),today,595,repeat('b',64),false);
+ r:=public.anota_usage_take(u,'VOICE',gen_random_uuid(),300,repeat('a',64));if (r->>'granted')::integer<>5 then raise exception 'VOICE_REMAINDER_NOT_CLAMPED';end if;
+ update public.anota_usage_events set is_open=false where user_id=u;
+ if public.anota_usage_take(u,'VOICE',gen_random_uuid(),1,repeat('a',64))->>'error'<>'LIMIT' then raise exception 'VOICE_LIMIT_BYPASS';end if;
+ if (public.anota_usage_summary(other)->>'requests')::integer<>0 then raise exception 'OTHER_ACCOUNT_USAGE_LEAK';end if;
+ p:=public.anota_request_pix(u,gen_random_uuid(),'Pix sintético ilimitado','ILIMITADO');if p.amount_cents<>9990 then raise exception 'UNLIMITED_PRICE';end if;
+ if (public.anota_usage_summary(u)->'limits'->>'requests')::integer<>150 then raise exception 'UNPAID_UPGRADE_ACTIVE';end if;
+ perform public.anota_review_pix(actor,p.id,true);
+ if (public.anota_usage_summary(u)->'limits'->>'requests') is not null then raise exception 'UNLIMITED_CAPPED';end if;
+ if public.anota_usage_take(u,'REQUEST',gen_random_uuid(),1,repeat('a',64)) ? 'error' then raise exception 'UNLIMITED_BLOCKED';end if;
+ update public.anota_subscriptions set plan='Básico',usage_anchor=today-30 where user_id=u;
+ if (public.anota_usage_summary(u)->>'requests')::integer<>151 then raise exception 'PERIOD_ANCHOR_SAME_CURRENT_DAY';end if;
+ update public.anota_subscriptions set usage_anchor=today-29 where user_id=u;
+ if (public.anota_usage_summary(u)->>'requests')::integer<>0 then raise exception 'PERIOD_RESET_FAILED';end if;
+ if (public.anota_usage_summary(actor)->'limits'->>'requests') is not null then raise exception 'MANAGER_CAPPED';end if;
+end $$;
+select set_config('request.jwt.claim.sub','d3333333-3333-4333-8333-333333333333',true);
+set local role authenticated;
+do $$begin if exists(select 1 from public.anota_customer_details where user_id='d2222222-2222-4222-8222-222222222222') then raise exception 'CPF_CROSS_ACCOUNT_LEAK';end if;end $$;
+reset role;
+do $$begin
+ if has_function_privilege('anon','public.anota_usage_take(uuid,text,uuid,integer,text)','execute') or has_function_privilege('authenticated','public.anota_usage_summary(uuid)','execute') or has_table_privilege('authenticated','public.anota_usage_events','select') then raise exception 'USAGE_RPC_EXPOSED';end if;
+ if has_table_privilege('anon','public.anota_customer_details','select') then raise exception 'CPF_PUBLIC';end if;
+end $$;

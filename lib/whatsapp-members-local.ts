@@ -6,12 +6,14 @@ import {phoneBR} from './whatsapp.ts';
 import {authorizedPhones} from './whatsapp-contacts.ts';
 import {isManager} from './commerce.ts';
 import type {Bot} from './whatsapp-store.ts';
+import type {PlanCode} from './subscription-plans.ts';
 
-export type PersonalInvitation={id:string;owner_id:string;phone:string;user_id:string|null;token_hash:string;token_cipher:string;expires_at:number;send_status:'NAO_ENVIADO'|'ENVIANDO'|'ACEITO'|'INCERTO'|'FALHOU';active:number;created_at:string;updated_at:string};
+export type PersonalInvitation={id:string;owner_id:string;phone:string;user_id:string|null;token_hash:string;token_cipher:string;expires_at:number;send_status:'NAO_ENVIADO'|'ENVIANDO'|'ACEITO'|'INCERTO'|'FALHOU';active:number;created_at:string;updated_at:string;subscriber_name?:string;plan_code?:PlanCode};
+function labels(){const db=localDb();db.exec('CREATE TABLE IF NOT EXISTS subscriber_labels(owner_id TEXT NOT NULL,phone TEXT NOT NULL,name TEXT NOT NULL,plan_code TEXT NOT NULL,PRIMARY KEY(owner_id,phone))');return db;}
 const tokenHash=(token:string)=>createHash('sha256').update(token).digest('hex');
 export function publicAppOrigin(raw=process.env.ANOTA_PUBLIC_URL){try{const u=new URL(raw||'');if(u.protocol!=='https:'||u.username||u.password||u.pathname!=='/'||u.search||u.hash||/^(localhost|127\.|\[|10\.|192\.168\.)/.test(u.hostname))throw Error();return u.origin;}catch{throw new AppError('Ative o endereço público do cadastro antes de enviar convites.',503);}}
 export function rawLocalBot(user:string):Bot|null{const row=localDb().prepare('SELECT data FROM bots WHERE user_id=?').get(user) as {data:string}|undefined;return row?JSON.parse(row.data):null;}
-export function localInvitations(owner:string){return localDb().prepare('SELECT * FROM whatsapp_invitations WHERE owner_id=? ORDER BY created_at,id').all(owner) as PersonalInvitation[];}
+export function localInvitations(owner:string){return labels().prepare('SELECT i.*,coalesce(l.name,\'\') AS subscriber_name,coalesce(l.plan_code,\'BASICO\') AS plan_code FROM whatsapp_invitations i LEFT JOIN subscriber_labels l ON l.owner_id=i.owner_id AND l.phone=i.phone WHERE i.owner_id=? ORDER BY i.created_at,i.id').all(owner) as PersonalInvitation[];}
 export function personalRecipient(owner:string,phone:string):string|null{
  const bot=rawLocalBot(owner);if(!bot?.enabled||bot.status!=='PRONTO'||bot.shared_owner_id||!bot.allowed_phones.includes(phone))return null;
  const invite=localDb().prepare('SELECT * FROM whatsapp_invitations WHERE owner_id=? AND phone=?').get(owner,phone) as PersonalInvitation|undefined;
@@ -26,11 +28,12 @@ export function localEffectiveBot(user:string):Bot|null{
  const master=rawLocalBot(own.shared_owner_id);if(!master||master.shared_owner_id)return {...own,enabled:false};
  return {...own,phone:master.phone,status:master.status,enabled:own.allowed_phones.length>=1&&own.allowed_phones.length<=2&&localBotAuthorized(user,own.allowed_phones[0]),token_cipher:master.token_cipher,connection_user_id:master.user_id};
 }
-export function createPersonalInvitation(owner:string,rawPhone:unknown,expected:string,now=Date.now()){
+export function createPersonalInvitation(owner:string,rawPhone:unknown,expected:string,now=Date.now(),name='',plan:PlanCode='BASICO'){
  publicAppOrigin();const phone=phoneBR(rawPhone);
  return transaction(()=>{const db=localDb(),bot=rawLocalBot(owner);if(!bot||bot.shared_owner_id||!bot.enabled||bot.status!=='PRONTO')throw new AppError('Conecte e ative o WhatsApp da IA antes de convidar.',409);if(bot.updated_at!==expected)throw new AppError('A configuração mudou. Atualize a lista.',409);
   const previous=db.prepare('SELECT * FROM whatsapp_invitations WHERE phone=?').get(phone) as PersonalInvitation|undefined;
   if(previous&&previous.owner_id!==owner)throw new AppError('Este número já está vinculado a outra conta.',409);
+  if(name)labels().prepare('INSERT INTO subscriber_labels VALUES(?,?,?,?) ON CONFLICT(owner_id,phone) DO UPDATE SET name=excluded.name,plan_code=excluded.plan_code').run(owner,phone,name,plan);
   if(previous?.user_id){const numbers=bot.allowed_phones.includes(phone)?bot.allowed_phones:authorizedPhones([...bot.allowed_phones,phone],bot.phone,isManager(owner)?Infinity:100),date=new Date(Math.max(now,Date.parse(bot.updated_at)+1)).toISOString();db.prepare('UPDATE bots SET data=?,updated_at=? WHERE user_id=?').run(JSON.stringify({...bot,allowed_phones:numbers,updated_at:date}),date,owner);db.prepare('UPDATE whatsapp_invitations SET active=1 WHERE id=?').run(previous.id);return previous;}
   if(previous&&(previous.send_status==='INCERTO'||previous.send_status==='ENVIANDO'))throw new AppError('O envio está em conferência. Confira o WhatsApp antes de reenviar.',409);
   if(previous&&previous.active&&previous.expires_at>now&&bot.allowed_phones.includes(phone)){if(previous.send_status==='FALHOU')db.prepare("UPDATE whatsapp_invitations SET send_status='NAO_ENVIADO' WHERE id=?").run(previous.id);return previous;}

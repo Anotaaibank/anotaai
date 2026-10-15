@@ -1,3 +1,5 @@
+import type {CustomerDetails} from './customer-details.ts';
+import type {PlanCode} from './subscription-plans.ts';
 import type {PixSettings,PixPayment} from './subscription-access.ts';
 import {AppError,brazilDay,object,realDate,uuid} from './model.ts';
 
@@ -11,7 +13,7 @@ export type FeedbackStatus=typeof feedbackStatuses[number];
 export type SubscriptionStatus=typeof subscriptionStatuses[number];
 export type FeedbackInput={id:string;topic:typeof feedbackTopics[number];kind:typeof feedbackKinds[number];message:string};
 export type Feedback=FeedbackInput&{user_id:string;status:FeedbackStatus;response:string;created_at:string;updated_at:string};
-export type Subscription={user_id:string;status:SubscriptionStatus;plan:string;monthly_cents:number;renewal_date:string|null;updated_at:string};
+export type Subscription={user_id:string;status:SubscriptionStatus;plan:string;monthly_cents:number;renewal_date:string|null;updated_at:string;plan_code?:PlanCode};
 export const paymentMethods=['CARTAO','PIX','BOLETO','NAO_DEFINIDO'] as const;
 export const paymentMethodLabel={CARTAO:'Cartão recorrente',PIX:'Pix · validação administrativa',BOLETO:'Boleto',NAO_DEFINIDO:'Não informado'};
 export type CommercialInput={payment_method:typeof paymentMethods[number];notes:string;follow_up_date:string|null;cancellation_reason:string;expected:string|null};
@@ -19,7 +21,7 @@ export type CustomerProfile=Omit<CommercialInput,'expected'>&{user_id:string;upd
 export type Campaign={id:string;name:string;influencer:string;channel:string;code:string;commission_bps:number;active:boolean;created_at:string;updated_at:string};
 export type Acquisition={user_id:string;campaign_id:string;captured_at:string};
 export type SubscriptionEvent={id:string;user_id:string;actor_id:string;before_subscription:Subscription|null;after_subscription:Subscription;before_profile:CustomerProfile|null;after_profile:CustomerProfile|null;created_at:string};
-export type Customer={id:string;name:string;email:string;created_at:string;subscription:Subscription|null;profile?:CustomerProfile|null;acquisition?:Acquisition|null};
+export type Customer={id:string;name:string;email:string;created_at:string;subscription:Subscription|null;details?:CustomerDetails|null;profile?:CustomerProfile|null;acquisition?:Acquisition|null};
 type BaseManagementData={customers:Customer[];feedbacks:(Feedback&{user_name:string;user_email:string})[];metrics:ReturnType<typeof commerceMetrics>;billing_mode:'MANUAL';campaigns:(Campaign&{link:string;test_link:boolean;registered:number;active_subscribers:number;mrr_cents:number})[];history:SubscriptionEvent[];attention:ReturnType<typeof commerceAttention>;reports:ReturnType<typeof commerceReports>;billing:{provider:string|null;connected:false;primary_method:'CARTAO';boleto_optional:true;public_url_ready:boolean}};
 
 // Server configuration only: names, email and user-editable metadata never grant management access.
@@ -87,4 +89,4 @@ export function campaignResults(campaigns:Campaign[],customers:Customer[],config
 // Text cells are quoted and neutralize spreadsheet formulas, including leading whitespace.
 export function commerceCsv(rows:(string|number|null)[][]){return '\uFEFF'+rows.map(row=>row.map(value=>{let cell=String(value??'');if(/^[\s\uFEFF]*[=+@-]/.test(cell)||/^[\t\r\n]/.test(cell))cell="'"+cell;return '"'+cell.replaceAll('"','""')+'"';}).join(';')).join('\r\n')+'\r\n';}
 
-export type ManagementData=BaseManagementData&{pix?:PixSettings|null;pix_payments?:PixPayment[];participantAccounts?:{phone:string;user_id:string|null;registered:boolean;active:boolean;send_status:string}[];households?:{user_id:string;phone:string}[]};
+export type ManagementData=BaseManagementData&{pix?:PixSettings|null;pix_payments?:PixPayment[];participantAccounts?:{authorized?:boolean;subscriber_name?:string;plan_code?:PlanCode;phone:string;user_id:string|null;registered:boolean;active:boolean;send_status:string}[];households?:{user_id:string;phone:string;contact_name?:string}[]};

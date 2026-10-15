@@ -5,6 +5,8 @@ import {buildFinancePlan,profileInput} from './finance.ts';
 import {applyLocalFinance} from './finance-store.ts';
 import {randomUUID} from 'node:crypto';
 import {confirmedRegistrationPassword} from './registration-password.ts';
+import {registrationDetails} from './customer-details.ts';
+import {localDb} from './local-db.ts';
 export function registrationMoney(raw:unknown,negative=false){
  if(typeof raw!=='string')throw new AppError('Informe seu salário e seu saldo atual.');let value=raw.trim().replace(/^R\$\s*/i,'');
  if(/^-?\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?$/.test(value))value=value.replaceAll('.','');
@@ -14,11 +16,13 @@ export function registrationMoney(raw:unknown,negative=false){
 }
 export function registerPersonalInvitation(input:Record<string,unknown>,today=brazilDay()){
  confirmedRegistrationPassword(input.password,input.password_confirmation);
+ const details=registrationDetails(input);
  if(typeof input.email!=='string'||! /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email.trim())||input.email.length>254||typeof input.name!=='string'||input.name.trim().length<2||input.name.length>80||typeof input.password!=='string'||input.password.length<10||input.password.length>128)throw new AppError('Confira nome, e-mail e uma senha de pelo menos 10 caracteres.');
  const invite=invitationForToken(input.invitation);if(!invite)throw new AppError('Este convite foi utilizado, expirou ou foi cancelado. Peça um novo link.',409);
  const profile=profileInput({salary_cents:registrationMoney(input.salary),opening_balance_cents:registrationMoney(input.balance,true),opening_date:today,salary_day:Number(input.salary_day||5)},today);
  return registerLocal(String(input.email).trim().toLowerCase(),String(input.password),String(input.name).trim(),input.assistant_name,user=>{
   bindPersonalInvitation(String(input.invitation),user);
+  const db=localDb();db.exec('CREATE TABLE IF NOT EXISTS customer_details(user_id TEXT PRIMARY KEY,data TEXT NOT NULL)');db.prepare('INSERT INTO customer_details VALUES(?,?)').run(user,JSON.stringify(details));
   applyLocalFinance(user,buildFinancePlan({action:'profile_upsert',profile},{documents:[],expenses:[]},user,randomUUID(),today),'MANUAL');
  });
 }

@@ -11,5 +11,6 @@ import './login-access.css';
 import './payments.css';
 import './whatsapp-contacts.css';
 import './registration.css';
+import './subscription-usage.css';
 export const metadata:Metadata={title:'Anotei na Hora · Suas finanças pessoais',description:'Falou. Anotou. Organizou. Salário, saldo, contas e renda extra com inteligência artificial por voz e WhatsApp.'};
 export default function Layout({children}:{children:React.ReactNode}){return <html lang="pt-BR"><body>{children}</body></html>;}

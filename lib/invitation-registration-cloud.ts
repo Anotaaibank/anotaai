@@ -8,8 +8,10 @@ import {invitationForToken,invitationHash,personalSecret} from './whatsapp-membe
 import {authFetch,loginCloud,createCloudSession,type CloudUser} from './cloud-auth.ts';
 import {seal} from './secret-box.ts';
 import {service} from './server.ts';
+import {registrationDetails} from './customer-details.ts';
 export async function registerCloudInvitation(input:Record<string,unknown>,today=brazilDay()){
  confirmedRegistrationPassword(input.password,input.password_confirmation);
+ const details=registrationDetails(input);
  const email=typeof input.email==='string'?input.email.trim().toLowerCase():'',name=typeof input.name==='string'?input.name.trim():'';
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||name.length<2||name.length>80||typeof input.invitation!=='string')throw new AppError('Confira nome, e-mail e senha.');
  const invite=await invitationForToken(input.invitation);if(!invite)throw new AppError('Este convite foi utilizado, expirou ou foi cancelado. Peça um novo link.',409);
@@ -28,7 +30,7 @@ export async function registerCloudInvitation(input:Record<string,unknown>,today
  }
  if(!user.id||user.email!==email)throw new AppError('Não foi possível confirmar a conta criada.',503);
  const plan=buildFinancePlan({action:'profile_upsert',profile},{documents:[],expenses:[]},user.id,randomUUID(),today);
- await service('rpc/anota_register_invitation','POST',{p_hash:hash,p_user:user.id,p_hook:seal(randomBytes(32).toString('base64url'),personalSecret(),'anota-ai-hook:'+user.id),p_plan:plan});
+ await service('rpc/anota_register_customer','POST',{p_hash:hash,p_user:user.id,p_hook:seal(randomBytes(32).toString('base64url'),personalSecret(),'anota-ai-hook:'+user.id),p_plan:plan,p_details:details});
  const update=await authFetch('admin/users/'+user.id,'PUT',{app_metadata:{registration_pending:false,anotei_invitation_hash:null}},undefined,true);
  if(!update.ok)console.warn('Cadastro concluído; atualização do estado da conta pendente.');
  return createCloudSession(await loginCloud(email,password));

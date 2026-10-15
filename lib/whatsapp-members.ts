@@ -6,6 +6,8 @@ import {seal,unseal} from './secret-box.ts';
 import {AppError} from './model.ts';
 import {phoneBR} from './whatsapp.ts';
 import type {Bot} from './whatsapp-store.ts';
+import {subscriberName} from './customer-details.ts';
+import {validPlan,type PlanCode} from './subscription-plans.ts';
 export type {PersonalInvitation} from './whatsapp-members-local.ts';
 export const publicAppOrigin=local.publicAppOrigin;
 export const invitationHash=(value:string)=>createHash('sha256').update(value).digest('hex');
@@ -22,10 +24,12 @@ export async function effectivePersonalBot(user:string):Promise<Bot|null>{
  const permitted=own.allowed_phones.length>=1&&own.allowed_phones.length<=2&&await personalRecipient(master.user_id,own.allowed_phones[0])===user;
  return {...own,phone:master.phone,status:master.status,enabled:permitted,token_cipher:master.token_cipher,connection_user_id:master.user_id};
 }
-export async function createPersonalInvitation(owner:string,rawPhone:unknown,expected:string,now=Date.now()){
- if(localMode())return local.createPersonalInvitation(owner,rawPhone,expected,now);
+export async function createPersonalInvitation(owner:string,rawPhone:unknown,expected:string,now=Date.now(),name?:unknown,plan:PlanCode='BASICO',retry=0){
+ const label=name===undefined?'':subscriberName(name);if(!validPlan(plan))throw new AppError('Escolha um plano disponível.');
+ if(localMode())return local.createPersonalInvitation(owner,rawPhone,expected,now,label,plan);
  publicAppOrigin();const phone=phoneBR(rawPhone),prior=(await personalInvitations(owner)).find(i=>i.phone===phone),id=prior?.id||randomUUID(),token=randomBytes(32).toString('base64url');
- return service<local.PersonalInvitation>('rpc/anota_create_invitation','POST',{p_owner:owner,p_phone:phone,p_expected:expected,p_candidate:{id,token_hash:invitationHash(token),token_cipher:seal(token,personalSecret(),'anotei-invitation:'+id)}});
+ if(!prior&&!label)throw new AppError('Informe nome e sobrenome do novo assinante.');
+ try{return await service<local.PersonalInvitation>('rpc/anota_create_invitation','POST',{p_owner:owner,p_phone:phone,p_expected:expected,p_candidate:{id,token_hash:invitationHash(token),token_cipher:seal(token,personalSecret(),'anotei-invitation:'+id),subscriber_name:label,plan_code:plan}});}catch(error){if(retry<1&&error instanceof AppError&&error.status===409){const current=await rawPersonalBot(owner);if(current&&current.updated_at!==expected)return createPersonalInvitation(owner,rawPhone,current.updated_at,now,name,plan,retry+1);}throw error;}
 }
 export async function invitationForToken(value:unknown,now=Date.now()):Promise<local.PersonalInvitation|null>{
  if(localMode())return local.invitationForToken(value,now);
@@ -42,5 +46,5 @@ export function invitationText(invite:local.PersonalInvitation){
 }
 export async function invitationViews(owner:string){
  if(localMode())return local.localInvitationViews(owner);
- return Promise.all((await personalInvitations(owner)).map(async i=>({phone:i.phone,registered:!!i.user_id,active:!!i.active&&!!i.user_id&&await personalRecipient(owner,i.phone)===i.user_id,send_status:i.send_status,expired:i.expires_at<=Date.now()})));
+ return Promise.all((await personalInvitations(owner)).map(async i=>({phone:i.phone,subscriber_name:i.subscriber_name||'',plan_code:i.plan_code||'BASICO',registered:!!i.user_id,active:!!i.active&&!!i.user_id&&await personalRecipient(owner,i.phone)===i.user_id,send_status:i.send_status,expired:i.expires_at<=Date.now()})));
 }
