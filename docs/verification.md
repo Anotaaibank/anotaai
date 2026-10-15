@@ -344,3 +344,10 @@ O log local mostrou a primeira chamada de `/api/assistant/finance` com HTTP 200 
 - Fila própria com espaçamento de três segundos por canal, sem bloquear as respostas financeiras. Conexão e autorização são verificadas novamente antes do envio; pedidos idempotentes, confirmação com prazo de 15 minutos e cancelamento dos pendentes. Envio incerto não é repetido automaticamente.
 - Histórico dos últimos 20 comunicados com paginação dos destinatários e status individual. Aceite do provedor não é apresentado como entrega confirmada. Apenas gestores autenticados podem preparar, confirmar, cancelar ou ler o histórico.
 - Typecheck e 190 testes passaram. Testes SQL com dados fictícios em transação revertida validaram isolamento entre gestores, ausência de disparo antes da confirmação, idempotência, bloqueio de destinatários removidos, prazo, cancelamento e recuperação sem repetir envios após falha do worker. Nenhum comunicado real foi enviado durante os testes.
+
+
+## Validade de liberações administrativas — 15 de outubro de 2026
+
+- Assinaturas ativas ou de teste não podem ser salvas manualmente sem data de validade. O campo da gestão fica obrigatório nessas situações e a API recusa tentativas de omitir a data. Cancelamentos continuam admitindo data vazia.
+- Luiz Lázaro (final 7330) tinha cadastro completo, WhatsApp autorizado e situação TESTE, mas renovação nula. A liberação administrativa de teste foi completada por 30 dias, até 13/11/2026. A função real de autorização confirmou acesso permitido. Nenhuma senha foi alterada nem pagamento aprovado.
+- Testes de regressão cobrem recusa de validade vazia em ATIVA e TESTE e aceitação de cancelamento sem renovação.

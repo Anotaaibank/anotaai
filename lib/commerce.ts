@@ -41,6 +41,7 @@ export function subscriptionInput(raw:unknown):Omit<Subscription,'updated_at'>&{
  const b=object(raw);keys(b,['user_id','status','plan','monthly_cents','renewal_date','expected','commercial']);
  if(!uuid(b.user_id)||!subscriptionStatuses.includes(b.status as SubscriptionStatus)||!Number.isSafeInteger(b.monthly_cents)||Number(b.monthly_cents)<0||Number(b.monthly_cents)>10000000||b.status==='ATIVA'&&Number(b.monthly_cents)===0)throw new AppError('Confira a assinatura. Uma assinatura paga ativa precisa ter um valor mensal.');
  if(b.renewal_date!==null&&(typeof b.renewal_date!=='string'||!realDate(b.renewal_date)))throw new AppError('Confira a data da próxima renovação.');
+ if((b.status==='ATIVA'||b.status==='TESTE')&&b.renewal_date===null)throw new AppError('Informe a validade do acesso para liberar uma assinatura ativa ou de teste.');
  if(b.expected!==null&&(typeof b.expected!=='string'||!Number.isFinite(Date.parse(b.expected))))throw new AppError('Atualize a assinatura antes de salvar.');
  const commercial=b.commercial===undefined?undefined:commercialInput(b.commercial);
  if(commercial&&b.status==='CANCELADA'&&!commercial.cancellation_reason)throw new AppError('Informe o motivo do cancelamento para acompanhar a retenção.');
