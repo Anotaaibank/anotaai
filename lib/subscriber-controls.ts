@@ -1,4 +1,4 @@
-import {AppError,object} from './model.ts';
+import {AppError,object,uuid} from './model.ts';
 import {phoneBR} from './whatsapp.ts';
 export function subscriberActiveInput(raw:unknown){
  const b=object(raw);
@@ -6,3 +6,8 @@ export function subscriberActiveInput(raw:unknown){
  return {phone:phoneBR(b.phone),active:b.active,expected:b.expected};
 }
 export function accessLinkStatus(status:string){return ({NAO_ENVIADO:'Na fila de envio',AUTOMATICO:'Na fila de envio',ENVIANDO:'Enviando — aguarde',ACEITO:'Aceito pelo serviço · entrega não confirmada',INCERTO:'Sem confirmação de envio',FALHOU:'Falha no envio',CANCELADO:'Envio cancelado'} as Record<string,string>)[status]||'Sem informação de envio';}
+export function subscriberLinkInput(raw:unknown){
+ const b=object(raw);
+ if(Object.keys(b).some(k=>!['phone','user_id','email','expected'].includes(k))||!uuid(b.user_id)||typeof b.email!=='string'||!b.email.trim()||typeof b.expected!=='string'||!Number.isFinite(Date.parse(b.expected)))throw new AppError('Selecione o cadastro existente e confira o e-mail e o número.');
+ return {phone:phoneBR(b.phone),user_id:b.user_id as string,email:b.email.trim().toLowerCase(),expected:b.expected};
+}

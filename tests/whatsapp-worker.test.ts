@@ -19,6 +19,33 @@ async function context(){const old={storage:process.env.ANOTA_STORAGE,url:proces
  const bot:import('../lib/whatsapp-store.ts').Bot={user_id:user,phone,allowed_phones:[sender],enabled:true,status:'PRONTO',instance_id:'synthetic-instance',token_cipher:seal('synthetic-token',m.server.encryptionSecret(),'anota-ai-bot:'+user),hook_cipher:'unused-test',updated_at:new Date().toISOString()};await m.store.putBot(bot,null);
  return {...m,user,bot,async message(text:string,type:'text'|'audio'='text',number=sender){const id=await m.store.enqueue(user,{provider_id:randomUUID(),sender:number,type,text:type==='audio'?'':text,sent_at:new Date().toISOString()});assert.ok(id);const row=await m.store.claimMessage();assert.ok(row);assert.equal(row.id,id);await m.worker.processMessage(row);return (await m.store.history(user)).find(r=>r.id===id)!;},restore(){localDb().prepare('DELETE FROM inbox WHERE user_id=?').run(user);localDb().prepare('DELETE FROM bots WHERE user_id=?').run(user);globalThis.fetch=transport;for(const [k,v]of Object.entries({ANOTA_STORAGE:old.storage,ANOTA_WHATSAPP_URL:old.url,OPENAI_API_KEY:old.key})){if(v===undefined)delete process.env[k];else process.env[k]=v;}}};
 }
+
+test('lista de contas por áudio e texto mostra todos os itens, edita sem gravar e confirma uma vez',async()=>{
+ const c=await context();try{
+  process.env.OPENAI_API_KEY='synthetic-only';
+  const transcript='Pago meu carro todo dia 22 valor de 1500 reais; pago internet todo dia 20 valor de 100 reais';
+  globalThis.fetch=async(url)=>{const u=String(url);if(u.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(u.endsWith('/audio/transcriptions'))return Response.json({text:transcript});assert.ok(/\/send\/(?:text|menu)$/.test(u));return Response.json({id:randomUUID()});};
+  const proposal=await c.message('','audio');assert.equal(proposal.status,'ESCLARECER',proposal.reply);assert.match(proposal.reply,/1\.500,00/);assert.match(proposal.reply,/100,00/);assert.equal(localFinanceState(c.user).expenses.length,0);
+  const edit=await c.message('2');assert.match(edit.reply,/lista inteira/);assert.equal(localFinanceState(c.user).expenses.length,0);
+  const corrected=await c.message(transcript.replace('1500','1600'));assert.equal(corrected.status,'ESCLARECER',corrected.reply);
+  const saved=await c.message('1');assert.equal(saved.status,'LANCADO',saved.reply);assert.equal(localFinanceState(c.user).expenses.length,24);assert.equal(localFinanceState(c.user).documents.filter(d=>d.kind==='BILL_RULE').length,2);
+  await c.message('CONFIRMAR '+corrected.confirmation_code);assert.equal(localFinanceState(c.user).expenses.length,24);
+ }finally{c.restore();}
+});
+
+test('gestor com convite próprio vinculado acessa a agenda pelo WhatsApp sem perfil financeiro',async()=>{
+ const c=await context(),oldPublic=process.env.ANOTA_PUBLIC_URL;try{
+  process.env.ANOTA_PUBLIC_URL='https://anotei.example';
+  const members=await import('../lib/whatsapp-members-local.ts');
+  const invite=members.createPersonalInvitation(c.user,sender,c.bot.updated_at,Date.now(),'Gestor Teste','ILIMITADO');
+  assert.equal(members.personalRecipient(c.user,sender),null);
+  localDb().prepare('UPDATE whatsapp_invitations SET user_id=?,token_cipher=? WHERE id=?').run(c.user,'',invite.id);
+  assert.equal(members.personalRecipient(c.user,sender),c.user);assert.ok((await c.store.getBot(c.user))?.allowed_phones.includes(sender));
+  globalThis.fetch=async(url)=>{assert.ok(/\/send\/(?:text|menu)$/.test(String(url)));return Response.json({id:randomUUID()});};
+  const proposal=await c.message('Agenda uma consulta dia 10 de novembro às 14h.');assert.equal(proposal.status,'ESCLARECER',proposal.reply);assert.equal(localFinanceState(c.user).documents.length,0);
+  const saved=await c.message('1');assert.equal(saved.status,'LANCADO',saved.reply);assert.equal(localFinanceState(c.user).documents.length,1);assert.equal(localFinanceState(c.user).documents[0].kind,'APPOINTMENT');assert.equal(localFinanceState(c.user).expenses.length,0);
+ }finally{if(oldPublic===undefined)delete process.env.ANOTA_PUBLIC_URL;else process.env.ANOTA_PUBLIC_URL=oldPublic;c.restore();}
+});
 test('configuração salva cem números na conta, conserva a conexão e revoga quem foi removido',async()=>{
  const c=await context(),previousManager=process.env.ANOTA_MANAGER_USER_IDS;try{
   await assert.rejects(c.server.saveBot({user:{id:c.user,name:'Teste',email:'test@example.test'},token:'fixture'},{phone,allowed_phones:[sender],enabled:true,expected_updated_at:c.bot.updated_at}),/exclusiva da gestão/);

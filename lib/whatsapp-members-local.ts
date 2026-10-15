@@ -18,13 +18,14 @@ export function personalRecipient(owner:string,phone:string):string|null{
  const bot=rawLocalBot(owner);if(!bot?.enabled||bot.status!=='PRONTO'||bot.shared_owner_id||!bot.allowed_phones.includes(phone))return null;
  const invite=localDb().prepare('SELECT * FROM whatsapp_invitations WHERE owner_id=? AND phone=?').get(owner,phone) as PersonalInvitation|undefined;
  if(!invite)return owner;
+ if(invite.user_id===owner)return invite.active?owner:null;
  const member=invite.user_id?rawLocalBot(invite.user_id):null;
  return invite.active&&member?.enabled&&member.status==='PRONTO'&&member.shared_owner_id===owner&&member.allowed_phones.length<=2&&member.allowed_phones.includes(phone)?invite.user_id:null;
 }
 export function localBotAuthorized(user:string,phone:string){const bot=rawLocalBot(user);if(!bot?.enabled||bot.status!=='PRONTO'||!bot.allowed_phones.includes(phone))return false;return personalRecipient(bot.shared_owner_id||user,phone)===user;}
 export function localEffectiveBot(user:string):Bot|null{
  const own=rawLocalBot(user);if(!own)return null;
- if(!own.shared_owner_id){const pending=new Set(localInvitations(user).map(i=>i.phone));return {...own,allowed_phones:own.allowed_phones.filter(p=>!pending.has(p))};}
+ if(!own.shared_owner_id){const pending=new Set(localInvitations(user).filter(i=>i.user_id!==user||!i.active).map(i=>i.phone));return {...own,allowed_phones:own.allowed_phones.filter(p=>!pending.has(p))};}
  const master=rawLocalBot(own.shared_owner_id);if(!master||master.shared_owner_id)return {...own,enabled:false};
  return {...own,phone:master.phone,status:master.status,enabled:own.allowed_phones.length>=1&&own.allowed_phones.length<=2&&localBotAuthorized(user,own.allowed_phones[0]),token_cipher:master.token_cipher,connection_user_id:master.user_id};
 }

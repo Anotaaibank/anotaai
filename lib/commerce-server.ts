@@ -9,7 +9,7 @@ import {getBot,type Inbox} from './whatsapp-store.ts';
 import {localDb,transaction} from './local-db.ts';
 import {localBotAuthorized} from './whatsapp-members-local.ts';
 import {pixSettings,type PixPayment} from './subscription-access.ts';
-import {rawPersonalBot,personalInvitations} from './whatsapp-members.ts';
+import {rawPersonalBot,personalInvitations,personalRecipient} from './whatsapp-members.ts';
 import {accessLinkViews} from './whatsapp-access-links.ts';
 
 export async function authorizeManager(){const auth=await authorize();requireManager(auth.user.id);return auth;}
@@ -33,7 +33,7 @@ export async function management(auth:Auth){requireManager(auth.user.id);const d
  const campaigns=campaignResults(data.campaigns,data.customers,process.env.ANOTA_PUBLIC_URL,process.env.APP_URL);
  const [pix,pix_payments,invites,households,details,master]=await Promise.all([pixSettings(),localMode()?Promise.resolve([]):all<PixPayment>('anota_pix_payments?select=*&order=created_at.desc,id'),personalInvitations(auth.user.id),localMode()?Promise.resolve([]):all<{user_id:string;phone:string;contact_name:string}>('anota_household_phones?select=*&order=user_id,phone'),localMode()?Promise.resolve([]):all<import('./customer-details.ts').CustomerDetails&{user_id:string}>('anota_customer_details?select=*&order=user_id'),rawPersonalBot(auth.user.id)]);
  const accessLinks=await accessLinkViews(auth.user.id);
- const participantAccounts=invites.map(i=>({subscriber_name:i.subscriber_name||'',plan_code:i.plan_code||'BASICO',phone:i.phone,authorized:!!master?.allowed_phones.includes(i.phone),user_id:i.user_id,registered:!!i.user_id,send_status:i.send_status,active:!!i.active,expires_at:i.expires_at,updated_at:i.updated_at,last_link:accessLinks.find(l=>l.phone===i.phone)||{status:i.send_status,updated_at:i.updated_at}}));
+ const participantAccounts=await Promise.all(invites.map(async i=>({owner_account:i.user_id===auth.user.id,whatsapp_ready:!!i.user_id&&await personalRecipient(auth.user.id,i.phone)===i.user_id,subscriber_name:i.subscriber_name||'',plan_code:i.plan_code||'BASICO',phone:i.phone,authorized:!!master?.allowed_phones.includes(i.phone),user_id:i.user_id,registered:!!i.user_id,send_status:i.send_status,active:!!i.active,expires_at:i.expires_at,updated_at:i.updated_at,last_link:accessLinks.find(l=>l.phone===i.phone)||{status:i.send_status,updated_at:i.updated_at}})));
  return {...data,customers:data.customers.map(c=>({...c,details:details.find(d=>d.user_id===c.id)||null})),pix,pix_payments,participantAccounts,households,campaigns,metrics:commerceMetrics(data.customers,data.feedbacks),attention:commerceAttention(data.customers,data.feedbacks),reports:commerceReports(data.customers),billing_mode:'MANUAL' as const,billing:{provider:['asaas','stripe','mercadopago'].includes(process.env.ANOTA_BILLING_PROVIDER||'')?process.env.ANOTA_BILLING_PROVIDER!:null,connected:false as const,primary_method:'CARTAO' as const,boleto_optional:true as const,public_url_ready:!campaignLink('verificar',process.env.ANOTA_PUBLIC_URL,process.env.APP_URL).test_link}};
 }
 async function audit(auth:Auth,entity:string,action:string,details:unknown){await service('anota_audit_logs','POST',{id:randomUUID(),user_id:auth.user.id,entity_id:entity,action,details});}

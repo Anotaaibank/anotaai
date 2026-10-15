@@ -14,6 +14,7 @@ export function readWhatsappEdit(token:string,user:string,sender:string,key:stri
 }
 // Simple corrections reuse only verified signed fields. Complex corrections retain the structured interpreter.
 export function quickEditedPlan(edit:Editing,text:string,state:FinanceState,user:string,id:string,today:string):FinancePlan|null{
+ if(edit.plan.title.startsWith("Conferir "))return null;
  const s=fold(text),amounts=monetaryLiterals(text);let c:FinanceCommand;
  const rule=edit.plan.documents.find(d=>d.document.kind==='BILL_RULE'),appointment=edit.plan.documents.length===1&&edit.plan.documents[0].document.kind==='APPOINTMENT'?edit.plan.documents[0]:null;
  if(rule){if(rule.expected||!rule.document.active)return null;const r=rule.document;c={action:'expense_schedule',description:r.description,date:r.date,amount_cents:r.amount_cents,category:String(r.details.category),details:{payment_method:r.details.payment_method},schedule_type:'MENSAL',amount_mode:'PARCELA',recurring:true,due_day:Number(r.details.day)};}

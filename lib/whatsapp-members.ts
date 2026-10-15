@@ -18,7 +18,7 @@ export async function personalRecipient(owner:string,phone:string):Promise<strin
 export async function effectivePersonalBot(user:string):Promise<Bot|null>{
  if(localMode())return local.localEffectiveBot(user);
  const own=await rawPersonalBot(user);if(!own)return null;
- if(!own.shared_owner_id){const invitations=await personalInvitations(user),members=new Set(invitations.map(i=>i.phone));return {...own,allowed_phones:own.allowed_phones.filter(phone=>!members.has(phone))};}
+ if(!own.shared_owner_id){const invitations=await personalInvitations(user),members=new Set(invitations.filter(i=>i.user_id!==user||!i.active).map(i=>i.phone));return {...own,allowed_phones:own.allowed_phones.filter(phone=>!members.has(phone))};}
  const master=await rawPersonalBot(own.shared_owner_id);
  if(!master||master.shared_owner_id)return {...own,enabled:false};
  const permitted=own.allowed_phones.length>=1&&own.allowed_phones.length<=2&&await personalRecipient(master.user_id,own.allowed_phones[0])===user;
