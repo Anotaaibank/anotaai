@@ -359,3 +359,10 @@ O log local mostrou a primeira chamada de `/api/assistant/finance` com HTTP 200 
 - Cadastro passa de dez para seis caracteres, aceitando somente números e sem exigir letras ou símbolos. Confirmação da senha e controle de visibilidade são mantidos, inclusive no cadastro geral. Seis corresponde à configuração atual do Supabase; tentativa de configurar quatro foi recusada por ausência de project_admin_write no acesso temporário.
 - Painel pessoal apresenta atalho Gestão de assinantes apenas para gestores, calculado no servidor. A gestão mantém o atalho Abrir Anotei. As permissões de assinantes comuns permanecem exclusivas da própria conta.
 - Typecheck e 193 testes passaram. Criação e entrada com seis números foram verificadas em uma conta fictícia do autenticador, removida ao terminar, sem mensagens ou alteração de senha de clientes. Manual online e PDF acompanham o novo critério.
+
+
+## Voltar do cadastro para a entrada — 15 de outubro de 2026
+
+- Cadastro pessoal apresenta Já tenho conta · Entrar no topo e no fim do formulário, também após erros e sem exigir o preenchimento dos campos. O e-mail é transportado pela sessão da aba e removido ao chegar ao login; senha não é armazenada.
+- Convite usado, cancelado ou expirado também apresenta o caminho de entrada com orientação para quem já criou a conta. Cadastro concluído mantém sessão e redirecionamento ao painel, com alternativa de login se necessário.
+- Typecheck e 193 testes passaram.
