@@ -12,3 +12,7 @@ export function calendarDays(month:string):(string|null)[]{
  return Array.from({length:Math.ceil((offset+count)/7)*7},(_,i)=>i>=offset&&i<offset+count?month+'-'+String(i-offset+1).padStart(2,'0'):null);
 }
 export function moveCalendarMonth(month:string,step:number){const [year,m]=month.split('-').map(Number);return new Date(Date.UTC(year,m-1+step,1)).toISOString().slice(0,7);}
+export function nextCalendarDays(start:string,count=10):string[]{
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(start)||!calendarDays(start.slice(0,7)).includes(start)||!Number.isInteger(count)||count<1||count>31)throw new Error('Período inválido.');
+ const first=Date.parse(start+'T12:00:00Z');return Array.from({length:count},(_,i)=>new Date(first+i*86400000).toISOString().slice(0,10));
+}
