@@ -1,13 +1,14 @@
-import {fold,literalMoney,financeDate} from './finance-date.ts';
+import {fold,literalMoney,financeDate,spokenNumber} from './finance-date.ts';
 import {personalCategory} from './personal-expenses.ts';
 import {appointmentFacts} from './appointment-language.ts';
 import {recurringDay} from './monthly-bills.ts';
+import {financialMessageDraft} from './financial-message.ts';
 import type {FinanceCommand,FinanceState,FinancePlan} from './finance.ts';
 import type {FinanceDraft} from './finance-ai.ts';
 
 // This layer extracts literal entities and resolves existing records. Unusual
 // language still goes to the structured interpreter; no model decides ownership.
-export const spokenNumber='(?:\\d+(?:[.,]\\d+)*(?:\\s+mil)?|(?:zero|um|uma|dois|duas|tres|três|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|treze|quatorze|catorze|quinze|dezesseis|dezessete|dezoito|dezenove|vinte|trinta|quarenta|cinquenta|sessenta|setenta|oitenta|noventa|cem|cento|duzentos|trezentos|quatrocentos|quinhentos|seiscentos|setecentos|oitocentos|novecentos|mil)(?:\\s+(?:e\\s+)?(?:um|uma|dois|duas|tres|três|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|quinze|vinte|trinta|quarenta|cinquenta|sessenta|setenta|oitenta|noventa|cem|cento|duzentos|trezentos|quatrocentos|quinhentos|seiscentos|setecentos|oitocentos|novecentos|mil))*)';
+export {spokenNumber} from './finance-date.ts';
 const amountPattern=new RegExp('^(?:r\\$\\s*)?('+spokenNumber+')(?:\\s+reais?)?\\b','i');
 function amountAtStart(text:string){const m=text.match(amountPattern);if(!m)return null;try{const amount=literalMoney(m[0]);if(amount<=0||amount>1000000000)return null;return {value:amount,excerpt:m[0],rest:text.slice(m[0].length).trim()};}catch{return null;}}
 export function financialAmountFragments(text:string){const pattern=new RegExp('(?:^|[,;\\n]|\\be\\b)\\s*(?:(?:anota|anote|lanca|lança|lance|gastei|registra|registre)\\s+)?(?:r\\$\\s*)?'+spokenNumber+'(?:\\s+reais?)?\\s+(?:de|do|da|com|no|na)\\s+(?!(?:janeiro|fevereiro|marco|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\\b)[a-zá-ú]+','gi');return [...text.matchAll(pattern)].map(m=>m[0]);}
@@ -16,7 +17,7 @@ export function normalizeAssistantText(text:string){
  value=value.replace(/\bacabei de (ganhar|receber|gastar)\b/gi,(_all,verb:string)=>({ganhar:'ganhei',receber:'recebi',gastar:'gastei'}[verb.toLowerCase()]||verb));
  // Resolve only an explicit, adjacent self-correction. Conflicting facts without
  // a correction marker remain ambiguous and cannot create a write.
- const correction=new RegExp('('+spokenNumber+')\\s*,\\s*(?:não|nao|quer dizer)\\s*,?\\s*('+spokenNumber+')','gi');
+ const correction=new RegExp('('+spokenNumber+')(?:\\s+reais?)?\\s*,\\s*(?:não|nao|quer dizer|corrigindo|melhor)\\s*,?\\s*('+spokenNumber+')','gi');
  value=value.replace(correction,(_all,_old,current)=>current);
  value=value.replace(/(?:às|as)\s+([^,;]+?)\s*,\s*(?:quer dizer|melhor|corrigindo)\s*,?\s*(?:às|as)\s+([^.;]+)/gi,(_all,_old,current)=>'às '+current);
  return value;
@@ -27,7 +28,7 @@ export function informationOnlyMessage(text:string){const s=fold(text);if(/^(?:q
 export function languageCommand(command:FinanceCommand,money:{field:string;excerpt:string}[]=[],dates:{field:string;excerpt:string}[]=[],target=''):FinanceDraft{return {...empty('COMMAND'),command,money_evidence:money,date_evidence:dates,target_excerpt:target};}
 export function languageGuard(text:string):FinanceDraft|null{
  const s=fold(text);
- if(/\b(?:se eu|se a gente|suponha|supondo|por exemplo|e so um exemplo|estou simulando|acho que vou|talvez eu)\b/.test(s)||/^nao (?:paguei|gastei|recebi|agenda|agende|anota|anote|lanca|lance|registre)\b/.test(s)){
+ if(/\b(?:se eu|se a gente|suponha|supondo|por exemplo|e so um exemplo|estou simulando|acho que vou|talvez eu)\b/.test(s)||/^(?:eu )?nao (?:paguei|gastei|recebi|agenda|agende|anota|anote|lanca|lance|registre)\b/.test(s)){
   const simulation=s.match(/^(?:se eu|suponha que eu) gastar\s+(.+?)(?:[, ]+)(?:quanto|o que) sobra/);const amount=simulation&&amountAtStart(simulation[1]);
   if(amount&&!amount.rest)return languageQuery({report:'simulation',amount_cents:amount.value});
   return empty('HELP',/^nao paguei/.test(s)?'O pagamento não foi registrado. A conta continua pendente se já estiver cadastrada.':'Não fiz alterações. Para registrar, envie um pedido direto com os dados reais.');
@@ -45,6 +46,11 @@ const options=(rows:{description:string;date?:string;entry_date?:string}[])=>row
 export type NaturalContext={query?:string;focus?:FinancePlan};
 export function naturalReadQuery(text:string,today:string):string|null{
  const s=fold(text),query=(raw:Record<string,unknown>)=>JSON.stringify(raw);
+ const paidSearch=s.match(/^quanto (?:eu )?paguei (?:de|do|da|com|no|na) (.+?)[?!. ]*$/);
+ if(paidSearch&&!/\b(?:e|ontem|hoje|amanha|semana|ano|entre|desde|ate)\b|\d|,/.test(paidSearch[1])){
+  const search=paidSearch[1].replace(/\s+(?:neste mes|este mes|esse mes|n[eo] mes atual|mes atual|no mes passado|mes passado|no mes anterior|mes anterior)$/,'').trim();
+  if(search)return query({period:/mes passado|mes anterior/.test(s)?'mes_anterior':/mes atual|neste mes|este mes|esse mes/.test(s)?'mes_atual':'total',search,status:'REALIZADO'});
+ }
  if(/^(?:quanto (?:eu )?tenho|quanto tem nas minhas contas|quanto tenho disponivel)[?!. ]*$/.test(s))return query({topic:'saldo'});
  if(/^quanto (?:eu )?tenho guardado[?!. ]*$/.test(s))return query({topic:'reservas'});
  if(/^quanto (?:sobra|fica).*contas.*mes/.test(s)||/^quanto (?:eu )?posso gastar/.test(s))return query({report:'available'});
@@ -90,7 +96,7 @@ export function naturalFinanceTurn(text:string,state:FinanceState,today:string,c
   if(rows.length>1){const current=rows.filter(e=>e.entry_date.startsWith(today.slice(0,7)));if(current.length===1)rows=current;}
   if(rows.length===1)return languageCommand({action:'expense_pay',target_id:rows[0].id,date:today},[],[],rows[0].id);
   if(rows.length>1)return empty('CLARIFY','Qual conta você pagou? '+options(rows)+'.');
-  if(!amount)return empty('CLARIFY','Não encontrei uma conta pendente correspondente. Qual é o nome e o valor do pagamento?');
+  if(!amount){const financial=financialMessageDraft(text,state,today);if(financial)return financial;return empty('CLARIFY','Não encontrei uma conta pendente correspondente. Qual é o nome e o valor do pagamento?');}
  }
  if(context.focus&&/^(?:na verdade|corrige|corrija|muda|mude|era|foi)\b/.test(s)){
   const focus=context.focus,documents=focus.documents.filter(d=>d.document.kind==='APPOINTMENT'),expenses=focus.expenses;
@@ -111,6 +117,6 @@ export function naturalFinanceTurn(text:string,state:FinanceState,today:string,c
   if(rows.length===1&&!/^cancel/.test(s))return empty('CLARIFY','Para qual data ou horário você quer mudar '+rows[0].description+'?');
   if(rows.length>1)return empty('CLARIFY','Qual compromisso? '+options(rows)+'.');
  }
- return null;
+ return financialMessageDraft(text,state,today);
 }
 export function sourceWithVerifiedTarget(source:string,draft:FinanceDraft){const command=draft.command as FinanceCommand|null;return command?.target_id&&draft.target_excerpt===command.target_id?source+'\nRegistro identificado nesta conversa: '+command.target_id:source;}

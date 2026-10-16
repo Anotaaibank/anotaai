@@ -18,6 +18,36 @@ process.env.ANOTA_DATABASE_PATH=':memory:';
 async function modules(){const hooks=registerHooks({resolve(s,c,next){return next(s==='next/headers'?'next/headers.js':s,c);}});try{return {store:await import('../lib/whatsapp-store.ts'),worker:await import('../lib/whatsapp-worker.ts'),server:await import('../lib/whatsapp-server.ts')};}finally{hooks.deregister();}}
 const sender='5511999999999',phone='5511988888888';
 
+test('texto e áudio de última parcela salvam uma única previsão após sim e confirmação repetida não duplica',async()=>{
+ for(const type of ['text','audio'] as const){const c=await context();try{
+  process.env.OPENAI_API_KEY='synthetic-only';const text='Dia 25 agora vou pagar 800 reais da última parcela da minha moto.';let transcriptions=0;
+  globalThis.fetch=async(url)=>{const path=String(url);if(path.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(path.endsWith('/audio/transcriptions')){transcriptions++;return Response.json({text});}assert.ok(/\/send\/(?:text|menu)$/.test(path),'Não deve chamar o modelo para reinterpretar o pedido completo');return Response.json({id:randomUUID()});};
+  const proposed=await c.message(text,type);assert.equal(proposed.status,'ESCLARECER',proposed.reply);assert.match(proposed.reply,/800,00/);assert.equal(localFinanceState(c.user).expenses.length,0);
+  assert.equal((await c.message('sim')).status,'LANCADO');const state=localFinanceState(c.user);assert.equal(state.expenses.length,1);assert.equal(state.expenses[0].status,'PREVISTO');assert.equal(state.expenses[0].entry_date,financeDate('dia 25 agora',brazilDay(),true));assert.match(state.expenses[0].description,/última parcela/i);assert.equal(state.documents.filter(d=>d.kind==='BILL_RULE').length,0);assert.equal(financeSnapshot(state).balance_cents,0);
+  await c.message('confirma');assert.equal(localFinanceState(c.user).expenses.length,1);assert.equal(transcriptions,type==='audio'?1:0);
+ }finally{c.restore();}}
+});
+
+test('valor ausente é a única pergunta; resposta curta completa sem modelo e áudio vazio é erro de transcrição',async()=>{
+ const c=await context();try{
+  globalThis.fetch=async(url)=>{assert.ok(/\/send\/(?:text|menu)$/.test(String(url)));return Response.json({id:randomUUID()});};
+  const incomplete=await c.message('Paguei a parcela da moto.');assert.equal(incomplete.reply,'Qual foi o valor?');assert.equal((await c.message('800')).status,'ESCLARECER');assert.equal(localFinanceState(c.user).expenses.length,0);assert.equal((await c.message('confirmo')).status,'LANCADO');assert.equal(localFinanceState(c.user).expenses.length,1);
+  process.env.OPENAI_API_KEY='synthetic-only';globalThis.fetch=async(url)=>{const path=String(url);if(path.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(path.endsWith('/audio/transcriptions'))return Response.json({text:' '});assert.ok(/\/send\/(?:text|menu)$/.test(path));return Response.json({id:randomUUID()});};
+  const empty=await c.message('','audio');assert.equal(empty.status,'ERRO');assert.match(empty.reply,/áudio.*Reenvie ou digite/);assert.doesNotMatch(empty.reply,/valor|data|categoria/);assert.equal(localFinanceState(c.user).expenses.length,1);
+ }finally{c.restore();}
+});
+
+test('fila atrasada resolve amanhã pelo recebimento e a confirmação recém-gerada continua válida',async()=>{
+ const c=await context();try{
+  globalThis.fetch=async()=>Response.json({id:randomUUID()});
+  const id=await c.store.enqueue(c.user,{provider_id:randomUUID(),sender,type:'text',text:'Amanhã vou pagar 800 da moto',sent_at:'2026-09-30T23:50:00Z'});assert.ok(id);
+  localDb().prepare("UPDATE inbox SET data=json_set(data,'$.created_at',?) WHERE id=?").run('2026-09-30T23:50:00Z',id);
+  const row=await c.store.claimMessage();assert.ok(row);await c.worker.processMessage(row);
+  const proposed=(await c.store.history(c.user)).find(r=>r.id===id)!;assert.equal(proposed.status,'ESCLARECER',proposed.reply);assert.match(proposed.reply,/01\/10\/2026/);
+  assert.equal((await c.message('1')).status,'LANCADO');assert.equal(localFinanceState(c.user).expenses[0].entry_date,'2026-10-01');
+ }finally{c.restore();}
+});
+
 test('venda pessoal por áudio e comissão por texto só aumentam saldo e calendário após confirmar, sem duplicar',async()=>{
  const c=await context();try{
   process.env.OPENAI_API_KEY='synthetic-only';

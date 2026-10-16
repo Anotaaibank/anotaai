@@ -3,10 +3,11 @@ import {AppError} from './model.ts';
 import {feedbackTokenPrefix,readFeedback} from './whatsapp-feedback.ts';
 import {editingPrefix,readWhatsappEdit} from './whatsapp-edit.ts';
 export const whatsappActor=(user:string,sender:string)=>user+':whatsapp:'+sender;
+export function confirmationChoice(text:string){const value=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase().replace(/[.! ]+$/,'');if(/^(?:(?:a |o )?(?:opcao|numero)\s+)?(?:um|uma|1)$/.test(value)||/^(?:sim|confirma|confirmo|confirmar|pode confirmar|pode salvar)$/.test(value))return '1';if(/^(?:(?:a |o )?(?:opcao|numero)\s+)?(?:dois|duas|2)$/.test(value))return '2';return null;}
 type PendingRow={user_id:string;sender:string;finance_confirmation?:string;confirmation_code?:string;confirmation_used?:boolean};
 function readPending(token:string,user:string,sender:string,key:string,now:number){return token.startsWith(feedbackTokenPrefix)?readFeedback(token,user,sender,key,now):readFinance(token,whatsappActor(user,sender),key,now);}
 function numberChoice(text:string,rows:PendingRow[],user:string,sender:string,key:string,choice:'1'|'2',now:number){
- if(!new RegExp('^'+choice+'[.!]?$').test(text.trim()))return null;
+ if(confirmationChoice(text)!==choice)return null;
  const valid=rows.filter(r=>r.user_id===user&&r.sender===sender&&!r.confirmation_used&&r.finance_confirmation).filter(r=>{try{const p=readPending(r.finance_confirmation!,user,sender,key,now);return r.confirmation_code===p.id.replaceAll('-','').slice(0,10).toUpperCase();}catch{return false;}});
  if(valid.length>1)throw new AppError('Há mais de uma proposta pendente. Toque no botão da proposta desejada ou envie '+(choice==='1'?'CONFIRMAR':'EDITAR')+' seguido do código dela.');
  if(!valid.length)throw new AppError('Não há proposta válida aguardando resposta. Ela pode ter sido concluída, cancelada ou expirado. Envie um novo pedido.');
