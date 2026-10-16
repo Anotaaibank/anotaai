@@ -429,3 +429,9 @@ O log local mostrou a primeira chamada de `/api/assistant/finance` com HTTP 200 
 - Suíte local: 231 testes aprovados. Build e typecheck também são obrigatórios na publicação pelo Dockerfile.
 - Publicação concluída com build, typecheck e 231 testes aprovados. Conferência pública verificou troca dos exemplos, confirmação ilustrativa, expansão das dúvidas, navegação aos planos e abertura do cadastro existente. Computador e celular de 390 px foram inspecionados; nenhuma rolagem horizontal da página. Corrigido um marcador numérico que aparecia antes do nome do Básico, com nova publicação e conferência final.
 - Conferência autenticada confirmou os novos totais/listas e o atalho de despesas na conta do dono. Calendário tem legenda Recebido e usa os mesmos documentos da conta; nenhum lançamento real foi criado ou alterado para a inspeção. As entradas continuam disponíveis em Meu dinheiro → Entradas e reservas e em Rendas complementares, com descrição, data, valor e situação. Viewport restaurado após a inspeção.
+
+## Cartão recorrente como opção principal — 16 de outubro de 2026
+
+- Política comercial compartilhada define cartão como principal, renovação mensal e Pix como alternativa com aprovação administrativa. Apresentação e FAQ mostram a intenção e identificam a integração como em preparação.
+- Tela de assinatura abre na modalidade cartão, com ação de cobrança indisponível até a integração. Pix fica em opção alternativa explícita; pagamentos Pix pendentes são mostrados diretamente. O fluxo existente de Pix, os preços, acessos e dados financeiros não são alterados.
+- Gestão mostra cartão principal, Pix disponível e os passos de ativação. O contrato técnico da futura integração está em credit-card-subscriptions.md; não coleta números de cartão, cria assinaturas ou cobra clientes.

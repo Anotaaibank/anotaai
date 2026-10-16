@@ -3,6 +3,7 @@ import {useEffect,useRef,useState} from 'react';
 import {AlertCircle,ArrowUpRight,CalendarClock,Copy,CreditCard,Download,Link2,Plus,ReceiptText,X} from 'lucide-react';
 import {currency} from '@/lib/model';
 import {paymentMethods,paymentMethodLabel,subscriptionStatusLabel,type Campaign,type Customer,type ManagementData} from '@/lib/commerce';
+import {subscriptionBillingPolicy} from '@/lib/subscription-billing-policy';
 
 const date=(value:string|null)=>value?(value.includes('T')?new Date(value).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo'}):value.split('-').reverse().join('/')):'Não informada';
 
@@ -10,13 +11,13 @@ export function CommercialFields({customer,busy}:{customer:Customer;busy:boolean
  <div className="commerce-form-grid"><label>Forma de cobrança<select name="payment_method" defaultValue={customer.profile?.payment_method||(customer.subscription?'NAO_DEFINIDO':'CARTAO')} disabled={busy}>{paymentMethods.map(m=><option key={m} value={m}>{paymentMethodLabel[m]}</option>)}</select></label><label>Data para acompanhar o cliente<input name="follow_up_date" type="date" defaultValue={customer.profile?.follow_up_date||''} disabled={busy}/></label></div>
  <label>Anotações internas<textarea name="notes" maxLength={2000} rows={3} defaultValue={customer.profile?.notes||''} disabled={busy} placeholder="Ex.: acompanhar a experiência após os primeiros dias."/></label>
  <label>Motivo do cancelamento<textarea name="cancellation_reason" rows={2} maxLength={500} defaultValue={customer.profile?.cancellation_reason||''} disabled={busy} placeholder="Preencha se marcar a assinatura como cancelada."/></label>
- <small>Estas anotações ficam somente na gestão. O cartão é a opção principal; boleto exige o pagamento de cada cobrança.</small>
+ <small>Estas anotações ficam somente na gestão. Cartão recorrente é a opção principal. Pix é uma alternativa com validação administrativa; boleto exige o pagamento de cada cobrança.</small>
  </>;}
 
 export function BillingReadiness({data}:{data:ManagementData}){return <section className="bank-panel commerce-billing-note">
  <div className="commerce-section-title"><CreditCard/><div><h2>Assinatura no cartão, todo mês</h2><p>Organizado para cobrança recorrente e divulgação por influenciadores.</p></div></div>
- <div className="commerce-billing-grid"><div><strong>Cartão recorrente</strong><p>A cobrança mensal será feita pelo serviço de pagamentos. A confirmação do serviço atualizará a assinatura e os recebimentos.</p></div><div><strong>Boleto opcional</strong><p>Gera uma cobrança por mês. O cliente precisa pagar o boleto; a assinatura depende da confirmação do pagamento.</p></div></div>
- <ol className="commerce-checklist"><li><span className="bank-pill">Pendente</span>Conectar {data.billing.provider||'o serviço de pagamentos'} e validar cobranças, falhas e cancelamentos.</li><li><span className="bank-pill">Pendente</span>Definir o plano, o preço e a página de pagamento com cartão.</li><li><span className="bank-pill">{data.billing.public_url_ready?'Configurado':'Pendente'}</span>Configurar o domínio público para divulgar os links.</li></ol>
+ <div className="commerce-billing-grid"><div><strong>Cartão recorrente · principal</strong><p>Renovação mensal automática, após integrar o serviço de pagamentos. Cartão ainda não disponível para cobrança.</p></div>{subscriptionBillingPolicy.pix.alternative&&<div><strong>Pix · alternativa disponível</strong><p>Permanece habilitado, com conferência administrativa de cada pagamento antes de liberar o acesso.</p></div>}<div><strong>Boleto opcional · futuro</strong><p>Depende da integração do serviço de pagamentos. Exige o pagamento de cada cobrança.</p></div></div>
+ <ol className="commerce-checklist"><li><span className="bank-pill">Pendente</span>Conectar {data.billing.provider||'o serviço de pagamentos'} e validar cobranças, falhas e cancelamentos.</li><li><span className="bank-pill">Preparado</span>Planos Básico e Ilimitado cadastrados; cartão destacado na tela de assinatura, aguardando a integração do pagamento.</li><li><span className="bank-pill">{data.billing.public_url_ready?'Configurado':'Pendente'}</span>Configurar o domínio público para divulgar os links.</li></ol>
  <p className="bank-note">Cobrança automática ainda não conectada. As situações atuais são registros manuais; previsão de receita não é dinheiro recebido. Dados do cartão serão tratados pelo serviço de pagamentos.</p>
  </section>;}
 
