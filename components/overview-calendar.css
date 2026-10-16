@@ -3,7 +3,7 @@
 .anota-app .overview-calendar .bank-panel-title h2{font-size:21px}
 .anota-app .overview-calendar .overview-expand{flex-shrink:0;border:1px solid #b4cdbd;border-radius:10px;background:#e3efe6;color:#214c36;padding:10px 14px;font-size:12px;font-weight:700}
 .anota-app .overview-calendar-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(230px,1fr);gap:22px;margin-top:18px}
-.anota-app .overview-calendar .agenda-days.overview-ten-days{grid-template-columns:repeat(5,minmax(0,1fr))}
+.anota-app .overview-calendar .agenda-days.overview-ten-days{grid-template-columns:repeat(10,minmax(0,1fr))}
 .anota-app .overview-calendar .agenda-day{min-height:70px}
 .anota-app .overview-calendar .overview-weekday{font-size:10px;text-transform:capitalize;opacity:.8}
 .anota-app .overview-calendar .agenda-month-nav h3{font-size:17px}
@@ -17,4 +17,5 @@
 .anota-app .overview-calendar .overview-empty{display:flex;flex-direction:column;gap:12px;padding:28px 0;color:#57725f}.anota-app .overview-calendar .overview-empty>span{font-size:26px;color:#7fa98a}.anota-app .overview-calendar .overview-empty strong{font-size:13px}.anota-app .overview-calendar .overview-empty p{font-size:12px;line-height:1.7;margin:0}
 .anota-app .overview-calendar .overview-open-agenda{width:100%;margin-top:18px;border:1px solid #c2d7c8;border-radius:10px;background:#e5efe8;color:#28513a;padding:11px;font-weight:600;font-size:12px}
 @media(max-width:1050px){.anota-app .overview-calendar-layout{grid-template-columns:1fr}.anota-app .overview-calendar .agenda-selected-day{padding:18px}}
+@media(max-width:700px){.anota-app .overview-calendar .agenda-days.overview-ten-days{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(max-width:520px){.anota-app .overview-calendar .bank-panel-title{align-items:flex-start}.anota-app .overview-calendar .bank-panel-title h2{font-size:17px}.anota-app .overview-calendar .overview-expand{font-size:10px;padding:9px;max-width:110px}.anota-app .overview-calendar .overview-upcoming-item{flex-wrap:wrap;gap:8px}.anota-app .overview-calendar .overview-upcoming-item strong{min-width:100px}.anota-app .overview-calendar .agenda-day{min-height:64px}}
