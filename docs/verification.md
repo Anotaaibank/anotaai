@@ -436,3 +436,10 @@ O log local mostrou a primeira chamada de `/api/assistant/finance` com HTTP 200 
 - Tela de assinatura abre na modalidade cartão, com ação de cobrança indisponível até a integração. Pix fica em opção alternativa explícita; pagamentos Pix pendentes são mostrados diretamente. O fluxo existente de Pix, os preços, acessos e dados financeiros não são alterados.
 - Gestão mostra cartão principal, Pix disponível e os passos de ativação. O contrato técnico da futura integração está em credit-card-subscriptions.md; não coleta números de cartão, cria assinaturas ou cobra clientes.
 - Typecheck, 231 testes e build aprovados; publicação concluída. Conferência autenticada verificou cartão selecionado por padrão, botão de cobrança desabilitado, abertura do Pix alternativo com os dados existentes e retorno ao cartão. A apresentação pública e a resposta expandida do FAQ mostram cartão principal em preparação e Pix alternativo. Nenhum pagamento foi enviado nem assinatura alterada.
+
+## Reestruturação comercial da landing — 16 de outubro de 2026
+
+- Reorganizada `/conheca` em oito seções do briefing: hero, vídeo, três benefícios, exemplos, rotina, planos, dúvidas e chamada final. Comunicação curta e acessível, smartphone com conversa animada, painel ilustrativo, exemplos interativos e contratação pelo endereço existente. Todas as gravações, serviços e regras do aplicativo permanecem fora do escopo.
+- Exemplos mostram a confirmação real antes de anunciar registro. Não usam dados reais nem chamam a API. Vídeo tem poster reservado, sem simular reprodução. Cartão em preparação e Pix alternativo preservados.
+- Mobile tem chamada fixa somente após o hero, recolhida enquanto os planos estão visíveis. Animações pausam fora da seção e respeitam movimento reduzido; controle de pausa/reinício disponível. Metadados e estrutura semântica atualizados, mantendo noindex da validação.
+- Rastreamento é uma ponte de eventos DOM sem rede, cookies ou dados pessoais. Não aceita compra fictícia; pagamento não dispara sem checkout real. Contrato e vídeo descritos em landing-page.md.
