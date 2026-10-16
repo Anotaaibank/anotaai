@@ -1,7 +1,8 @@
 'use client';
 import {useEffect,useRef,useState,type ReactNode} from 'react';
-import {ArrowDown,ArrowUpRight,ArrowRight,Check,CalendarDays,Wallet,MessageCircle,Mic,Play,Pause,RotateCcw,Sparkles,Plus,Minus,Bell,ChartNoAxesCombined,CreditCard,ShieldCheck,Volume2} from 'lucide-react';
+import {ArrowDown,ArrowUpRight,ArrowRight,Check,CalendarDays,Wallet,MessageCircle,Mic,Play,Sparkles,Plus,Minus,Bell,ChartNoAxesCombined,CreditCard,ShieldCheck,Volume2} from 'lucide-react';
 import {BrandOrb} from './Brand';
+import SalesScrollStory from './SalesScrollStory';
 import {subscriptionPlans,type PlanCode} from '@/lib/subscription-plans';
 import {currency} from '@/lib/model';
 import {subscriptionPaymentCopy} from '@/lib/subscription-billing-policy';
@@ -23,26 +24,6 @@ const faqItems=[
  ['Preciso confirmar o que mandei?','Sim. Confira o resumo e toque em Confirmar ou responda 1. Para corrigir, escolha 2 e envie a alteração.'],
  ['Como funciona o pagamento?',subscriptionPaymentCopy.faq],
 ] as const;
-
-function AnimatedPhone({visible}:{visible:boolean}){
- const [tick,setTick]=useState(1),[playing,setPlaying]=useState(false);
- useEffect(()=>{const preference=window.matchMedia('(prefers-reduced-motion: reduce)');if(preference.matches)setTick(3);else setPlaying(true);const change=()=>{setPlaying(!preference.matches);if(preference.matches)setTick(3);};preference.addEventListener('change',change);return()=>preference.removeEventListener('change',change);},[]);
- useEffect(()=>{if(!visible||!playing)return;const interval=setInterval(()=>{if(document.visibilityState==='visible')setTick(t=>(t+1)%12);},1800);return()=>clearInterval(interval);},[visible,playing]);
- const bill=tick>=6,step=tick%6,registered=step>=3;
- return <div className="s2-phone-stage"><span className="s2-orbit one" aria-hidden="true"/><span className="s2-orbit two" aria-hidden="true"/>
-  <div className="s2-floating-card" aria-hidden="true"><span><Check size={16}/></span><p>Menos coisa na cabeça.<b>Mais leveza no dia.</b></p></div>
-  <div className="s2-phone"><div className="s2-statusbar" aria-hidden="true"><span>9:41</span><i/><span>● ▰</span></div><div className="s2-phone-header"><BrandOrb/><span><strong>Anotei na Hora</strong><small>Seu assistente pessoal</small></span><MessageCircle size={19}/></div>
-   <div className="s2-phone-conversation" aria-hidden="true" key={bill?'bill':'expense'}><span className="s2-chat-date">CONVERSA ILUSTRATIVA</span><div className="s2-bubble sent"><div className="s2-wave"><Mic size={17}/><span>▂ ▄ ▆ ▃ ▇ ▅ ▂ ▆ ▄ ▂ ▅ ▃</span><small>0:06</small></div><p>{bill?'Me lembra de pagar a internet: R$ 120, dia 15 do próximo mês.':'Anotei, gastei R$ 85 no supermercado.'}</p></div>
-    {step>=1?<div className="s2-bubble received s2-appear"><strong>Vamos conferir?</strong><p>{bill?'Internet · R$ 120,00':'Supermercado · R$ 85,00'}<br/>{bill?'Dia 15 do próximo mês':'Hoje · Despesa paga'}</p><span className="s2-chat-confirm">1 · Confirmar</span><small className="s2-chat-edit">2 · Editar</small></div>:<span className="s2-typing"><i/><i/><i/></span>}
-    {step>=2&&<div className="s2-bubble sent small s2-appear">1 · Confirmar <Check size={12}/></div>}
-    {registered&&<div className="s2-bubble received s2-appear"><strong className="s2-saved"><Check size={15}/>Prontinho!</strong><p>{bill?'Conta registrada. O aviso de vencimento fica agendado.':'Registrei R$ 85 em supermercado. Seu saldo foi atualizado.'}</p></div>}
-   </div><div className="s2-phone-bottom" aria-hidden="true"><span>Uma mensagem. Tudo no lugar.</span><Mic size={17}/></div>
-  </div>
-  <div className={'s2-live-record'+(registered?' saved':'')} aria-live="off"><span className="s2-record-icon">{bill?<CalendarDays size={21}/>:<Wallet size={21}/>}</span><span><small>{registered?'ATUALIZADO NO PAINEL':'PRIMEIRO, VOCÊ CONFIRMA'}</small><strong>{bill?'Internet · dia 15':'Supermercado'}</strong></span><b>{bill?'R$ 120,00':'− R$ 85,00'}</b>{registered&&<Check size={17}/>}</div>
-  <div className="s2-animation-controls"><span>Exemplo ilustrativo · confirme antes de salvar</span><button type="button" onClick={()=>setPlaying(!playing)} aria-label={playing?'Pausar conversa animada':'Reproduzir conversa animada'}>{playing?<Pause size={15}/>:<Play size={15}/>}</button><button type="button" onClick={()=>setTick(0)} aria-label="Reiniciar conversa animada"><RotateCcw size={14}/></button></div>
-  <p className="s2-sr-only">Exemplo: o cliente informa um gasto ou uma conta, confere o resumo e confirma com 1. Só então o Anotei registra e atualiza o painel. Nenhum dado real é utilizado.</p>
- </div>;
-}
 
 function InteractiveExample(){
  const [selected,setSelected]=useState(0),[confirmed,setConfirmed]=useState(false),current=examples[selected],report=current.id==='report';
@@ -66,17 +47,17 @@ function InteractiveExample(){
 function PresentationVideo({src}:{src?:string}){return <div className="s2-video-frame">{src?<video controls playsInline preload="none" aria-label="Vídeo de apresentação do Anotei" onPlay={()=>trackLandingEvent('video_play',{source:'video'})}><source src={src}/></video>:<div className="s2-video-poster" aria-label="Espaço reservado para o vídeo de apresentação"><div className="s2-video-brand"><BrandOrb/><span>Anotei na Hora</span></div><div className="s2-video-story" aria-hidden="true"><span><Mic size={22}/>Você fala.</span><ArrowRight size={18}/><span><Check size={22}/>Você confirma.</span><ArrowRight size={18}/><span><Sparkles size={22}/>Tá organizado.</span></div><div className="s2-video-play" aria-hidden="true"><Play size={26} fill="currentColor"/></div><p>Sua organização começa numa conversa.</p><small>Área reservada para o vídeo de apresentação.</small><div className="s2-video-decoration" aria-hidden="true"><span>ANOTEI · APRESENTAÇÃO</span><i/><Volume2 size={16}/></div></div>}</div>;}
 
 export default function SalesPage(){
- const hero=useRef<HTMLElement>(null),plans=useRef<HTMLElement>(null),page=useRef<HTMLElement>(null),viewSent=useRef(false),[heroVisible,setHeroVisible]=useState(true),[afterHero,setAfterHero]=useState(false),[plansVisible,setPlansVisible]=useState(false),[faq,setFaq]=useState<number|null>(null);
+ const hero=useRef<HTMLDivElement>(null),plans=useRef<HTMLElement>(null),page=useRef<HTMLElement>(null),viewSent=useRef(false),[afterHero,setAfterHero]=useState(false),[plansVisible,setPlansVisible]=useState(false),[faq,setFaq]=useState<number|null>(null);
  useEffect(()=>{
   if(!viewSent.current){trackLandingEvent('landing_view');viewSent.current=true;}
-  const heroObserver=new IntersectionObserver(([entry])=>{setHeroVisible(entry.isIntersecting);setAfterHero(entry.boundingClientRect.bottom<=0);},{threshold:0});if(hero.current)heroObserver.observe(hero.current);
+  const heroObserver=new IntersectionObserver(([entry])=>{setAfterHero(entry.boundingClientRect.bottom<=0);},{threshold:0});if(hero.current)heroObserver.observe(hero.current);
   let planSeen=false;const plansObserver=new IntersectionObserver(([entry])=>{setPlansVisible(entry.isIntersecting);if(entry.isIntersecting&&!planSeen){planSeen=true;trackLandingEvent('plans_view',{source:'plans'});}},{threshold:.05});if(plans.current)plansObserver.observe(plans.current);
   let reveals:IntersectionObserver|undefined;if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){reveals=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){entry.target.classList.add('s2-revealed');reveals?.unobserve(entry.target);}},{threshold:.08});page.current?.querySelectorAll('[data-reveal]').forEach(element=>{element.classList.add('s2-will-reveal');reveals!.observe(element);});}
   return()=>{heroObserver.disconnect();plansObserver.disconnect();reveals?.disconnect();};
  },[]);
  return <main className="anotei-sales" ref={page} id="inicio"><a className="s2-skip" href="#como-funciona">Pular para o conteúdo</a>
   <div className="s2-dark"><header className="s2-nav s2-wrap"><a href="#inicio" aria-label="Anotei na Hora, início"><Logo/></a><nav aria-label="Navegação da apresentação"><a href="#como-funciona">Como funciona</a><a href="#na-pratica">Experimente</a><a href="#planos">Planos</a></nav><a className="s2-login" href="/">Já tenho conta <ArrowUpRight size={15}/></a></header>
-   <section className="s2-hero s2-wrap" ref={hero} aria-labelledby="s2-headline"><div className="s2-hero-copy"><p className="s2-ai-seal"><Sparkles size={15}/>Seu assistente pessoal com Inteligência Artificial</p><h1 id="s2-headline">Suas contas organizadas.<br/><em>Sem complicação.</em></h1><p className="s2-lead">Mandou um áudio ou mensagem no WhatsApp? O Anotei organiza seus gastos, suas contas e seus compromissos para você.</p><ul className="s2-hero-checks"><li><Check/>Sem planilhas</li><li><Check/>Sem aplicativos complicados</li><li><Check/>Tudo pelo WhatsApp</li></ul><p className="s2-start-price">A partir de <strong>{currency(subscriptionPlans.BASICO.monthly_cents)}</strong> por 30 dias.</p><Cta source="hero">QUERO ORGANIZAR MINHA VIDA</Cta><small className="s2-hero-micro">Simples de começar. Fácil de usar.</small></div><AnimatedPhone visible={heroVisible}/></section>
+   <section className="s2-hero s2-wrap" aria-labelledby="s2-headline"><div className="s2-hero-copy" ref={hero}><p className="s2-ai-seal"><Sparkles size={15}/>Seu assistente pessoal com Inteligência Artificial</p><h1 id="s2-headline">Suas contas organizadas.<br/><em>Sem complicação.</em></h1><p className="s2-lead">Mandou um áudio ou mensagem no WhatsApp? O Anotei organiza seus gastos, suas contas e seus compromissos para você.</p><ul className="s2-hero-checks"><li><Check/>Sem planilhas</li><li><Check/>Sem aplicativos complicados</li><li><Check/>Tudo pelo WhatsApp</li></ul><p className="s2-start-price">A partir de <strong>{currency(subscriptionPlans.BASICO.monthly_cents)}</strong> por 30 dias.</p><Cta source="hero">QUERO ORGANIZAR MINHA VIDA</Cta><small className="s2-hero-micro">Simples de começar. Fácil de usar.</small></div><SalesScrollStory/></section>
    <div className="s2-ribbon"><span><Mic size={16}/>Você fala.</span><i/><span><Check size={17}/>Você confirma.</span><i/><span><Sparkles size={16}/>O Anotei organiza.</span></div>
   </div>
   <section className="s2-video s2-wrap" id="como-funciona" aria-labelledby="s2-video-title"><div className="s2-section-title" data-reveal><p className="s2-label">CABE NA SUA ROTINA</p><h2 id="s2-video-title">Veja como é fácil.</h2><p>Se você sabe usar WhatsApp, já sabe usar o Anotei.</p></div><div id="video" data-reveal><PresentationVideo/></div><Cta source="video">EU QUERO ESSA FACILIDADE</Cta></section>

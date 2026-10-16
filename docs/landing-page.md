@@ -13,7 +13,13 @@ Rota preservada: `/conheca`. Componentes e estilos próprios; não altera cadast
 7. Dúvidas rápidas, com respostas curtas e regras reais.
 8. Chamada final. No celular, o botão fixo aparece após o hero e recolhe durante a exibição dos planos; área final reserva espaço e considera safe area.
 
-Animação do hero pode ser pausada e reiniciada, interrompe avanços fora da seção e com a aba oculta. Movimento reduzido usa uma conversa completa estática. Entradas ao rolar usam IntersectionObserver e respeitam movimento reduzido. Sem bibliotecas novas, fontes remotas ou imagens de terceiros.
+O hero tem uma única sequência cinematográfica, sincronizada à rolagem nativa: mensagem → resumo da IA → confirmação → card financeiro → painel e lembrete. O celular ganha profundidade, aproxima e abre espaço para o painel. Ao rolar de volta, a cena retrocede; a página nunca bloqueia ou desloca artificialmente a rolagem. Os quatro botões também permitem explorar as etapas por toque, sem alterar a posição da página.
+
+`SalesScrollStory` usa sticky nativo e requestAnimationFrame sob demanda, com geometria calculada só em resize e valores repetidos descartados. Sem intervalos ou loops permanentes. A dimensão svh mantém a cena estável com barras móveis; a fixação acaba no limite do próprio container. O preço e CTA precedem a cena no celular; há acesso direto aos planos dentro dela.
+
+Movimento reduzido, economia de dados, até dois núcleos lógicos, telas com menos de 680px de altura ou ausência de sticky usam uma ilustração em fluxo normal, navegável por etapas. Sem JavaScript, a ilustração completa continua visível, com descrição textual. Entradas das demais seções respeitam movimento reduzido. Sem bibliotecas novas, fontes remotas, canvas, WebGL ou imagens de terceiros.
+
+Os valores são exemplos locais: R$ 1.000 de saldo inicial menos R$ 85 de gasto = R$ 915. A conta futura de R$ 120 aparece no calendário e não é abatida como pagamento. O movimento de organização só começa depois da confirmação ilustrativa. Nenhum endpoint, cadastro, registro ou pagamento é acionado pela cena.
 
 ## Vídeo a adicionar
 

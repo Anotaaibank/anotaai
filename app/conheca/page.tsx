@@ -1,6 +1,7 @@
 import type {Metadata} from 'next';
 import SalesPage from '@/components/SalesPage';
 import './sales.css';
+import './cinematic.css';
 const title='Anotei · Suas contas organizadas. Sem complicação.';
 const description='Mande um áudio ou mensagem no WhatsApp e organize gastos, contas e compromissos com o Anotei. Planos a partir de R$ 49,90 por 30 dias.';
 const site='https://icom-anotei.pqaykh.easypanel.host';
