@@ -16,7 +16,7 @@
 .checkout-notice{padding:12px;border:1px solid #abcab0;background:#e7f4e3;border-radius:10px}.checkout-pending{padding:22px 16px;border:1px solid #bfceac;border-radius:14px;background:#f1f4e4}.checkout-pending>svg{color:#376e46}.checkout-pending h3{font-size:17px;line-height:1.5}
 .checkout-account{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:26px;padding-top:18px;border-top:1px solid #c5d9c7;font-size:11px;color:#5a755f}.checkout-account button{background:transparent;border:0;color:#335c40;font-size:12px}
 .subscription-checkout.subscription-payment .checkout-card .bank-note{color:#49654f;background:#edf4e7;border-color:#c0d4bd;line-height:1.7}
-.subscription-checkout.subscription-payment .checkout-card .bank-primary{background:linear-gradient(145deg,#1b674e,#134a3d);color:#fff1cc;border:1px solid #527f5a;font-size:14px;min-height:48px;box-shadow:0 4px 12px #17483118}
+.subscription-checkout.subscription-payment .checkout-card .bank-primary{background:linear-gradient(145deg,#1b674e,#134a3d)!important;color:#fff1cc!important;border:1px solid #527f5a!important;font-size:14px!important;min-height:48px;box-shadow:0 4px 12px #17483118}
 .subscription-checkout.subscription-payment .checkout-card input[type=radio]{color-scheme:light;accent-color:#24734f;background:#fff}
 .checkout-usage{max-width:1000px;margin:0 auto}.checkout-usage summary{min-height:48px;padding:14px 0;cursor:pointer;color:#315d40;font-size:14px}.checkout-usage .bank-panel-title{flex-wrap:wrap}
 @media(max-width:760px){
