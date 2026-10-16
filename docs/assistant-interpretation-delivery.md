@@ -55,9 +55,11 @@ O painel já consulta atualizações a cada dez segundos enquanto visível e ao 
 
 ## Verificação
 
-A validação final passou com **225 testes**, verificação de tipos e build. A base semântica contém **141 mensagens**. Na versão publicada, cinco verificações autenticadas passaram: conta mensal com valor e vencimento repetidos, compromisso de dia inteiro, lista parcialmente completa, simulação e consulta de pagamento. Nenhuma delas confirmou lançamentos ou enviou mensagens de WhatsApp. Os tempos observados foram de 374 a 632 ms para essas respostas do aplicativo; não incluem transcrição de áudio nem entrega pelo provedor de WhatsApp.
+A validação de 15 de outubro passou com **225 testes**, verificação de tipos e build. A base semântica contém **141 mensagens**. Na versão publicada, cinco verificações autenticadas passaram: conta mensal com valor e vencimento repetidos, compromisso de dia inteiro, lista parcialmente completa, simulação e consulta de pagamento. Nenhuma delas confirmou lançamentos ou enviou mensagens de WhatsApp. Os tempos observados foram de 374 a 632 ms para essas respostas do aplicativo; não incluem transcrição de áudio nem entrega pelo provedor de WhatsApp.
 
-A correção dos cliques em 16 de outubro passou na verificação de tipos e em **227 testes**. O novo teste de integração percorre o formato real ButtonsResponseMessage com vote e selectedButtonID, fila, confirmação assinada, gravação, calendário e saldo; três cliques distintos salvam compromisso, conta mensal e gasto, e o replay do mesmo evento é rejeitado. O texto citado de um botão não é interpretado como seleção.
+A correção dos cliques em 16 de outubro passou na verificação de tipos, no build e em **227 testes**. O novo teste de integração percorre o formato real ButtonsResponseMessage com vote e selectedButtonID, fila, confirmação assinada, gravação, calendário e saldo; três cliques distintos salvam compromisso, conta mensal e gasto, e o replay do mesmo evento é rejeitado. O texto citado de um botão não é interpretado como seleção.
+
+Após o dono confirmar o relato, três decisões reais foram recuperadas em transação única. A recuperação verificou conta, remetente, conexão, código e assinatura de cada plano no horário do clique registrado pelo provedor, sem alterar seu conteúdo. Usou o RPC existente, recibos e auditoria, com bloqueio de repetição. A regra de expiração do fluxo normal não foi modificada. A leitura pelo papel authenticated da mesma conta confirmou os registros. Os três avisos de registro foram aceitos pelo provedor; esse aceite não equivale a comprovante de entrega. Na versão publicada, três testes controlados de replay reconheceram o formato de botão e rejeitaram os IDs já processados sem novos registros ou mensagens.
 
 A base em [anotei-language-cases.ts](../tests/fixtures/anotei-language-cases.ts) registra mensagem, contexto, intenção, entidades, operação, esclarecimento e efeito esperado. A matriz executa os leitores e a preparação real dos planos; não substitui as respostas por resultados do modelo simulados.
 
@@ -65,7 +67,7 @@ Os testes de integração percorrem transcrição simulada, interpretação, res
 
 No Supabase, [whatsapp-calendar-persistence.sql](../tests/sql/whatsapp-calendar-persistence.sql) verificou gravação pelo fluxo do WhatsApp, visibilidade pela mesma conta autenticada, doze vencimentos mensais, compromisso com data e hora, idempotência e bloqueio de outra conta. Toda a transação foi revertida. Nenhum dado de cliente ou mensagem real foi criado nesse teste.
 
-A inspeção visual automatizada do calendário unificado não pôde ser concluída porque o controle do navegador excedeu o tempo de resposta, inclusive numa aba nova. A composição dos registros e as datas/cores estão cobertas pelos testes; permanece essa limitação da conferência visual nesta entrega.
+A conferência visual do calendário unificado foi concluída em 16 de outubro. A aba antiga ainda estava com o código da interface anterior carregado; após atualizar, novembro mostrou o vencimento em vermelho e o compromisso em verde. A seleção do compromisso exibiu título, horário e local corretos na conta autenticada.
 
 ## Limitações reais
 
