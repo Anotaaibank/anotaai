@@ -26,6 +26,17 @@ test('botão recebe ID exato; webhook continua bloqueando outro dono, grupo e me
  for(const content of [{buttonsResponseMessage:{selectedButtonId:buttonOrListid}},{listResponseMessage:{singleSelectReply:{selectedRowId:buttonOrListid}}},{buttonReply:{selectedId:buttonOrListid}}])assert.equal(messageFromWebhook({...value,message:{...legacy,content}},phone)?.text,buttonOrListid);
  assert.equal(messageFromWebhook({...value,message:{...value.message,content:{buttonsResponseMessage:{selectedButtonId:'CANCELAR '+row.confirmation_code}}}},phone),null);
 });
+test('resposta real do Uazapi com vote preserva a decisão; enquete, IDs divergentes e citações não autorizam comandos',()=>{
+ const {row}=proposal(),base={EventType:'messages',owner:phone,message:{fromMe:false,isGroup:false,chatid:sender+'@s.whatsapp.net',sender_pn:sender+'@s.whatsapp.net',messageTimestamp:Date.now(),id:'real-button-reply',messageType:'ButtonsResponseMessage',vote:'Confirmar',text:''}};
+ for(const action of ['CONFIRMAR','EDITAR','CANCELAR']){
+  const choice=action+' '+row.confirmation_code,content={Response:{SelectedDisplayText:action},selectedButtonID:choice,type:1};
+  const parsed=messageFromWebhook({...base,message:{...base.message,buttonOrListid:choice,content}},phone);assert.equal(parsed?.text,choice);
+  assert.equal(messageFromWebhook({...base,message:{...base.message,content}},phone)?.text,choice);
+ }
+ const choice='CONFIRMAR '+row.confirmation_code;
+ for(const message of [base.message,{...base.message,messageType:'PollUpdateMessage',buttonOrListid:choice},{...base.message,content:{contextInfo:{quotedMessage:{selectedButtonID:choice}}}},{...base.message,buttonOrListid:choice,content:{selectedButtonID:'EDITAR '+row.confirmation_code}},{...base.message,buttonOrListid:'CONFIRMAR INVALIDO'},{...base.message,buttonOrListid:choice,wasSentByApi:true}])assert.equal(messageFromWebhook({...base,message},phone),null);
+});
+
 test('botões preservam código e não repetem envio incerto; incompatibilidade usa texto com 1/2',async()=>{
  const previous=globalThis.fetch,calls:{url:string;body:any}[]=[],code='ABCDEF1234';let status=200;
  try{

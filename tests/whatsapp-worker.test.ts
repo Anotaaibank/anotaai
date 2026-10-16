@@ -4,7 +4,8 @@ import {randomUUID} from 'node:crypto';
 import {registerHooks} from 'node:module';
 import {registerLocal,localDb} from '../lib/local-db.ts';
 import {localFinanceState,applyLocalFinance} from '../lib/finance-store.ts';
-import {buildFinancePlan,type FinanceCommand} from '../lib/finance.ts';
+import {buildFinancePlan,financeSnapshot,type FinanceCommand} from '../lib/finance.ts';
+import {messageFromWebhook} from '../lib/whatsapp-expenses.ts';
 import {brazilDay} from '../lib/model.ts';
 import {financeDate} from '../lib/finance-date.ts';
 import {seal} from '../lib/secret-box.ts';
@@ -15,6 +16,20 @@ import {calendarEntries} from '../lib/agenda-calendar.ts';
 process.env.ANOTA_DATABASE_PATH=':memory:';
 async function modules(){const hooks=registerHooks({resolve(s,c,next){return next(s==='next/headers'?'next/headers.js':s,c);}});try{return {store:await import('../lib/whatsapp-store.ts'),worker:await import('../lib/whatsapp-worker.ts'),server:await import('../lib/whatsapp-server.ts')};}finally{hooks.deregister();}}
 const sender='5511999999999',phone='5511988888888';
+
+test('três cliques Uazapi com vote chegam à fila e salvam filme, conta mensal e almoço na mesma conta sem duplicar',async()=>{
+ const c=await context();try{
+  globalThis.fetch=async()=>Response.json({id:randomUUID()});
+  const proposals=[];
+  for(const text of ['Agenda assistir The Chosen na igreja dia 7 de novembro às 19h','Pago meu carro todo dia 5 valor de 1500 reais','Gastei 25 reais de almoço']){const row=await c.message(text);assert.equal(row.status,'ESCLARECER',row.reply);proposals.push(row);}
+  assert.equal(localFinanceState(c.user).expenses.length,0);
+  for(const proposal of proposals){
+   const choice='CONFIRMAR '+proposal.confirmation_code,value={EventType:'messages',owner:phone,message:{fromMe:false,isGroup:false,chatid:sender+'@s.whatsapp.net',sender_pn:sender+'@s.whatsapp.net',id:randomUUID(),messageTimestamp:Date.now(),messageType:'ButtonsResponseMessage',vote:'Confirmar',buttonOrListid:choice,text:'',content:{Response:{SelectedDisplayText:'Confirmar'},selectedButtonID:choice,type:1}}};
+   const parsed=messageFromWebhook(value,phone);assert.ok(parsed);const id=await c.store.enqueue(c.user,parsed);assert.ok(id);const claimed=await c.store.claimMessage();assert.equal(claimed?.id,id);await c.worker.processMessage(claimed!);const saved=(await c.store.history(c.user)).find(r=>r.id===id)!;assert.equal(saved.status,'LANCADO',saved.reply);assert.match(saved.reply,/✅ Registrado/);assert.equal(await c.store.enqueue(c.user,parsed),null);
+  }
+  const state=localFinanceState(c.user),entries=calendarEntries(state.documents,state.expenses,state.documents);assert.equal(state.expenses.length,13);assert.equal(state.documents.filter(d=>d.kind==='APPOINTMENT').length,1);assert.equal(entries.filter(e=>e.kind==='payable').length,12);assert.equal(entries.filter(e=>e.kind==='appointment').length,1);assert.equal(financeSnapshot(state).balance_cents,-2500);
+ }finally{c.restore();}
+});
 test('correção direta da proposta ainda não salva substitui o resumo e não altera registro anterior',async()=>{
  const c=await context();try{globalThis.fetch=async()=>Response.json({id:randomUUID()});await c.message('Lança 80 reais de mercado');const corrected=await c.message('Na verdade 90');assert.equal(corrected.status,'ESCLARECER',corrected.reply);assert.match(corrected.reply,/90,00/);assert.equal(localFinanceState(c.user).expenses.length,0);assert.equal((await c.message('1')).status,'LANCADO');assert.equal(localFinanceState(c.user).expenses[0].amount_cents,9000);assert.equal(localFinanceState(c.user).expenses.length,1);}finally{c.restore();}
 });

@@ -14,7 +14,7 @@ const object=(v:unknown):Record<string,unknown>=>v&&typeof v==='object'&&!Array.
 export function secureEqual(a:unknown,b:string){if(typeof a!=='string'||!b)return false;return timingSafeEqual(createHash('sha256').update(a).digest(),createHash('sha256').update(b).digest());}
 export function messageFromWebhook(value:unknown,phone:string,now=Date.now()):BotMessage|null{
  const root=object(value),m=object(root.message);
- if(root.EventType!=='messages'||m.fromMe!==false||m.isGroup!==false||m.wasSentByApi===true||m.edited||m.reaction||m.vote)return null;
+ if(root.EventType!=='messages'||m.fromMe!==false||m.isGroup!==false||m.wasSentByApi===true||m.edited||m.reaction)return null;
  let owner:string,sender:string;try{owner=phoneBR(root.owner);sender=phoneBR(String(m.sender_pn||m.sender||'').split('@')[0]);}catch{return null;}
  const chat=String(m.chatid||''),pn=/^\d+@s\.whatsapp\.net$/.test(chat)&&chat.split('@')[0]===sender;
  const lid=/^\d+@lid$/.test(chat)&&m.sender_lid===chat&&/^\d+@s\.whatsapp\.net$/.test(String(m.sender_pn||''));
@@ -25,10 +25,13 @@ export function messageFromWebhook(value:unknown,phone:string,now=Date.now()):Bo
  const type=String(m.messageType||'').toLowerCase(),content=object(m.content);
  const audio=['audio','audiomessage','ptt','voice','voicemessage'].includes(type)||!!content.audioMessage;
  const response=object(content.buttonsResponseMessage),list=object(object(content.listResponseMessage).singleSelectReply),buttonReply=object(content.buttonReply);
- const choices=[m.buttonOrListid,m.buttonOrListId,response.selectedButtonId,response.selectedButtonID,list.selectedRowId,buttonReply.selectedId].filter((v):v is string=>typeof v==='string'&&!!v);
+ const choices=[m.buttonOrListid,m.buttonOrListId,content.selectedButtonId,content.selectedButtonID,response.selectedButtonId,response.selectedButtonID,list.selectedRowId,buttonReply.selectedId].filter((v):v is string=>typeof v==='string'&&!!v);
  if(new Set(choices).size>1)return null;
  const choice=choices[0];
  const button=typeof choice==='string'&&/^(?:CONFIRMAR|EDITAR|CANCELAR) [a-f0-9]{10}$/i.test(choice)?choice:'';
+ // Uazapi also fills vote on genuine button/list replies. A poll vote still
+ // cannot become a command: require the response type and an explicit action ID.
+ if(m.vote&&(!button||!['buttonsresponsemessage','interactiveresponsemessage','listresponsemessage','templatebuttonreplymessage'].includes(type)))return null;
  const text=button||(typeof m.text==='string'?m.text.trim():typeof m.content==='string'&&!audio?m.content.trim():'');
  if(!audio&&!button&&!['conversation','extendedtextmessage','text'].includes(type)||!audio&&(!text||text.length>4000))return null;
  return {provider_id:id,sender,type:audio?'audio':'text',text:audio?'':text,sent_at:new Date(ms).toISOString()};

@@ -2,7 +2,7 @@
 
 ## Diagnóstico
 
-As mensagens relatadas como ausentes no painel eram propostas em estado ESCLARECER, ainda aguardando a confirmação 1. Não havia operação de gravação correspondente. A proposta tinha um resumo e uma opção de confirmação, mas podia ser confundida com o aviso de um registro já salvo.
+As mensagens relatadas como ausentes no painel apareciam internamente em ESCLARECER, sem operação de gravação. Essa leitura inicial do banco não era suficiente para concluir que o usuário não havia confirmado: em 16 de outubro, a consulta ao provedor comprovou os cliques reais em Confirmar. O Uazapi preenche o campo vote também em ButtonsResponseMessage; o filtro descartava qualquer evento com vote antes de ler a decisão. Corrigido para aceitar decisões explícitas de botões/listas, mantendo o bloqueio de enquetes, grupos, mensagens próprias, remetentes inválidos e IDs divergentes.
 
 A expressão “como pagamento” também acionava indevidamente a ajuda, pois um padrão de “como pagar” aceitava palavras com o mesmo começo. A transcrição já continha os dados; essa falha era de interpretação, não de captação do microfone.
 
@@ -56,6 +56,8 @@ O painel já consulta atualizações a cada dez segundos enquanto visível e ao 
 ## Verificação
 
 A validação final passou com **225 testes**, verificação de tipos e build. A base semântica contém **141 mensagens**. Na versão publicada, cinco verificações autenticadas passaram: conta mensal com valor e vencimento repetidos, compromisso de dia inteiro, lista parcialmente completa, simulação e consulta de pagamento. Nenhuma delas confirmou lançamentos ou enviou mensagens de WhatsApp. Os tempos observados foram de 374 a 632 ms para essas respostas do aplicativo; não incluem transcrição de áudio nem entrega pelo provedor de WhatsApp.
+
+A correção dos cliques em 16 de outubro passou na verificação de tipos e em **227 testes**. O novo teste de integração percorre o formato real ButtonsResponseMessage com vote e selectedButtonID, fila, confirmação assinada, gravação, calendário e saldo; três cliques distintos salvam compromisso, conta mensal e gasto, e o replay do mesmo evento é rejeitado. O texto citado de um botão não é interpretado como seleção.
 
 A base em [anotei-language-cases.ts](../tests/fixtures/anotei-language-cases.ts) registra mensagem, contexto, intenção, entidades, operação, esclarecimento e efeito esperado. A matriz executa os leitores e a preparação real dos planos; não substitui as respostas por resultados do modelo simulados.
 
