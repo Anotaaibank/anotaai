@@ -1,10 +1,11 @@
-.anota-app .overview-calendar{margin-top:24px;min-width:0}
-.anota-app .overview-calendar .bank-panel-title{align-items:center;gap:12px}
+.anota-app .with-overview-calendar .anotei-money-card{min-height:160px;padding:16px 18px;gap:8px}
+.anota-app .overview-calendar{margin-top:16px;min-width:0;padding:20px}
+.anota-app .overview-calendar .bank-panel-title{align-items:center;gap:12px;margin-bottom:10px}
 .anota-app .overview-calendar .bank-panel-title h2{font-size:21px}
 .anota-app .overview-calendar .overview-expand{flex-shrink:0;border:1px solid #b4cdbd;border-radius:10px;background:#e3efe6;color:#214c36;padding:10px 14px;font-size:12px;font-weight:700}
-.anota-app .overview-calendar-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(230px,1fr);gap:22px;margin-top:18px}
+.anota-app .overview-calendar-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(230px,1fr);gap:22px;margin-top:10px}
 .anota-app .overview-calendar .agenda-days.overview-ten-days{grid-template-columns:repeat(10,minmax(0,1fr))}
-.anota-app .overview-calendar .agenda-day{min-height:70px}
+.anota-app .overview-calendar .agenda-day{min-height:64px}
 .anota-app .overview-calendar .overview-weekday{font-size:10px;text-transform:capitalize;opacity:.8}
 .anota-app .overview-calendar .agenda-month-nav h3{font-size:17px}
 .anota-app .overview-calendar .agenda-month-nav h3 small{display:block;font-size:11px;font-weight:500;color:#5b7763;margin-top:5px}

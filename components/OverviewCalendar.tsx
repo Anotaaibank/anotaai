@@ -15,8 +15,7 @@ export default function OverviewCalendar({documents,expenses,today,onOpenAgenda}
  const navigate=(step:number)=>{const target=moveCalendarMonth(month,step);setMonth(target);setSelected(target+'-01');};
  const toggle=()=>{if(expanded){setSelected(today);setMonth(today.slice(0,7));}setExpanded(!expanded);};
  return <section className="bank-panel agenda-calendar overview-calendar" aria-label="Agenda de Compromissos">
-  <div className="bank-panel-title"><div><p className="agenda-eyebrow">SUA ROTINA, LOGO AQUI</p><h2>Agenda de Compromissos</h2></div><button className="overview-expand" aria-expanded={expanded} aria-controls={id+'-days'} onClick={toggle}>{expanded?'Ver próximos 10 dias':'Ver mês completo'}</button></div>
-  <p className="bank-note">Compromissos, contas a pagar e entradas previstas. Toque no dia para conferir.</p>
+  <div className="bank-panel-title"><h2>Agenda de Compromissos</h2><button className="overview-expand" aria-expanded={expanded} aria-controls={id+'-days'} onClick={toggle}>{expanded?'Ver próximos 10 dias':'Ver mês completo'}</button></div>
   <div className="overview-calendar-layout"><div>
    <div className="agenda-month-nav">{expanded?<><button aria-label="Mês anterior da visão geral" disabled={month==='2000-01'} onClick={()=>navigate(-1)}>‹</button><h3 aria-live="polite">{label(month+'-01',{month:'long',year:'numeric'})}</h3><button aria-label="Próximo mês da visão geral" disabled={month==='2100-12'} onClick={()=>navigate(1)}>›</button></>:<h3>Hoje e próximos 9 dias <small>{label(today,{day:'2-digit',month:'short'})} — {label(windowDays[9],{day:'2-digit',month:'short'})}</small></h3>}<button className="agenda-today" onClick={()=>select(today)}>Hoje</button></div>
    {expanded&&<div className="agenda-weekdays" aria-hidden="true">{['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d=><span key={d}>{d}</span>)}</div>}
