@@ -1,0 +1,3 @@
+.row-actions .bill-delete-action,.bank-actions .bill-delete-action{color:#8b3445;background:#fff5f5;border-color:#e8c8ce}
+.row-actions .bill-delete-action:hover,.bank-actions .bill-delete-action:hover{color:#702234;background:#fce7eb;border-color:#cb8f9b}
+.row-actions .bill-delete-action:disabled,.bank-actions .bill-delete-action:disabled{opacity:.5}

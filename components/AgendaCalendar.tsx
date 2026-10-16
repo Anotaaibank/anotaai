@@ -1,15 +1,16 @@
 'use client';
 import {useState} from 'react';
-import type {FinanceDocument} from '@/lib/finance';
+import type {FinanceCommand,FinanceDocument} from '@/lib/finance';
+import BillRemovalActions from './BillRemovalActions';
 import type {AdminEntry} from '@/lib/expenses';
 import {currency} from '@/lib/model';
 import {calendarDays,moveCalendarMonth,calendarEntries,type CalendarEntry} from '@/lib/agenda-calendar';
 
-type Props={appointments:FinanceDocument[];payments:AdminEntry[];incomes:FinanceDocument[];today:string;archived:boolean;busy:boolean;onArchived:()=>void;onNew:(date:string)=>void;onEdit:(event:FinanceDocument)=>void;onDone:(event:FinanceDocument)=>void;onArchive:(event:FinanceDocument)=>void;onPay:(expense:AdminEntry)=>void;onEditExpense:(expense:AdminEntry)=>void;onReceive:(income:FinanceDocument)=>void};
+type Props={appointments:FinanceDocument[];payments:AdminEntry[];incomes:FinanceDocument[];today:string;archived:boolean;busy:boolean;onArchived:()=>void;onNew:(date:string)=>void;onEdit:(event:FinanceDocument)=>void;onDone:(event:FinanceDocument)=>void;onArchive:(event:FinanceDocument)=>void;onPay:(expense:AdminEntry)=>void;onEditExpense:(expense:AdminEntry)=>void;onReceive:(income:FinanceDocument)=>void;onRemove:(command:FinanceCommand)=>void};
 const label=(day:string,options:Intl.DateTimeFormatOptions)=>new Date(day+'T12:00:00Z').toLocaleDateString('pt-BR',{timeZone:'UTC',...options});
 const names={appointment:'Compromisso',payable:'Conta a pagar',receivable:'Entrada prevista'};
 const daySummary=(rows:CalendarEntry[])=>[...new Set(rows.map(e=>e.kind))].map(kind=>rows.filter(e=>e.kind===kind).length+' '+(kind==='payable'?'conta(s) a pagar':kind==='receivable'?'entrada(s) prevista(s)':'compromisso(s)')).join(', ');
-export default function AgendaCalendar({appointments,payments,incomes,today,archived,busy,onArchived,onNew,onEdit,onDone,onArchive,onPay,onEditExpense,onReceive}:Props){
+export default function AgendaCalendar({appointments,payments,incomes,today,archived,busy,onArchived,onNew,onEdit,onDone,onArchive,onPay,onEditExpense,onReceive,onRemove}:Props){
  const [month,setMonth]=useState(today.slice(0,7)),[selected,setSelected]=useState(today);
  const entries=calendarEntries(appointments,payments,incomes,archived),days=calendarDays(month),events=entries.filter(a=>a.date===selected),monthly=entries.filter(a=>a.date.startsWith(month)),next=entries.find(a=>!a.done&&a.date>=today);
  const select=(day:string)=>{setMonth(day.slice(0,7));setSelected(day);};
@@ -39,7 +40,7 @@ export default function AgendaCalendar({appointments,payments,incomes,today,arch
     {!!event.document?.details.location&&<p>{String(event.document.details.location)}</p>}
     <div className="bank-actions">
      {event.kind==='appointment'&&event.document&&<><button disabled={busy} onClick={()=>onEdit(event.document!)}>Editar</button>{event.document.active&&<button disabled={busy} onClick={()=>onDone(event.document!)}>{event.done?'Reabrir':'Concluir'}</button>}<button disabled={busy} onClick={()=>onArchive(event.document!)}>{event.document.active?'Arquivar':'Restaurar'}</button></>}
-     {event.kind==='payable'&&event.expense&&<><button disabled={busy} onClick={()=>onPay(event.expense!)}>Registrar pagamento</button><button disabled={busy} onClick={()=>onEditExpense(event.expense!)}>Editar conta</button></>}
+     {event.kind==='payable'&&event.expense&&<><button disabled={busy} onClick={()=>onPay(event.expense!)}>Registrar pagamento</button><button disabled={busy} onClick={()=>onEditExpense(event.expense!)}>Editar conta</button><BillRemovalActions expense={event.expense} documents={incomes} disabled={busy} onPrepare={onRemove}/></>}
      {event.kind==='receivable'&&event.document&&<button disabled={busy} onClick={()=>onReceive(event.document!)}>Registrar recebimento</button>}
     </div>
    </article>)}

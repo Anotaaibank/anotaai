@@ -13,9 +13,26 @@ import {appointmentReminders} from '../lib/whatsapp-reminder.ts';
 import {paymentReminders} from '../lib/payment-reminder.ts';
 import {localFeedbacks,saveLocalFeedback} from '../lib/commerce-local.ts';
 import {calendarEntries} from '../lib/agenda-calendar.ts';
+import {billRuleForExpense} from '../lib/bill-removal.ts';
 process.env.ANOTA_DATABASE_PATH=':memory:';
 async function modules(){const hooks=registerHooks({resolve(s,c,next){return next(s==='next/headers'?'next/headers.js':s,c);}});try{return {store:await import('../lib/whatsapp-store.ts'),worker:await import('../lib/whatsapp-worker.ts'),server:await import('../lib/whatsapp-server.ts')};}finally{hooks.deregister();}}
 const sender='5511999999999',phone='5511988888888';
+
+test('excluir uma conta não paga nem regenera o vencimento; excluir recorrência preserva pagamentos e interrompe expansões',async()=>{
+ const c=await context();try{
+  const {expandMonthlyBillsForBot}=await import('../lib/monthly-bills-server.ts'),today=brazilDay();
+  const schedule=add(c.user,{action:'expense_schedule',description:'Carro para cancelamento',amount_cents:150000,date:today.slice(0,8)+'01',schedule_type:'MENSAL',amount_mode:'PARCELA',recurring:true,due_day:1});
+  const ruleId=schedule.documents[0].document.id;
+  add(c.user,{action:'expense_pay',target_id:schedule.expenses[0].payload.id,date:today});
+  let state=localFinanceState(c.user);const balance=financeSnapshot(state).balance_cents,target=state.expenses.find(e=>e.active&&e.status==='PREVISTO')!;
+  assert.equal(billRuleForExpense(target,state.documents)?.id,ruleId);assert.equal(billRuleForExpense({...target,details:{notes:'Recorrência mensal: '+randomUUID()}},state.documents),undefined);
+  const single=buildFinancePlan({action:'expense_archive',target_id:target.id},state,c.user,randomUUID(),today);assert.match(single.title,/Excluir conta/);assert.equal(single.documents.length,0);assert.equal(single.expenses.length,1);applyLocalFinance(c.user,single,'MANUAL');
+  assert.equal(applyLocalFinance(c.user,single,'MANUAL').replayed,true);await expandMonthlyBillsForBot(c.user);state=localFinanceState(c.user);assert.equal(state.expenses.find(e=>e.id===target.id)?.active,false);assert.equal(state.documents.find(d=>d.id===ruleId)?.active,true);assert.equal(financeSnapshot(state).balance_cents,balance);
+  const series=buildFinancePlan({action:'document_archive',target_id:ruleId},state,c.user,randomUUID(),today);assert.equal(series.title,'Excluir recorrência');assert.ok(series.expenses.length>0);assert.ok(series.expenses.every(e=>e.payload.status==='PREVISTO'&&e.payload.entry_date>=today&&e.active===false));applyLocalFinance(c.user,series,'MANUAL');
+  state=localFinanceState(c.user);assert.equal(state.documents.find(d=>d.id===ruleId)?.active,false);assert.equal(state.expenses.filter(e=>e.active&&e.status==='PREVISTO').length,0);assert.equal(state.expenses.filter(e=>e.active&&e.status==='REALIZADO').length,1);assert.equal(financeSnapshot(state).balance_cents,balance);assert.equal(calendarEntries(state.documents,state.expenses,state.documents).filter(e=>e.kind==='payable').length,0);assert.equal(billRuleForExpense(target,state.documents),undefined);
+  assert.equal(await expandMonthlyBillsForBot(c.user,Date.now()+400*86400000),0);assert.equal(localFinanceState(c.user).expenses.length,state.expenses.length);
+ }finally{c.restore();}
+});
 
 test('três cliques Uazapi com vote chegam à fila e salvam filme, conta mensal e almoço na mesma conta sem duplicar',async()=>{
  const c=await context();try{
