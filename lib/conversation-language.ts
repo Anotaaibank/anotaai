@@ -13,6 +13,7 @@ function amountAtStart(text:string){const m=text.match(amountPattern);if(!m)retu
 export function financialAmountFragments(text:string){const pattern=new RegExp('(?:^|[,;\\n]|\\be\\b)\\s*(?:(?:anota|anote|lanca|lança|lance|gastei|registra|registre)\\s+)?(?:r\\$\\s*)?'+spokenNumber+'(?:\\s+reais?)?\\s+(?:de|do|da|com|no|na)\\s+(?!(?:janeiro|fevereiro|marco|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\\b)[a-zá-ú]+','gi');return [...text.matchAll(pattern)].map(m=>m[0]);}
 export function normalizeAssistantText(text:string){
  let value=text.normalize('NFC').trim().replace(/\b(hj|qto|qts|vc|agnda|sldo|boelto)\b/gi,w=>({hj:'hoje',qto:'quanto',qts:'quantos',vc:'você',agnda:'agenda',sldo:'saldo',boelto:'boleto'}[w.toLowerCase()]||w));
+ value=value.replace(/\bacabei de (ganhar|receber|gastar)\b/gi,(_all,verb:string)=>({ganhar:'ganhei',receber:'recebi',gastar:'gastei'}[verb.toLowerCase()]||verb));
  // Resolve only an explicit, adjacent self-correction. Conflicting facts without
  // a correction marker remain ambiguous and cannot create a write.
  const correction=new RegExp('('+spokenNumber+')\\s*,\\s*(?:não|nao|quer dizer)\\s*,?\\s*('+spokenNumber+')','gi');

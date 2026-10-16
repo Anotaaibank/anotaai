@@ -18,6 +18,19 @@ process.env.ANOTA_DATABASE_PATH=':memory:';
 async function modules(){const hooks=registerHooks({resolve(s,c,next){return next(s==='next/headers'?'next/headers.js':s,c);}});try{return {store:await import('../lib/whatsapp-store.ts'),worker:await import('../lib/whatsapp-worker.ts'),server:await import('../lib/whatsapp-server.ts')};}finally{hooks.deregister();}}
 const sender='5511999999999',phone='5511988888888';
 
+test('venda pessoal por áudio e comissão por texto só aumentam saldo e calendário após confirmar, sem duplicar',async()=>{
+ const c=await context();try{
+  process.env.OPENAI_API_KEY='synthetic-only';
+  const transcript='Acabei de ganhar 1.250 reais porque eu vendi a minha televisão';
+  globalThis.fetch=async(url)=>{const path=String(url);if(path.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(path.endsWith('/audio/transcriptions'))return Response.json({text:transcript});assert.ok(/\/send\/(?:text|menu)$/.test(path),'Pedidos simples não chamam interpretação remota');return Response.json({id:randomUUID()});};
+  const proposed=await c.message('','audio');assert.equal(proposed.status,'ESCLARECER',proposed.reply);assert.match(proposed.reply,/1.250,00/);assert.equal(localFinanceState(c.user).documents.length,0);assert.equal(financeSnapshot(localFinanceState(c.user)).balance_cents,0);
+  assert.equal((await c.message('1')).status,'LANCADO');let state=localFinanceState(c.user);assert.equal(financeSnapshot(state).balance_cents,125000);assert.equal(state.documents.filter(d=>d.kind==='INCOME').length,1);assert.match(state.documents[0].description,/televis/);let calendar=calendarEntries(state.documents,state.expenses,state.documents);assert.equal(calendar.filter(e=>e.kind==='income'&&e.date===brazilDay()).length,1);assert.ok(calendar[0].done);
+  await c.message('1');assert.equal(financeSnapshot(localFinanceState(c.user)).balance_cents,125000);
+  const commission=await c.message('Acabei de ganhar 1.250 reais de comissão');assert.equal(commission.status,'ESCLARECER',commission.reply);assert.equal((await c.message('1')).status,'LANCADO');state=localFinanceState(c.user);assert.equal(financeSnapshot(state).balance_cents,250000);assert.equal(financeSnapshot(state).extra_received_month_cents,250000);assert.equal(calendarEntries(state.documents,state.expenses,state.documents).filter(e=>e.kind==='income').length,2);
+  const outsider=registerLocal(randomUUID()+'@example.test','private-test-only','Outra conta').user.id;assert.equal(localFinanceState(outsider).documents.length,0);
+ }finally{c.restore();}
+});
+
 test('excluir uma conta não paga nem regenera o vencimento; excluir recorrência preserva pagamentos e interrompe expansões',async()=>{
  const c=await context();try{
   const {expandMonthlyBillsForBot}=await import('../lib/monthly-bills-server.ts'),today=brazilDay();

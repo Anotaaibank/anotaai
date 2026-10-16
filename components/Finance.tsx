@@ -7,6 +7,7 @@ import {pendingPayments,paymentStatus} from '@/lib/payment-status';
 import PaymentBadge from './PaymentBadge';
 import AgendaCalendar from './AgendaCalendar';
 import OverviewCalendar from './OverviewCalendar';
+import OverviewActivity from './OverviewActivity';
 import BillRemovalActions from './BillRemovalActions';
 type Snapshot=ReturnType<typeof financeSnapshot>;
 type Pending={title:string;lines:string[];confirmation:string};
@@ -19,7 +20,7 @@ function useChanges(onSaved:()=>void){const [pending,setPending]=useState<Pendin
  async function confirm(){if(!pending||busy)return;setError('');setBusy(true);try{await send({confirmation:pending.confirmation});setPending(null);onSaved();}catch(e){setError(e instanceof Error?e.message:'Confira o histórico antes de repetir.');}finally{setBusy(false);}}
  const dialog=pending?<div className="anota-modal-backdrop"><section className="bank-panel anota-modal finance-confirm" role="dialog" aria-modal="true" aria-labelledby="finance-confirm-title"><h2 id="finance-confirm-title">{pending.title}</h2>{pending.lines.map((line,i)=><p key={i}>{line}</p>)}<small>Ainda não foi salvo. A confirmação vale por dez minutos.</small>{error&&<p role="alert" className="bank-error">{error}</p>}<div className="bank-actions"><button disabled={busy} onClick={()=>setPending(null)}>Cancelar</button><button className="bank-primary" disabled={busy} onClick={()=>void confirm()}>{busy?'Salvando…':'Confirmar alteração'}</button></div></section></div>:null;
  return {prepare,dialog,busy,error,pending};}
-export function FinanceOverview({refresh=0,demo=false,onSaved=()=>{},onAgenda}:{refresh?:number;demo?:boolean;onSaved?:()=>void;onIncomeTab?:()=>void;onAgenda?:()=>void}){
+export function FinanceOverview({refresh=0,demo=false,onSaved=()=>{},onAgenda,onIncomeTab,onExpenses}:{refresh?:number;demo?:boolean;onSaved?:()=>void;onIncomeTab?:()=>void;onExpenses?:()=>void;onAgenda?:()=>void}){
  const {data,error}=useFinance(demo,refresh),[editor,setEditor]=useState<'profile'|null>(null),changes=useChanges(()=>{setEditor(null);onSaved();});
  if(demo)return null;if(error)return <p className="bank-error" role="alert">{error}</p>;if(!data)return <p className="bank-note">Consultando suas finanças…</p>;
  const monthLabel=new Date(data.today.slice(0,7)+'-02T12:00:00Z').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
@@ -28,7 +29,7 @@ export function FinanceOverview({refresh=0,demo=false,onSaved=()=>{},onAgenda}:{
  <article className="anotei-money-card"><div className="money-card-top"><span>SALDO NA CONTA</span><span className="money-symbol">↗</span></div><strong>{data.configured?currency(data.balance_cents):'A cadastrar'}</strong><small>Saldo informado + entradas − saídas realizadas</small><button className="text-button" disabled={changes.busy} onClick={()=>setEditor('profile')}>Configurar meu saldo <span aria-hidden="true">↗</span></button></article>
  <article className="anotei-money-card"><div className="money-card-top"><span>CONTAS A PAGAR</span><span className="money-symbol">↘</span></div><strong>{currency(data.pending_month_cents)}</strong><small>Até o fim de {monthLabel.split(' de ')[0]}, incluindo atrasadas</small><button className="text-button" disabled={!onAgenda} onClick={onAgenda}>Ver vencimentos <span aria-hidden="true">↗</span></button></article>
  <article className={'anotei-money-card available'+(data.available_month_cents<0&&data.configured?' deficit':'')}><div className="money-card-top"><span>{data.available_month_cents<0&&data.configured?'FALTA NESTE MÊS':'SOBRA NESTE MÊS'}</span><span className="money-symbol">✦</span></div><strong>{data.configured?currency(Math.abs(data.available_month_cents)):'A calcular'}</strong><small>Saldo atual − contas a pagar até o fim do mês</small><span className="available-footnote">{data.configured?'Planeje os próximos gastos com esse valor.':'Cadastre seu saldo para ver quanto sobra.'}</span></article>
- </div>{onAgenda&&<OverviewCalendar documents={data.documents} expenses={data.expenses} today={data.today} onOpenAgenda={onAgenda}/> }
+ </div>{onAgenda&&<OverviewCalendar documents={data.documents} expenses={data.expenses} today={data.today} onOpenAgenda={onAgenda}/> }<OverviewActivity expenses={data.expenses} documents={data.documents} today={data.today} onExpenses={onExpenses} onIncome={onIncomeTab}/>
  {data.alerts.map((a,i)=><p key={i} className="bank-note finance-alert">{a}</p>)}{changes.error&&!changes.pending&&<p className="bank-error" role="alert">{changes.error}</p>}{editor&&!changes.pending&&<FinanceEditor mode={editor} profile={data.profile} reserves={[]} onPrepare={c=>void changes.prepare(c)} onClose={()=>setEditor(null)} busy={changes.busy}/ >}{changes.dialog}</section>;
 }
 export function ComplementaryIncome({refresh=0,demo=false,onSaved}:{refresh?:number;demo?:boolean;onSaved:()=>void}){
