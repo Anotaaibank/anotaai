@@ -20,7 +20,7 @@ export default function SubscriptionPayment(){
   if(!initialized.current){const pending=d.requests.find(p=>p.status==='PENDENTE');setPlan(pending?.plan_code||d.subscription?.plan_code||'BASICO');if(pending)setStep('payment');initialized.current=true;}
  },[]);
  useEffect(()=>{void load().catch(e=>setError(e.message));const timer=setInterval(()=>{if(document.visibilityState==='visible'&&!submitting.current)void load().catch(()=>{});},15000);return()=>clearInterval(timer);},[load]);
- useEffect(()=>{const restore=()=>{setStep(location.hash==='#pagamento'?'payment':'plan');paymentNavigation.current=false;};restore();window.addEventListener('popstate',restore);return()=>window.removeEventListener('popstate',restore);},[]);
+ useEffect(()=>{const previous=history.scrollRestoration;history.scrollRestoration='manual';const restore=()=>{setStep(location.hash==='#pagamento'?'payment':'plan');paymentNavigation.current=false;window.scrollTo({top:0,behavior:'instant'});heading.current?.focus({preventScroll:true});};restore();window.addEventListener('popstate',restore);return()=>{history.scrollRestoration=previous;window.removeEventListener('popstate',restore);};},[]);
  const settings=data?.settings,ready=!!settings?.pix_key&&!!settings.receiver,pending=data?.requests.find(p=>p.status==='PENDENTE'),selected=planFrom(pending?.plan_code||plan),paymentStep=!!pending||step==='payment';
  function changeStep(next:'plan'|'payment'){
   if(next==='payment'&&location.hash!=='#pagamento'){history.pushState(history.state,'','#pagamento');paymentNavigation.current=true;}
@@ -38,7 +38,7 @@ export default function SubscriptionPayment(){
  }
  return <main className="anotei-registration subscription-payment subscription-checkout">
   <header className="checkout-header"><a className="checkout-back" href={data?.access?'/painel':'/conheca#planos'}><ArrowLeft size={19}/>{data?.access?'Voltar ao aplicativo':'Voltar ao Anotei'}</a><span>ANOTEI <b>NA HORA</b></span></header>
-  <div className="checkout-layout"><aside className="checkout-intro"><p className="bank-eyebrow">SUA ROTINA MAIS LEVE</p><h1>Um plano para<br/>organizar seu dia.</h1><p>Contas, dinheiro e compromissos juntos. Pelo aplicativo e pelo WhatsApp.</p><ul><li><Check size={18}/>Até dois números na mesma conta</li><li><Check size={18}/>Seus registros sempre com você</li><li><ShieldCheck size={18}/>Você confere antes de confirmar</li></ul></aside>
+  <div className="checkout-layout"><aside className="checkout-intro"><p className="bank-eyebrow">SUA ROTINA MAIS LEVE</p><h1>Um plano para <br/>organizar seu dia.</h1><p>Contas, dinheiro e compromissos juntos. Pelo aplicativo e pelo WhatsApp.</p><ul><li><Check size={18}/>Até dois números na mesma conta</li><li><Check size={18}/>Seus registros sempre com você</li><li><ShieldCheck size={18}/>Você confere antes de confirmar</li></ul></aside>
   <section className="bank-card checkout-card" aria-busy={!data&&!error||busy}>
    <ol className="checkout-steps" aria-label="Etapas da assinatura"><li aria-current={!paymentStep?'step':undefined}><span>1</span>Escolher plano</li><li aria-current={paymentStep?'step':undefined}><span>2</span>Pagamento</li></ol>
    <h2 ref={heading} tabIndex={-1}>{pending?'Pagamento em análise':paymentStep?'Confira e pague':data?.access?'Meu plano e renovação':'Escolha seu plano'}</h2>
