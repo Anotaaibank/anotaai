@@ -1,5 +1,5 @@
 import './finance.css';
-import type {Metadata} from 'next';
+import type {Metadata,Viewport} from 'next';
 import './base.css';
 import './voice.css';
 import './personal.css';
@@ -12,5 +12,8 @@ import './payments.css';
 import './whatsapp-contacts.css';
 import './registration.css';
 import './subscription-usage.css';
+import './mobile-app.css';
+import './checkout.css';
+export const viewport:Viewport={width:'device-width',initialScale:1,viewportFit:'cover',themeColor:'#165449'};
 export const metadata:Metadata={title:'Anotei na Hora · Suas finanças pessoais',description:'Falou. Anotou. Organizou. Salário, saldo, contas e renda extra com inteligência artificial por voz e WhatsApp.'};
 export default function Layout({children}:{children:React.ReactNode}){return <html lang="pt-BR"><body>{children}</body></html>;}

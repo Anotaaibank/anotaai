@@ -1,0 +1,84 @@
+/* The personal app keeps one vertical page scroller. Wide data stays in its panel. */
+.anota-personal-app,.anota-personal-app .anota-main,.anota-personal-app .anota-content{min-width:0;max-width:100%}
+.anota-personal-app .anota-sidebar{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.anota-personal-app .bank-panel,.anota-personal-app .bank-card{min-width:0}
+.anota-personal-app .bank-table-wrap{max-width:100%;overscroll-behavior-x:contain}
+.anota-bottom-nav{display:none}
+.anota-mobile-drawer:not([open]){display:none}
+.anota-mobile-drawer{position:fixed;inset:0 auto 0 0;margin:0;width:min(340px,calc(100% - 32px));height:100dvh;max-height:100dvh;max-width:none;border:0;border-radius:0 24px 24px 0;padding:24px 18px max(24px,env(safe-area-inset-bottom));background:#063c39;color:#f3f5e5;box-shadow:12px 0 50px #001e2b55;overflow:auto;overscroll-behavior:contain;color-scheme:dark}
+.anota-mobile-drawer::backdrop{background:#062e3270;backdrop-filter:blur(4px)}
+.anota-mobile-drawer>header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 8px 24px}
+.anota-mobile-drawer>header span{font-size:10px;color:#b9dba5;letter-spacing:.15em}
+.anota-mobile-drawer h2{font-size:19px;margin:8px 0}
+.anota-mobile-drawer>header button{width:44px;height:44px;flex-shrink:0;padding:8px;border:1px solid #b5e0bd40;background:#ffffff0c;color:#f6efda}
+.anota-mobile-drawer nav{display:grid;gap:4px}
+.anota-mobile-drawer nav button,.anota-mobile-drawer nav a{display:flex;align-items:center;justify-content:flex-start;gap:12px;min-height:48px;padding:12px;border:1px solid transparent;border-radius:12px;background:transparent;color:#d8eadb;font-size:14px;text-decoration:none;text-align:left}
+.anota-mobile-drawer nav button.active{background:#d4ebbe18;border-color:#b5d9a84a;color:#f0dfb3}
+.anota-mobile-drawer .sidebar-bottom{padding:20px 12px}
+.anota-mobile-drawer .sidebar-bottom p{color:#a9cdbb;margin-bottom:14px}
+.anota-mobile-drawer .sidebar-bottom button{min-height:44px;color:#e4ddc2}
+@media(min-width:761px){.anota-mobile-drawer{display:none}}
+@media(max-width:760px){
+ html:has(.anota-personal-app),html:has(.subscription-checkout){scrollbar-gutter:stable;overscroll-behavior-x:none}
+ body:has(.anota-personal-app),body:has(.subscription-checkout){overscroll-behavior-y:none}
+ body:has(.anota-personal-app .anota-modal-backdrop){overflow:hidden}
+ .anota-personal-app{min-height:100svh}
+ .anota-personal-app .anota-sidebar{display:none}
+ .anota-personal-app .anota-main{margin-left:0;min-height:100svh;overflow-x:clip}
+ .anota-personal-app .anota-topbar{position:sticky;top:0;z-index:45;min-height:94px;padding:6px max(16px,env(safe-area-inset-right)) 6px max(12px,env(safe-area-inset-left));background:#f5faf6f5;backdrop-filter:blur(16px);gap:8px}
+ .anota-personal-app .anota-topbar>span{display:none}
+ .anota-personal-app .mobile-menu{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;border:1px solid #c2d7c8;border-radius:13px;background:#e8f1e7;padding:10px;color:#174e3c}
+ .anota-personal-app .anota-user-tools{flex:1;min-width:0;justify-content:space-between;gap:8px;margin-left:4px}
+ .anota-personal-app .anota-user{min-width:0;gap:7px}
+ .anota-personal-app .anota-user strong{max-width:105px;font-size:11px;overflow-wrap:anywhere}
+ .anota-personal-app .bank-voice-launch{order:2;width:98px;min-height:82px;padding:0;gap:0;inset:auto}
+ .anota-personal-app .bank-voice-launch .anotei-orb-space{width:82px;height:58px}
+ .anota-personal-app .bank-voice-launch .bank-ai-orb{width:50px;height:50px;min-width:50px}
+ .anota-personal-app .bank-voice-launch .bank-ai-label strong{font-size:11px;max-width:90px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .anota-personal-app .bank-voice-launch .bank-ai-label small{font-size:8px}
+ .anota-personal-app .anota-content{padding:20px max(14px,env(safe-area-inset-right)) calc(100px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
+ .anota-personal-app .bank-heading{display:block;margin-bottom:20px}
+ .anota-personal-app .bank-heading h1{font-size:27px;line-height:1.2;overflow-wrap:anywhere}
+ .anota-personal-app .bank-heading .bank-actions{display:flex;align-items:flex-end;gap:10px;justify-content:space-between;margin-top:18px}
+ .anota-personal-app .period-label{display:grid;gap:6px;font-size:11px;flex:1;min-width:0}
+ .anota-personal-app .period-label input{margin:0;width:100%;max-width:180px;min-height:46px}
+ .anota-personal-app button,.anota-mobile-drawer button{touch-action:manipulation}
+ .anota-personal-app button:hover:not(:disabled){transform:none}
+ .anota-personal-app .bank-actions button,.anota-personal-app .row-actions button,.anota-personal-app .bank-panel-title button,.anota-personal-app .payment-filters button{min-height:44px}
+ .anota-personal-app input,.anota-personal-app select,.anota-personal-app textarea{font-size:16px;max-width:100%}
+ .anota-personal-app .bank-form-grid{grid-template-columns:minmax(0,1fr)}
+ .anota-personal-app .bank-filters{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ .anota-personal-app .bank-filters input,.anota-personal-app .bank-filters select{width:100%;max-width:100%;min-height:44px}
+ .anota-personal-app .bank-filters>input{grid-column:1/-1}
+ .anota-personal-app .bank-panel-title{flex-wrap:wrap;align-items:flex-start}
+ .anota-personal-app .bank-panel-title>.bank-actions{width:100%}
+ .anota-personal-app .bank-panel,.anota-personal-app .bank-card{padding:18px 14px;overflow-wrap:anywhere}
+ .anota-personal-app .anota-summary-grid,.anota-personal-app .bank-wa-grid{display:grid;grid-template-columns:minmax(0,1fr)}
+ .anota-personal-app .anota-hero{gap:14px;padding:20px;min-height:0}
+ .anota-personal-app .anota-hero>div{min-width:0;flex:1}
+ .anota-personal-app .anota-hero>button{margin:0;width:100%;min-height:46px}
+ .anota-personal-app .anota-hero h2{font-size:24px}
+ .anota-personal-app .anota-hero .hero-orb{width:54px;height:54px;flex-shrink:0}
+ .anota-personal-app .anota-kpis{grid-template-columns:minmax(0,1fr)}
+ .anota-personal-app .anota-bottom-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;inset:auto 0 0;z-index:50;min-height:72px;padding:6px max(6px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));background:#f8fcf8f5;border-top:1px solid #bdd3c1;box-shadow:0 -6px 30px #15452d0d;backdrop-filter:blur(18px)}
+ .anota-bottom-nav button{position:relative;display:flex;flex-direction:column;gap:5px;min-height:54px;padding:7px 2px;border:0;border-radius:12px;background:transparent;color:#5c7564;font-size:10px;line-height:1.2}
+ .anota-bottom-nav button[aria-current=page],.anota-bottom-nav button.is-current{background:#e0edde;color:#124e36;font-weight:700}
+ .anota-nav-dot{position:absolute;top:4px;right:calc(50% - 18px);width:7px;height:7px;border-radius:50%;background:#b74234}
+ .anota-personal-app .anota-modal-backdrop{padding:12px;overscroll-behavior:contain}
+ .anota-personal-app .anota-modal{max-height:calc(100dvh - 24px);padding-bottom:max(20px,env(safe-area-inset-bottom));overscroll-behavior:contain}
+ .anota-personal-app .bank-voice-dialog{inset:12px 12px auto;max-height:calc(100dvh - 24px);width:calc(100% - 24px)}
+ .anota-personal-app .finance-text-command textarea{min-width:0;flex-basis:100%}
+ /* Cards keep every value and action visible without a sideways table. */
+ .anota-personal-app .mobile-record-table{display:block;min-width:0;width:100%}
+ .anota-personal-app .mobile-record-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+ .anota-personal-app .mobile-record-table tbody{display:grid;gap:12px;width:100%}
+ .anota-personal-app .mobile-record-table tr{display:block;border:1px solid #c3d8c8;border-radius:12px;padding:8px 12px;background:#f7fbf6;min-width:0}
+ .anota-personal-app .mobile-record-table td{display:grid;grid-template-columns:78px minmax(0,1fr);gap:8px;padding:10px 0;border-color:#d7e4d9;min-width:0;white-space:normal;align-items:start}
+ .anota-personal-app .mobile-record-table td::before{content:attr(data-label);font-size:10px;line-height:1.5;font-weight:600;color:#54705b}
+ .anota-personal-app .mobile-record-table td:first-child{font-weight:600}
+ .anota-personal-app .mobile-record-table td:last-child{border-bottom:0}
+ .anota-personal-app .mobile-record-table td small{grid-column:2;margin:0}
+ .anota-personal-app .mobile-record-table .row-actions{display:flex;flex-wrap:wrap;gap:7px}
+ .anota-personal-app .mobile-record-table .row-actions button{font-size:11px;padding:9px 10px}
+ .anota-personal-app .mobile-record-table .payment-status{justify-self:start;white-space:normal}
+}
