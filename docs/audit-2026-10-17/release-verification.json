@@ -12,5 +12,20 @@
     "passed": 263,
     "total": 263
   },
-  "production_build": "pending"
+  "production_build": "passed",
+  "production_typecheck_passed": true,
+  "production_tests": {
+    "passed": 263,
+    "total": 263,
+    "failed": 0
+  },
+  "production_commit": "8df3f8dc1ade40c1f658a12959578136d99c47b2",
+  "deployment_action": "cmvch3i39004p07muet5w8qjj",
+  "deployment_status": "done",
+  "health": {
+    "http": 200,
+    "application": "anota-ai",
+    "status": "ok"
+  },
+  "verified_at": "2026-10-17T14:12:52.704Z"
 }
