@@ -30,6 +30,7 @@ export function appointmentFacts(text:string,today:string,direction:boolean|'pas
    new RegExp('\\bdia\\s+'+number+'(?:\\s+agora)?\\b','g')
   ])add(dates,pattern,m=>financeDate(m[0],today,direction));
   add(times,new RegExp('\\b(?:as|pelas)\\s+('+number+')(?:(?::|h)(\\d{2}))?(?:\\s+e\\s+('+number+'|meia))?(?:\\s*(?:horas?|h))?(?:\\s+(?:da|de)\\s+(manha|tarde|noite|madrugada))?\\b','g'),m=>timeValue(m[1],m[2]||m[3],m[4]));
+  add(times,new RegExp('\\b('+number+')\\s+horas?(?:\\s+(?:da|de)\\s+(manha|tarde|noite|madrugada))?\\b','g'),m=>timeValue(m[1],undefined,m[2]));
   add(times,/\b(\d{1,2})(?::(\d{2})|h(?:(\d{2}))?|\s+horas?)(?:\s+(?:da|de)\s+(manha|tarde|noite|madrugada))?\b/g,m=>timeValue(m[1],m[2]||m[3],m[4]));
  }catch{return null;}
  if(new Set(dates.map(d=>d.value)).size>1||new Set(times.map(t=>t.value)).size>1)return null;

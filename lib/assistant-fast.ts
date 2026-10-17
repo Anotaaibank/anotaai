@@ -5,7 +5,7 @@ import {naturalAppointmentDraft,appointmentFacts} from './appointment-language.t
 
 // Complete single appointments use literal date/time evidence in natural order.
 // Edits, ambiguous times and combined requests retain the full interpreter.
-export function quickAppointmentDraft(text:string,today:string):FinanceDraft|null{if(!appointmentFacts(text,today))return null;const informal=fold(text).match(/^(?:(?:dia\s+[^,]+|hoje|amanha|depois de amanha|(?:proxima\s+)?(?:segunda|terca|quarta|quinta|sexta|sabado|domingo)(?:-feira)?)\s+)?(?:eu\s+)?tenho\s+(?:uma?\s+)?(?:reuniao|consulta|aniversario|visita|entrevista)\b/);return legacyAppointmentDraft(text,today)||naturalAppointmentDraft(informal?'Agenda '+text:text,today);}
+export function quickAppointmentDraft(text:string,today:string):FinanceDraft|null{if(!appointmentFacts(text,today))return null;const informal=fold(text).match(/^(?:(?:dia\s+[^,]+|hoje|amanha|depois de amanha|(?:proxima\s+)?(?:segunda|terca|quarta|quinta|sexta|sabado|domingo)(?:-feira)?)\s+)?(?:eu\s+)?tenho\s+(?:uma?\s+)?(?:reuniao|consulta|dentista|medico|aniversario|visita|entrevista)\b/);return legacyAppointmentDraft(text,today)||naturalAppointmentDraft(informal?'Agenda '+text:text,today);}
 function legacyAppointmentDraft(text:string,today:string):FinanceDraft|null{
  const original=text.normalize('NFC').trim(),source=fold(original).replace(/[, ]*por favor[.! ]*$/,'');
  if(source.length>400||/[?\n]|\b(?:empresas?|lojas?|clientes?|contratos?|estoque|juridico|cnpj|pagar|pagamento|reais|recorr\w*|mensal|todo|toda|semanal|alter\w*|edit\w*|corrig\w*|cancel\w*|arquiv\w*|nao)\b/.test(source))return null;

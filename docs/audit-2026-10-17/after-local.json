@@ -1,0 +1,1204 @@
+{
+  "summary": {
+    "phase": "after",
+    "mode": "local",
+    "audio": false,
+    "fixture_sha256": "e831019dfae1a451da4ddaa4ad7521870309e1a05679bfb1db9a3400ea0f24cb",
+    "date": "2026-10-17T13:52:10.640Z",
+    "total": 36,
+    "passed": 27,
+    "accuracy": 0.75,
+    "model_calls": 0,
+    "estimated_usd": 0,
+    "cost_per_success_usd": 0,
+    "p50_ms": 7.804699999999912,
+    "p95_ms": 47.85160000000019
+  },
+  "results": [
+    {
+      "id": "saldo-01",
+      "text": "Atualiza meu saldo de 1.100 para 1.500",
+      "expect": {
+        "type": "adjustment",
+        "balance": 150000
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Ajustar saldo atual",
+        "documents": [
+          {
+            "id": "bb0b4626-b82c-49c4-8ce9-beb5feaa6f81",
+            "kind": "BALANCE_ADJUSTMENT",
+            "description": "Ajuste do saldo atual",
+            "date": "2026-10-17",
+            "amount_cents": 40000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "previous_balance_cents": 110000,
+              "target_balance_cents": 150000,
+              "delta_cents": 40000,
+              "basis_hash": "966f21652541b780a1faa9aa8c3f924a"
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 47.85160000000019,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "saldo-02",
+      "text": "Corrige meu saldo atual para 1500 reais. Isso é ajuste, não receita.",
+      "expect": {
+        "type": "adjustment",
+        "balance": 150000
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Ajustar saldo atual",
+        "documents": [
+          {
+            "id": "5ffbfe8e-a34a-447d-8b49-343912f74804",
+            "kind": "BALANCE_ADJUSTMENT",
+            "description": "Ajuste do saldo atual",
+            "date": "2026-10-17",
+            "amount_cents": 40000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "previous_balance_cents": 110000,
+              "target_balance_cents": 150000,
+              "delta_cents": 40000,
+              "basis_hash": "966f21652541b780a1faa9aa8c3f924a"
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 9.256400000000212,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "saldo-03",
+      "text": "Meu saldo está errado, deixa em mil e quinhentos.",
+      "expect": {
+        "type": "adjustment",
+        "balance": 150000
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Ajustar saldo atual",
+        "documents": [
+          {
+            "id": "2ce849e1-a40a-48ee-8a68-ba68b32c54d9",
+            "kind": "BALANCE_ADJUSTMENT",
+            "description": "Ajuste do saldo atual",
+            "date": "2026-10-17",
+            "amount_cents": 40000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "previous_balance_cents": 110000,
+              "target_balance_cents": 150000,
+              "delta_cents": 40000,
+              "basis_hash": "966f21652541b780a1faa9aa8c3f924a"
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 16.513499999999794,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "saldo-04",
+      "text": "No banco tenho 1500 reais agora, ajusta o saldo da conta pra esse valor.",
+      "expect": {
+        "type": "adjustment",
+        "balance": 150000
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Ajustar saldo atual",
+        "documents": [
+          {
+            "id": "e40e8d3e-1582-4b23-8df3-ce8b5e0d297c",
+            "kind": "BALANCE_ADJUSTMENT",
+            "description": "Ajuste do saldo atual",
+            "date": "2026-10-17",
+            "amount_cents": 40000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "previous_balance_cents": 110000,
+              "target_balance_cents": 150000,
+              "delta_cents": 40000,
+              "basis_hash": "966f21652541b780a1faa9aa8c3f924a"
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 6.27110000000016,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "saldo-05",
+      "text": "O saldo certo é 900 reais, pode corrigir pra mim?",
+      "expect": {
+        "type": "adjustment",
+        "balance": 90000
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Ajustar saldo atual",
+        "documents": [
+          {
+            "id": "28deeaf3-ffe8-4eaf-8ee7-f953c89e8035",
+            "kind": "BALANCE_ADJUSTMENT",
+            "description": "Ajuste do saldo atual",
+            "date": "2026-10-17",
+            "amount_cents": 20000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "previous_balance_cents": 110000,
+              "target_balance_cents": 90000,
+              "delta_cents": -20000,
+              "basis_hash": "966f21652541b780a1faa9aa8c3f924a"
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 10.073500000000195,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "saldo-06",
+      "text": "Ajusta meu saldo atual para menos duzentos reais.",
+      "expect": {
+        "type": "adjustment",
+        "balance": -20000
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Ajustar saldo atual",
+        "documents": [
+          {
+            "id": "d54d0c99-1688-4311-894f-168b96f462e5",
+            "kind": "BALANCE_ADJUSTMENT",
+            "description": "Ajuste do saldo atual",
+            "date": "2026-10-17",
+            "amount_cents": 130000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "previous_balance_cents": 110000,
+              "target_balance_cents": -20000,
+              "delta_cents": -130000,
+              "basis_hash": "966f21652541b780a1faa9aa8c3f924a"
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 7.804699999999912,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "renda-01",
+      "text": "Acabei de ganhar mais 500, adiciona ao saldo",
+      "expect": {
+        "type": "income",
+        "amount": 50000,
+        "date": "2026-10-17"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar recebimento",
+        "documents": [
+          {
+            "id": "00b2f932-92a2-406b-8c22-c674e08e6eec",
+            "kind": "INCOME",
+            "description": "Mais , adiciona ao saldo",
+            "date": "2026-10-17",
+            "amount_cents": 50000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "salary": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 10.57529999999997,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "renda-02",
+      "text": "Caiu mais quinhentos na conta, anota aí.",
+      "expect": {
+        "type": "income",
+        "amount": 50000,
+        "date": "2026-10-17"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar recebimento",
+        "documents": [
+          {
+            "id": "7c709dfc-35a2-4796-84fb-7fd85a1b2a29",
+            "kind": "INCOME",
+            "description": "Mais na conta, anota aí",
+            "date": "2026-10-17",
+            "amount_cents": 50000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "salary": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 7.054000000000087,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "renda-03",
+      "text": "Recebi 500 reais de comissão agora.",
+      "expect": {
+        "type": "income",
+        "amount": 50000,
+        "date": "2026-10-17"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar recebimento",
+        "documents": [
+          {
+            "id": "2f49e96e-bd20-405a-8776-06f2edd214b3",
+            "kind": "INCOME",
+            "description": "comissao agora",
+            "date": "2026-10-17",
+            "amount_cents": 50000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "salary": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 5.688600000000179,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "renda-04",
+      "text": "Entraram R$ 500 da venda da bicicleta, coloca no meu saldo.",
+      "expect": {
+        "type": "income",
+        "amount": 50000,
+        "date": "2026-10-17"
+      },
+      "pass": false,
+      "stage": "model-required",
+      "local": {},
+      "answer": "",
+      "error": "MODEL_REQUIRED",
+      "plan": null,
+      "ms": 22.915899999999965,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "renda-05",
+      "text": "Ontem ganhei 500 de presente da minha mãe, registra.",
+      "expect": {
+        "type": "income",
+        "amount": 50000,
+        "date": "2026-10-16"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar recebimento",
+        "documents": [
+          {
+            "id": "6458a588-9294-411f-88cc-a8e4a5219a95",
+            "kind": "INCOME",
+            "description": "Presente da minha mãe, registra",
+            "date": "2026-10-16",
+            "amount_cents": 50000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "salary": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 5.757399999999961,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "renda-06",
+      "text": "Ganhei mais 500 reais. Pode lançar essa entrada?",
+      "expect": {
+        "type": "income",
+        "amount": 50000,
+        "date": "2026-10-17"
+      },
+      "pass": false,
+      "stage": "model-required",
+      "local": {},
+      "answer": "",
+      "error": "MODEL_REQUIRED",
+      "plan": null,
+      "ms": 23.774000000000115,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "gasto-01",
+      "text": "Gastei 25 no McDonald’s",
+      "expect": {
+        "type": "expense",
+        "amount": 2500,
+        "date": "2026-10-17",
+        "status": "REALIZADO"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar despesa paga",
+        "documents": [],
+        "expenses": [
+          {
+            "id": "0415f6a2-e76e-42af-825e-ed2fa82e17fc",
+            "kind": "PESSOAL",
+            "scope": "PESSOAL",
+            "entry_date": "2026-10-17",
+            "description": "mcdonald’s",
+            "category": "Outras despesas pessoais",
+            "status": "REALIZADO",
+            "amount_cents": 2500,
+            "details": {
+              "notes": "",
+              "payment_method": "OUTRO",
+              "trip_name": "",
+              "expense_audience": "NAO_INFORMADO",
+              "expense_nature": "NAO_CLASSIFICADO"
+            }
+          }
+        ]
+      },
+      "ms": 14.873700000000099,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "gasto-02",
+      "text": "Acabei de gastar vinte e cinco no McDonalds.",
+      "expect": {
+        "type": "expense",
+        "amount": 2500,
+        "date": "2026-10-17",
+        "status": "REALIZADO"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar despesa paga",
+        "documents": [],
+        "expenses": [
+          {
+            "id": "5244139f-0afc-4bbb-8bda-51522acc4342",
+            "kind": "PESSOAL",
+            "scope": "PESSOAL",
+            "entry_date": "2026-10-17",
+            "description": "mcdonalds",
+            "category": "Outras despesas pessoais",
+            "status": "REALIZADO",
+            "amount_cents": 2500,
+            "details": {
+              "notes": "",
+              "payment_method": "OUTRO",
+              "trip_name": "",
+              "expense_audience": "NAO_INFORMADO",
+              "expense_nature": "NAO_CLASSIFICADO"
+            }
+          }
+        ]
+      },
+      "ms": 7.136700000000019,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "gasto-03",
+      "text": "Foram 25 reais no lanche do Mec, anota pra mim.",
+      "expect": {
+        "type": "expense",
+        "amount": 2500,
+        "date": "2026-10-17",
+        "status": "REALIZADO"
+      },
+      "pass": false,
+      "stage": "model-required",
+      "local": {},
+      "answer": "",
+      "error": "MODEL_REQUIRED",
+      "plan": null,
+      "ms": 13.39260000000013,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "gasto-04",
+      "text": "Ontem paguei 25 no Mc Donalds, esqueci de registrar.",
+      "expect": {
+        "type": "expense",
+        "amount": 2500,
+        "date": "2026-10-16",
+        "status": "REALIZADO"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar despesa paga",
+        "documents": [],
+        "expenses": [
+          {
+            "id": "1f1a4e4f-a0d1-4bab-87ae-3e4ac42e8511",
+            "kind": "PESSOAL",
+            "scope": "PESSOAL",
+            "entry_date": "2026-10-16",
+            "description": "Mc Donalds, esqueci de registrar",
+            "category": "Outras despesas pessoais",
+            "status": "REALIZADO",
+            "amount_cents": 2500,
+            "details": {
+              "notes": "",
+              "payment_method": "OUTRO",
+              "trip_name": "",
+              "expense_audience": "NAO_INFORMADO",
+              "expense_nature": "NAO_CLASSIFICADO"
+            }
+          }
+        ]
+      },
+      "ms": 13.450900000000047,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "gasto-05",
+      "text": "Paguei vinte e cinco reais pelo almoço hoje.",
+      "expect": {
+        "type": "expense",
+        "amount": 2500,
+        "date": "2026-10-17",
+        "status": "REALIZADO"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar despesa paga",
+        "documents": [],
+        "expenses": [
+          {
+            "id": "fb63ac92-096f-44a0-87c6-df25cf891a8f",
+            "kind": "PESSOAL",
+            "scope": "PESSOAL",
+            "entry_date": "2026-10-17",
+            "description": "Pelo almoço",
+            "category": "Restaurante",
+            "status": "REALIZADO",
+            "amount_cents": 2500,
+            "details": {
+              "notes": "",
+              "payment_method": "OUTRO",
+              "trip_name": "",
+              "expense_audience": "NAO_INFORMADO",
+              "expense_nature": "NAO_CLASSIFICADO"
+            }
+          }
+        ]
+      },
+      "ms": 7.889400000000023,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "gasto-06",
+      "text": "Lança pra mim o sorvete que acabei de comprar por 25 reais.",
+      "expect": {
+        "type": "expense",
+        "amount": 2500,
+        "date": "2026-10-17",
+        "status": "REALIZADO"
+      },
+      "pass": false,
+      "stage": "model-required",
+      "local": {},
+      "answer": "",
+      "error": "MODEL_REQUIRED",
+      "plan": null,
+      "ms": 2.7725000000000364,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "moto-01",
+      "text": "Dia 25 vou pagar 800 da última parcela da moto",
+      "expect": {
+        "type": "expense",
+        "amount": 80000,
+        "date": "2026-10-25",
+        "status": "PREVISTO"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Agendar pagamento futuro",
+        "documents": [],
+        "expenses": [
+          {
+            "id": "8a7fb66a-a80c-4353-8d8b-d3eced9665fb",
+            "kind": "PESSOAL",
+            "scope": "PESSOAL",
+            "entry_date": "2026-10-25",
+            "description": "Última parcela da moto",
+            "category": "Veículo pessoal",
+            "status": "PREVISTO",
+            "amount_cents": 80000,
+            "details": {
+              "notes": "",
+              "payment_method": "OUTRO",
+              "trip_name": "",
+              "expense_audience": "NAO_INFORMADO",
+              "expense_nature": "NAO_CLASSIFICADO"
+            }
+          }
+        ]
+      },
+      "ms": 19.088999999999942,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "moto-02",
+      "text": "Agenda a última prestação da moto, oitocentos reais, dia vinte e cinco.",
+      "expect": {
+        "type": "expense",
+        "amount": 80000,
+        "date": "2026-10-25",
+        "status": "PREVISTO"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Agendar pagamento futuro",
+        "documents": [],
+        "expenses": [
+          {
+            "id": "43ae6646-9894-42e9-878b-ea9e52cd882c",
+            "kind": "PESSOAL",
+            "scope": "PESSOAL",
+            "entry_date": "2026-10-25",
+            "description": "Última prestação da moto",
+            "category": "Veículo pessoal",
+            "status": "PREVISTO",
+            "amount_cents": 80000,
+            "details": {
+              "notes": "",
+              "payment_method": "OUTRO",
+              "trip_name": "",
+              "expense_audience": "NAO_INFORMADO",
+              "expense_nature": "NAO_CLASSIFICADO"
+            }
+          }
+        ]
+      },
+      "ms": 9.815800000000081,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "moto-03",
+      "text": "Vou quitar a moto dia 25, a parcela final é de 800 reais.",
+      "expect": {
+        "type": "expense",
+        "amount": 80000,
+        "date": "2026-10-25",
+        "status": "PREVISTO"
+      },
+      "pass": false,
+      "stage": "model-required",
+      "local": {},
+      "answer": "",
+      "error": "MODEL_REQUIRED",
+      "plan": null,
+      "ms": 2.7124999999998636,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "moto-04",
+      "text": "Oitocentos da última parcela da moto pra pagar no dia 25.",
+      "expect": {
+        "type": "expense",
+        "amount": 80000,
+        "date": "2026-10-25",
+        "status": "PREVISTO"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Agendar pagamento futuro",
+        "documents": [],
+        "expenses": [
+          {
+            "id": "af4cca31-d93d-4049-8494-440b2ee11c3e",
+            "kind": "PESSOAL",
+            "scope": "PESSOAL",
+            "entry_date": "2026-10-25",
+            "description": "Última parcela da moto pra pagar no",
+            "category": "Veículo pessoal",
+            "status": "PREVISTO",
+            "amount_cents": 80000,
+            "details": {
+              "notes": "",
+              "payment_method": "OUTRO",
+              "trip_name": "",
+              "expense_audience": "NAO_INFORMADO",
+              "expense_nature": "NAO_CLASSIFICADO"
+            }
+          }
+        ]
+      },
+      "ms": 8.608099999999922,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "moto-05",
+      "text": "Pode deixar anotado 800 da minha moto para o dia 25? É a última parcela.",
+      "expect": {
+        "type": "expense",
+        "amount": 80000,
+        "date": "2026-10-25",
+        "status": "PREVISTO"
+      },
+      "pass": false,
+      "stage": "model-required",
+      "local": {},
+      "answer": "",
+      "error": "MODEL_REQUIRED",
+      "plan": null,
+      "ms": 2.4682000000000244,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "moto-06",
+      "text": "Última parcela da moto: R$ 800 no dia 25. Ainda vou pagar.",
+      "expect": {
+        "type": "expense",
+        "amount": 80000,
+        "date": "2026-10-25",
+        "status": "PREVISTO"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Agendar pagamento futuro",
+        "documents": [],
+        "expenses": [
+          {
+            "id": "819df3e3-b449-4117-8503-0369447cf805",
+            "kind": "PESSOAL",
+            "scope": "PESSOAL",
+            "entry_date": "2026-10-25",
+            "description": "Última parcela da moto: no . Ainda",
+            "category": "Veículo pessoal",
+            "status": "PREVISTO",
+            "amount_cents": 80000,
+            "details": {
+              "notes": "",
+              "payment_method": "OUTRO",
+              "trip_name": "",
+              "expense_audience": "NAO_INFORMADO",
+              "expense_nature": "NAO_CLASSIFICADO"
+            }
+          }
+        ]
+      },
+      "ms": 9.101499999999987,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "agenda-01",
+      "text": "Amanhã tenho dentista às 15h",
+      "expect": {
+        "type": "appointment",
+        "date": "2026-10-18",
+        "time": "15:00",
+        "contains": "dentista"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Agendar / alterar compromisso",
+        "documents": [
+          {
+            "id": "8749ee68-82e2-4942-8e78-1d13cc6d1c1a",
+            "kind": "APPOINTMENT",
+            "description": "tenho dentista",
+            "date": "2026-10-18",
+            "amount_cents": 0,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "time": "15:00",
+              "location": "",
+              "done": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 6.850400000000036,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "agenda-02",
+      "text": "Marca dentista pra amanhã às três da tarde.",
+      "expect": {
+        "type": "appointment",
+        "date": "2026-10-18",
+        "time": "15:00",
+        "contains": "dentista"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Agendar / alterar compromisso",
+        "documents": [
+          {
+            "id": "e9dfe7a9-885d-4825-8d0a-4bf8c4168f81",
+            "kind": "APPOINTMENT",
+            "description": "dentista pra",
+            "date": "2026-10-18",
+            "amount_cents": 0,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "time": "15:00",
+              "location": "",
+              "done": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 9.91009999999983,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "agenda-03",
+      "text": "Anota minha consulta no dentista amanhã, quinze horas.",
+      "expect": {
+        "type": "appointment",
+        "date": "2026-10-18",
+        "time": "15:00",
+        "contains": "dentista"
+      },
+      "pass": false,
+      "stage": "model-required",
+      "local": {},
+      "answer": "",
+      "error": "MODEL_REQUIRED",
+      "plan": null,
+      "ms": 5.265600000000177,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "agenda-04",
+      "text": "Pode agendar dentista pra mim amanhã às 15 horas?",
+      "expect": {
+        "type": "appointment",
+        "date": "2026-10-18",
+        "time": "15:00",
+        "contains": "dentista"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Agendar / alterar compromisso",
+        "documents": [
+          {
+            "id": "e28d0fdb-350a-4447-8de5-f3c6fc948af4",
+            "kind": "APPOINTMENT",
+            "description": "dentista",
+            "date": "2026-10-18",
+            "amount_cents": 0,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "time": "15:00",
+              "location": "",
+              "done": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 6.9927000000000135,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "agenda-05",
+      "text": "Meu dentista ficou pra amanhã, 15h. Coloca na agenda.",
+      "expect": {
+        "type": "appointment",
+        "date": "2026-10-18",
+        "time": "15:00",
+        "contains": "dentista"
+      },
+      "pass": false,
+      "stage": "model-required",
+      "local": {},
+      "answer": "",
+      "error": "MODEL_REQUIRED",
+      "plan": null,
+      "ms": 2.5357000000001335,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "agenda-06",
+      "text": "Tenho consulta com o dentista amanhã às quinze horas, registra esse compromisso.",
+      "expect": {
+        "type": "appointment",
+        "date": "2026-10-18",
+        "time": "15:00",
+        "contains": "dentista"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Agendar / alterar compromisso",
+        "documents": [
+          {
+            "id": "5fa89380-6cce-47a8-8ef2-d17ca9c13e9f",
+            "kind": "APPOINTMENT",
+            "description": "Tenho consulta com o dentista, registra esse compromisso",
+            "date": "2026-10-18",
+            "amount_cents": 0,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "time": "15:00",
+              "location": "",
+              "done": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 5.955200000000104,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "controle-01",
+      "text": "Qual é meu saldo atual?",
+      "expect": {
+        "type": "query"
+      },
+      "pass": false,
+      "stage": "model-required",
+      "local": {},
+      "answer": "",
+      "error": "MODEL_REQUIRED",
+      "plan": null,
+      "ms": 2.79099999999994,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "controle-02",
+      "text": "Se eu ganhar 500 reais, quanto fica meu saldo?",
+      "expect": {
+        "type": "no-write"
+      },
+      "pass": true,
+      "stage": "pre-model-rule",
+      "local": {
+        "guard": "HELP",
+        "natural": "HELP",
+        "question": "Não fiz alterações. Para registrar, envie um pedido direto com os dados reais."
+      },
+      "answer": "Não fiz alterações. Para registrar, envie um pedido direto com os dados reais.",
+      "error": "",
+      "plan": null,
+      "ms": 0.39180000000010295,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "controle-03",
+      "text": "Não gastei 25 no McDonalds.",
+      "expect": {
+        "type": "no-write"
+      },
+      "pass": true,
+      "stage": "pre-model-rule",
+      "local": {
+        "guard": "HELP",
+        "natural": "HELP",
+        "question": "Não fiz alterações. Para registrar, envie um pedido direto com os dados reais."
+      },
+      "answer": "Não fiz alterações. Para registrar, envie um pedido direto com os dados reais.",
+      "error": "",
+      "plan": null,
+      "ms": 0.3023000000000593,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "controle-04",
+      "text": "Ajusta meu saldo atual.",
+      "expect": {
+        "type": "clarify"
+      },
+      "pass": true,
+      "stage": "pre-model-rule",
+      "local": {
+        "natural": "CLARIFY",
+        "question": "Qual é o saldo atual correto, em reais?"
+      },
+      "answer": "Qual é o saldo atual correto, em reais?",
+      "error": "",
+      "plan": null,
+      "ms": 4.458799999999883,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "controle-05",
+      "text": "Ajusta meu saldo para 1500 ou 1600, não lembro direito.",
+      "expect": {
+        "type": "clarify"
+      },
+      "pass": true,
+      "stage": "pre-model-rule",
+      "local": {
+        "natural": "CLARIFY",
+        "question": "Qual é o saldo correto? Informe apenas um valor para o ajuste."
+      },
+      "answer": "Qual é o saldo correto? Informe apenas um valor para o ajuste.",
+      "error": "",
+      "plan": null,
+      "ms": 62.80679999999984,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "controle-06",
+      "text": "Dia 25 vou pagar a última parcela da moto.",
+      "expect": {
+        "type": "clarify"
+      },
+      "pass": true,
+      "stage": "pre-model-rule",
+      "local": {
+        "natural": "CLARIFY",
+        "question": "Qual foi o valor?"
+      },
+      "answer": "Qual foi o valor?",
+      "error": "",
+      "plan": null,
+      "ms": 2.084999999999809,
+      "estimated_usd": 0,
+      "calls": []
+    }
+  ]
+}

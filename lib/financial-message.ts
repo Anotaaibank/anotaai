@@ -6,11 +6,11 @@ import type {FinanceCommand,FinanceState} from './finance.ts';
 
 const reply=(question:string):FinanceDraft=>({intent:'CLARIFY',question,query:'',command:null,confidence:'ALTA',target_excerpt:'',money_evidence:[],date_evidence:[]});
 const command=(c:FinanceCommand,amount?:string,date?:string):FinanceDraft=>({...reply(''),intent:'COMMAND',command:c,money_evidence:amount?[{field:'amount_cents',excerpt:amount}]:[],date_evidence:date?[{field:'date',excerpt:date}]:[]});
-const futureOut=/\b(?:(?:vou|irei|preciso|devo|tenho que|tenho de)\s+(?:pagar|gastar)|pagarei|a pagar|vai vencer|vence|vencimento)\b/;
+const futureOut=/\b(?:(?:vou|irei|preciso|devo|tenho que|tenho de)\s+(?:pagar|gastar|quitar)|pagarei|a pagar|vai vencer|vence|vencimento)\b/;
 const futureIn=/\b(?:(?:vou|irei|tenho que|tenho a)\s+receber|receberei|a receber|(?:vai|ira)\s+me\s+pagar|me\s+(?:pagara|vai pagar))\b/;
 const paid=/\b(?:paguei|gastei|comprei|quitei)\b/;
 const received=/\b(?:recebi|ganhei|entrou|caiu|vendi|tive)\b|\bme\s+(?:pagou|pagaram)\b/;
-const outgoing=/\b(?:paguei|gastei|comprei|quitei|pagar|pagarei|parcela|prestacao|boleto|aluguel|mensalidade|conserto)\b/;
+const outgoing=/\b(?:paguei|gastei|comprei|quitei|quitar|pagar|pagarei|parcela|prestacao|boleto|aluguel|mensalidade|conserto)\b/;
 const incoming=/\b(?:recebi|ganhei|recebo|receber|receberei|vendi|entrou|caiu|lucro)\b|\bme\s+(?:pagou|pagaram|paga|pagara|vai pagar)\b|\b(?:vai|ira)\s+me\s+pagar\b/;
 export function statedFinancialStatus(text:string){const s=fold(text);return futureOut.test(s)||futureIn.test(s)?'PREVISTO' as const:paid.test(s)||received.test(s)?'REALIZADO' as const:undefined;}
 
@@ -38,9 +38,10 @@ export function financialMessageDraft(text:string,state:FinanceState,today:strin
  const amount=amounts[0];if(amount.amount<=0||amount.amount>1000000000)return reply('Qual é o valor em reais, maior que zero?');
  let description=masked;
  for(const span of amounts.slice().reverse())description=description.slice(0,span.start)+' '.repeat(span.end-span.start)+description.slice(span.end);
- description=description.replace(/\b(?:(?:eu\s+)?(?:vou|irei|preciso|devo|tenho que|tenho de)\s+(?:pagar|gastar|receber)|(?:vai|irá|ira)\s+me\s+pagar|me\s+(?:pagou|pagaram|paga|pagará|pagara|vai pagar)|paguei|gastei|comprei|quitei|recebi|ganhei|recebo|receberei|pagarei|vendi|entrou|caiu|tive)\b/gi,' ')
+ description=description.replace(/\b(?:(?:eu\s+)?(?:vou|irei|preciso|devo|tenho que|tenho de)\s+(?:pagar|gastar|quitar|receber)|(?:vai|irá|ira)\s+me\s+pagar|me\s+(?:pagou|pagaram|paga|pagará|pagara|vai pagar)|paguei|gastei|comprei|quitei|recebi|ganhei|recebo|receberei|pagarei|vendi|entrou|caiu|tive)\b/gi,' ')
   .replace(/^(?:(?:por favor|anota|anote|lança|lanca|lance|registra|registre|agenda|agende|pra mim|para mim|agora|eu)\b[, ]*)+/i,'')
   .replace(/\b(?:por favor|aqui|agora|já|ja)\b/gi,' ').replace(/\s+/g,' ').replace(/^[\s,.:;-]*(?:(?:de|do|da|no|na|em|por|o|a|um|uma)\b[\s,.:;-]*)*/i,'').replace(/[\s,.:;!-]+$/,'').trim();
+ description=description.replace(/(?:^|\s)é\s+de\b|\bo\s+valor\s+(?:é\s+)?de\b/gi,' ').replace(/\s+/g,' ').trim();
  if(!description)description=isIn?'Entrada recebida':'Despesa pessoal';
  if(description.length>160||/\b(?:e|mas|tambem|depois|antes|outro|outra|registrad[oa]|anotad[oa])\b/.test(fold(description)))return null;
  if(/\blucro\b/.test(s))description='Lucro informado · '+description;

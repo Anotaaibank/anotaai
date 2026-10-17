@@ -1,0 +1,548 @@
+{
+  "summary": {
+    "phase": "holdout",
+    "mode": "real",
+    "audio": false,
+    "fixture_sha256": "e353e568f7104fc429833eabfa195e7760696ddb472b04f391e53fab30af853e",
+    "date": "2026-10-17T13:58:53.535Z",
+    "total": 10,
+    "passed": 9,
+    "accuracy": 0.9,
+    "model_calls": 2,
+    "estimated_usd": 0.0065544,
+    "cost_per_success_usd": 0.0007282666666666667,
+    "p50_ms": 11.726000000000113,
+    "p95_ms": 4444.7371
+  },
+  "results": [
+    {
+      "id": "inedito-01",
+      "text": "Por favor, corrija o saldo atual da minha conta para R$ 2.375,42.",
+      "expect": {
+        "type": "adjustment",
+        "balance": 237542
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Ajustar saldo atual",
+        "documents": [
+          {
+            "id": "ca6cab06-2f8e-422f-81e1-8dd544e9b76c",
+            "kind": "BALANCE_ADJUSTMENT",
+            "description": "Ajuste do saldo atual",
+            "date": "2026-10-17",
+            "amount_cents": 127542,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "previous_balance_cents": 110000,
+              "target_balance_cents": 237542,
+              "delta_cents": 127542,
+              "basis_hash": "3c401524b65a4cb1ced2ffe332e6b033"
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 55.739900000000034,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "inedito-02",
+      "text": "Deixa meu saldo atual em zero reais agora.",
+      "expect": {
+        "type": "adjustment",
+        "balance": 0
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Ajustar saldo atual",
+        "documents": [
+          {
+            "id": "5417da11-05be-4f15-815b-51b1a9214ea3",
+            "kind": "BALANCE_ADJUSTMENT",
+            "description": "Ajuste do saldo atual",
+            "date": "2026-10-17",
+            "amount_cents": 110000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "previous_balance_cents": 110000,
+              "target_balance_cents": 0,
+              "delta_cents": -110000,
+              "basis_hash": "3c401524b65a4cb1ced2ffe332e6b033"
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 8.031400000000076,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "inedito-03",
+      "text": "Ganhei 425,50 reais de um serviço por fora hoje, lança a entrada.",
+      "expect": {
+        "type": "income",
+        "amount": 42550,
+        "date": "2026-10-17"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar recebimento",
+        "documents": [
+          {
+            "id": "733e7e97-71b8-4232-8489-41dc8930b598",
+            "kind": "INCOME",
+            "description": "Serviço por fora , lança a entrada",
+            "date": "2026-10-17",
+            "amount_cents": 42550,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "salary": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 14.686300000000074,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "inedito-04",
+      "text": "Hoje entrou cento e trinta e oito reais de comissão, registra pra mim.",
+      "expect": {
+        "type": "income",
+        "amount": 13800,
+        "date": "2026-10-17"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar recebimento",
+        "documents": [
+          {
+            "id": "cddfb211-d978-47d2-8267-390be82276c0",
+            "kind": "INCOME",
+            "description": "Comissão, registra pra mim",
+            "date": "2026-10-17",
+            "amount_cents": 13800,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "salary": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 11.726000000000113,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "inedito-05",
+      "text": "Acabei de pagar R$ 38,75 na mercearia.",
+      "expect": {
+        "type": "expense",
+        "amount": 3875,
+        "date": "2026-10-17",
+        "status": "REALIZADO"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar despesa paga",
+        "documents": [],
+        "expenses": [
+          {
+            "id": "5c889c00-e211-49c7-8f33-e595a7cc4230",
+            "kind": "PESSOAL",
+            "scope": "PESSOAL",
+            "entry_date": "2026-10-17",
+            "description": "Acabei de pagar na mercearia",
+            "category": "Outras despesas pessoais",
+            "status": "REALIZADO",
+            "amount_cents": 3875,
+            "details": {
+              "notes": "",
+              "payment_method": "OUTRO",
+              "trip_name": "",
+              "expense_audience": "NAO_INFORMADO",
+              "expense_nature": "NAO_CLASSIFICADO"
+            }
+          }
+        ]
+      },
+      "ms": 9.4058,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "inedito-06",
+      "text": "Ontem almocei e paguei sessenta e dois reais no restaurante, anota aí.",
+      "expect": {
+        "type": "expense",
+        "amount": 6200,
+        "date": "2026-10-16",
+        "status": "REALIZADO"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {},
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar despesa paga",
+        "documents": [],
+        "expenses": [
+          {
+            "id": "394a407f-35e5-4539-88b8-16221a448cfe",
+            "kind": "PESSOAL",
+            "scope": "PESSOAL",
+            "entry_date": "2026-10-16",
+            "description": "Almoço no restaurante",
+            "category": "Restaurante",
+            "status": "REALIZADO",
+            "amount_cents": 6200,
+            "details": {
+              "notes": "",
+              "payment_method": "OUTRO",
+              "trip_name": "",
+              "expense_audience": "NAO_INFORMADO",
+              "expense_nature": "NAO_CLASSIFICADO"
+            }
+          }
+        ]
+      },
+      "ms": 4444.7371,
+      "estimated_usd": 0.0032952000000000003,
+      "calls": [
+        {
+          "model": "gpt-4.1-mini",
+          "status": 200,
+          "ms": 4400.7392,
+          "usage": {
+            "input_tokens": 7302,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens": 234,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "total_tokens": 7536
+          },
+          "request_id": "req_1ef0c785696448a5aa9dc6f411766696",
+          "draft": {
+            "intent": "COMMAND",
+            "command": {
+              "balance_cents": null,
+              "action": "expense_create",
+              "target_id": null,
+              "description": "Almoço no restaurante",
+              "date": "2026-10-16",
+              "amount_cents": 6200,
+              "status": "REALIZADO",
+              "category": "Restaurante",
+              "details": {
+                "notes": "",
+                "payment_method": "OUTRO",
+                "trip_name": "",
+                "expense_audience": "NAO_INFORMADO",
+                "income_activity": null,
+                "expense_nature": "ESSENCIAL"
+              },
+              "dates": null,
+              "count": null,
+              "amount_mode": null,
+              "schedule_type": null,
+              "profile": null,
+              "rate_percent": null,
+              "rate_period": null,
+              "reserve_id": null,
+              "direction": null,
+              "location": null,
+              "time": null,
+              "done": null,
+              "salary": null,
+              "activity": null,
+              "cost_cents": null,
+              "recurring": null,
+              "due_day": null
+            },
+            "items": null,
+            "question": "",
+            "confidence": "ALTA",
+            "target_excerpt": "Sessenta e dois reais no restaurante ontem",
+            "money_evidence": [
+              {
+                "field": "amount_cents",
+                "excerpt": "sessenta e dois reais"
+              }
+            ],
+            "date_evidence": [
+              {
+                "field": "date",
+                "excerpt": "ontem"
+              }
+            ],
+            "query": ""
+          }
+        }
+      ]
+    },
+    {
+      "id": "inedito-07",
+      "text": "Agende a prestação final do financiamento da moto, R$ 940, para o dia 29. Ainda não paguei.",
+      "expect": {
+        "type": "expense",
+        "amount": 94000,
+        "date": "2026-10-29",
+        "status": "PREVISTO"
+      },
+      "pass": false,
+      "stage": "semantic-or-plan",
+      "local": {
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Agendar / alterar compromisso",
+        "documents": [
+          {
+            "id": "75eb3359-e054-43a8-8f97-027def102525",
+            "kind": "APPOINTMENT",
+            "description": "prestação final do financiamento da moto, R$ 940, para o . Ainda não paguei",
+            "date": "2026-10-29",
+            "amount_cents": 0,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "time": "",
+              "location": "",
+              "done": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 6.889100000000326,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "inedito-08",
+      "text": "A consulta com a pediatra é amanhã às 10h30. Marca esse compromisso.",
+      "expect": {
+        "type": "appointment",
+        "date": "2026-10-18",
+        "time": "10:30",
+        "contains": "pediatra"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {},
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Agendar / alterar compromisso",
+        "documents": [
+          {
+            "id": "a71bd366-de5a-49e1-850c-3e315af453ed",
+            "kind": "APPOINTMENT",
+            "description": "consulta com a pediatra",
+            "date": "2026-10-18",
+            "amount_cents": 0,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "time": "10:30",
+              "location": "",
+              "done": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 2333.7158,
+      "estimated_usd": 0.0032592,
+      "calls": [
+        {
+          "model": "gpt-4.1-mini",
+          "status": 200,
+          "ms": 2326.2928999999995,
+          "usage": {
+            "input_tokens": 7300,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens": 212,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "total_tokens": 7512
+          },
+          "request_id": "req_76352d539bef4405a1738a134af78897",
+          "draft": {
+            "intent": "COMMAND",
+            "command": {
+              "balance_cents": null,
+              "action": "appointment_upsert",
+              "target_id": null,
+              "description": "consulta com a pediatra",
+              "date": "2026-10-18",
+              "amount_cents": null,
+              "status": null,
+              "category": null,
+              "details": null,
+              "dates": null,
+              "count": null,
+              "amount_mode": null,
+              "schedule_type": null,
+              "profile": null,
+              "rate_percent": null,
+              "rate_period": null,
+              "reserve_id": null,
+              "direction": null,
+              "location": null,
+              "time": "10:30",
+              "done": null,
+              "salary": null,
+              "activity": null,
+              "cost_cents": null,
+              "recurring": null,
+              "due_day": null
+            },
+            "items": null,
+            "question": "",
+            "confidence": "ALTA",
+            "target_excerpt": "consulta com a pediatra é amanhã às 10h30",
+            "money_evidence": [
+              {
+                "field": "date",
+                "excerpt": "amanhã"
+              },
+              {
+                "field": "time",
+                "excerpt": "10h30"
+              }
+            ],
+            "date_evidence": [
+              {
+                "field": "date",
+                "excerpt": "amanhã"
+              }
+            ],
+            "query": ""
+          }
+        }
+      ]
+    },
+    {
+      "id": "inedito-09",
+      "text": "Não registre os 45 reais, era só uma simulação.",
+      "expect": {
+        "type": "no-write"
+      },
+      "pass": true,
+      "stage": "pre-model-rule",
+      "local": {
+        "guard": "HELP",
+        "natural": "HELP",
+        "question": "Não fiz alterações. Para registrar, envie um pedido direto com os dados reais."
+      },
+      "answer": "Não fiz alterações. Para registrar, envie um pedido direto com os dados reais.",
+      "error": "",
+      "plan": null,
+      "ms": 0.5817000000006374,
+      "estimated_usd": 0,
+      "calls": []
+    },
+    {
+      "id": "inedito-10",
+      "text": "Agenda consulta com o dentista amanhã às oito da manhã.",
+      "expect": {
+        "type": "appointment",
+        "date": "2026-10-18",
+        "time": "08:00",
+        "contains": "dentista"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "local": {
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Agendar / alterar compromisso",
+        "documents": [
+          {
+            "id": "25642918-342c-457e-8edb-a440025de737",
+            "kind": "APPOINTMENT",
+            "description": "consulta com o dentista",
+            "date": "2026-10-18",
+            "amount_cents": 0,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "time": "08:00",
+              "location": "",
+              "done": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 9.295000000000073,
+      "estimated_usd": 0,
+      "calls": []
+    }
+  ]
+}

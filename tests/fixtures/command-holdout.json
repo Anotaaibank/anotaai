@@ -1,0 +1,15 @@
+{
+ "today":"2026-10-17",
+ "cases":[
+  {"id":"inedito-01","text":"Por favor, corrija o saldo atual da minha conta para R$ 2.375,42.","expect":{"type":"adjustment","balance":237542}},
+  {"id":"inedito-02","text":"Deixa meu saldo atual em zero reais agora.","expect":{"type":"adjustment","balance":0}},
+  {"id":"inedito-03","text":"Ganhei 425,50 reais de um serviço por fora hoje, lança a entrada.","expect":{"type":"income","amount":42550,"date":"2026-10-17"}},
+  {"id":"inedito-04","text":"Hoje entrou cento e trinta e oito reais de comissão, registra pra mim.","expect":{"type":"income","amount":13800,"date":"2026-10-17"}},
+  {"id":"inedito-05","text":"Acabei de pagar R$ 38,75 na mercearia.","expect":{"type":"expense","amount":3875,"date":"2026-10-17","status":"REALIZADO"}},
+  {"id":"inedito-06","text":"Ontem almocei e paguei sessenta e dois reais no restaurante, anota aí.","expect":{"type":"expense","amount":6200,"date":"2026-10-16","status":"REALIZADO"}},
+  {"id":"inedito-07","text":"Agende a prestação final do financiamento da moto, R$ 940, para o dia 29. Ainda não paguei.","expect":{"type":"expense","amount":94000,"date":"2026-10-29","status":"PREVISTO"}},
+  {"id":"inedito-08","text":"A consulta com a pediatra é amanhã às 10h30. Marca esse compromisso.","expect":{"type":"appointment","date":"2026-10-18","time":"10:30","contains":"pediatra"}},
+  {"id":"inedito-09","text":"Não registre os 45 reais, era só uma simulação.","expect":{"type":"no-write"}},
+  {"id":"inedito-10","text":"Agenda consulta com o dentista amanhã às oito da manhã.","expect":{"type":"appointment","date":"2026-10-18","time":"08:00","contains":"dentista"}}
+ ]
+}

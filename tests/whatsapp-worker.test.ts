@@ -18,6 +18,18 @@ process.env.ANOTA_DATABASE_PATH=':memory:';
 async function modules(){const hooks=registerHooks({resolve(s,c,next){return next(s==='next/headers'?'next/headers.js':s,c);}});try{return {store:await import('../lib/whatsapp-store.ts'),worker:await import('../lib/whatsapp-worker.ts'),server:await import('../lib/whatsapp-server.ts')};}finally{hooks.deregister();}}
 const sender='5511999999999',phone='5511988888888';
 
+test('saldo por texto/áudio usa conciliação, 2 edita e 1 confirma sem receita, repetição ou perda de histórico',async()=>{
+ for(const type of ['text','audio'] as const){const c=await context();try{
+  add(c.user,{action:'profile_upsert',profile:{opening_balance_cents:100000,opening_date:brazilDay()}});add(c.user,{action:'income_upsert',description:'Entrada anterior',amount_cents:30000});add(c.user,{action:'expense_create',description:'Saída anterior',category:'Supermercado',amount_cents:20000});
+  const before=localFinanceState(c.user);process.env.OPENAI_API_KEY='synthetic-only';
+  globalThis.fetch=async(url)=>{const path=String(url);if(path.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(path.endsWith('/audio/transcriptions'))return Response.json({text:'Atualiza meu saldo de mil e cem para mil e quinhentos.'});assert.ok(/\/send\/(?:text|menu)$/.test(path));return Response.json({id:randomUUID()});};
+  const proposed=await c.message('Atualiza meu saldo de 1.100 para 1.500',type);assert.equal(proposed.status,'ESCLARECER',proposed.reply);assert.match(proposed.reply,/Ajustar saldo atual/);assert.deepEqual(localFinanceState(c.user),before);
+  assert.match((await c.message('2')).reply,/Editar proposta/);const edited=await c.message('1800');assert.equal(edited.status,'ESCLARECER',edited.reply);assert.match(edited.reply,/1\.800,00/);assert.deepEqual(localFinanceState(c.user),before);
+  assert.equal((await c.message('1')).status,'LANCADO');await c.message('1');
+  const after=localFinanceState(c.user),snapshot=financeSnapshot(after);assert.equal(snapshot.balance_cents,180000);assert.equal(snapshot.extra_received_month_cents,30000);assert.equal(snapshot.profile.opening_balance_cents,100000);assert.deepEqual(after.expenses,before.expenses);assert.equal(after.documents.filter(d=>d.kind==='BALANCE_ADJUSTMENT').length,1);
+ }finally{c.restore();}}
+});
+
 test('texto e áudio de última parcela salvam uma única previsão após sim e confirmação repetida não duplica',async()=>{
  for(const type of ['text','audio'] as const){const c=await context();try{
   process.env.OPENAI_API_KEY='synthetic-only';const text='Dia 25 agora vou pagar 800 reais da última parcela da minha moto.';let transcriptions=0;

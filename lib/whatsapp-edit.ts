@@ -4,6 +4,8 @@ import {buildFinancePlan,type FinancePlan,type FinanceCommand,type FinanceState}
 import {fold,monetaryLiterals,literalMoney,financeDate} from './finance-date.ts';
 import {nextMonthlyDay} from './monthly-bills.ts';
 import {appointmentFacts} from './appointment-language.ts';
+import {signedBalanceMoney} from './balance-language.ts';
+import {spokenNumber} from './finance-date.ts';
 export const editingPrefix='edit.v1.';
 type Editing={plan:FinancePlan;source:string};
 const signature=(body:string,key:string)=>createHmac('sha256',key).update('anotei-whatsapp-edit-v1:'+body).digest();
@@ -17,6 +19,8 @@ export function readWhatsappEdit(token:string,user:string,sender:string,key:stri
 export function quickEditedPlan(edit:Editing,text:string,state:FinanceState,user:string,id:string,today:string):FinancePlan|null{
  if(edit.plan.title.startsWith("Conferir "))return null;
  const s=fold(text).replace(/^na verdade[, ]+/,''),amounts=monetaryLiterals(text);let c:FinanceCommand;
+ const adjustment=edit.plan.documents.length===1&&edit.plan.documents[0].document.kind==='BALANCE_ADJUSTMENT'?edit.plan.documents[0]:null;
+ if(adjustment&&amounts.length<=1){const literal=text.trim().replace(/^(?:(?:o |a )?(?:saldo|valor) (?:correto |certo )?(?:é |e )?|na verdade[, ]+|para |pra )/i,'').replace(/[.!]+$/,'');if(new RegExp('^(?:menos\\s+|-)?'+spokenNumber+'(?:\\s+reais?)?$','iu').test(literal))return buildFinancePlan({action:'balance_adjust',balance_cents:signedBalanceMoney(literal)},state,user,id,today);}
  const rule=edit.plan.documents.find(d=>d.document.kind==='BILL_RULE'),appointment=edit.plan.documents.length===1&&edit.plan.documents[0].document.kind==='APPOINTMENT'?edit.plan.documents[0]:null;
  if(rule){if(rule.expected||!rule.document.active)return null;const r=rule.document;c={action:'expense_schedule',description:r.description,date:r.date,amount_cents:r.amount_cents,category:String(r.details.category),details:{payment_method:r.details.payment_method},schedule_type:'MENSAL',amount_mode:'PARCELA',recurring:true,due_day:Number(r.details.day)};}
  else if(appointment){const a=appointment.document;c={action:'appointment_upsert',...(appointment.expected?{target_id:a.id}:{}),description:a.description,date:a.date,time:String(a.details.time||''),location:String(a.details.location||''),done:Boolean(a.details.done)};}

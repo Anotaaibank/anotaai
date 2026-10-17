@@ -2,6 +2,7 @@ import {fold,literalMoney,financeDate,spokenNumber} from './finance-date.ts';
 import {personalCategory} from './personal-expenses.ts';
 import {appointmentFacts} from './appointment-language.ts';
 import {recurringDay} from './monthly-bills.ts';
+import {currentBalanceDraft} from './balance-language.ts';
 import {financialMessageDraft} from './financial-message.ts';
 import type {FinanceCommand,FinanceState,FinancePlan} from './finance.ts';
 import type {FinanceDraft} from './finance-ai.ts';
@@ -69,6 +70,7 @@ export function naturalReadQuery(text:string,today:string):string|null{
 }
 export function naturalFinanceTurn(text:string,state:FinanceState,today:string,context:NaturalContext={}):FinanceDraft|null{
  const s=fold(text),guard=languageGuard(text);if(guard)return guard;
+ const balance=currentBalanceDraft(text);if(balance)return balance;
  if(/[;\n]/.test(text)||financialAmountFragments(text).length>1||/\be\s+(?:tambem\s+)?(?:marca|marque|agende|anota|lanca|lança|registra|pago|pagar|paguei)\b/.test(s))return null;
  const read=naturalReadQuery(text,today);if(read)return {...empty('QUERY'),query:read};
  if(context.query&&/^(?:e\s+)?(?:no |na |do |da |o |a )?(?:mes passado|passado|mes anterior|mes atual|este mes|hoje|amanha|esta semana)[?!. ]*$/.test(s)){

@@ -3,6 +3,7 @@ import {AppError,uuid} from './model.ts';
 import {fold,literalMoney} from './finance-date.ts';
 import type {FinancePlan,FinanceState} from './finance.ts';
 import type {FinanceDraft} from './finance-ai.ts';
+import {currentBalanceIntent} from './balance-language.ts';
 import {continuedAppointment} from './appointment-language.ts';
 import {continuedMonthlyBill} from './monthly-bills.ts';
 
@@ -36,6 +37,7 @@ export function reconcileConversation(c:AssistantConversation,state:FinanceState
 export function contextualCorrection(text:string){return /^(?:na verdade|corrig(?:e|ir|a)|corrija|quis dizer|errei|o correto|era |foram |foi )/.test(fold(text));}
 export function resolveAssistantSource(c:AssistantConversation,text:string,state:FinanceState,now=Date.now(),today=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo'}).format(new Date())):{source:string;answer?:string;target?:string;draft?:FinanceDraft}{
  reconcileConversation(c,state,now);const value=fold(text);
+ if(currentBalanceIntent(text))return {source:text};
  if(c.incomplete){const continuation=continuedAppointment(c.incomplete,text,today)||continuedMonthlyBill(c.incomplete,text,today);if(continuation)return continuation;}
  if(contextualCorrection(text)){
   const focus=c.focus;

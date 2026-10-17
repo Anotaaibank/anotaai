@@ -1,0 +1,16 @@
+{
+  "supabase_project": "yqbbbqkouedhrunazpqd",
+  "migration": "current_balance_adjustment",
+  "applied": true,
+  "synthetic_transaction_rolled_back": true,
+  "sql_result": true,
+  "security_advisors_before": 24,
+  "security_advisors_after": 24,
+  "new_advisors": [],
+  "local_typecheck_passed": true,
+  "local_tests": {
+    "passed": 263,
+    "total": 263
+  },
+  "production_build": "pending"
+}

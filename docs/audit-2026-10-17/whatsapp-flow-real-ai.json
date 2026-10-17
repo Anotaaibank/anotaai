@@ -1,0 +1,277 @@
+{
+  "scope": "real OpenAI, real application queue/confirmation/persistence, simulated WhatsApp provider",
+  "total": 10,
+  "passed": 10,
+  "results": [
+    {
+      "id": "saldo-01",
+      "type": "text",
+      "pass": true,
+      "proposal_status": "ESCLARECER",
+      "transcript": "Atualiza meu saldo de 1.100 para 1.500",
+      "reply": "*⏳ Aguardando confirmação — ainda não salvo*\n\nAjustar saldo atual\n\n• Saldo registrado: R$ 1.100,00\n• Saldo correto: R$ 1.500,00\n• Ajuste de conciliação: R$ 400,00\n• Não é receita nem despesa. Preserva o saldo inicial e todos os lançamentos anteriores.\n\n*1 — Confirmar*\n*2 — Editar*\n\nAinda não foi salvo. Responda em até 10 minutos.\nPara desistir: CANCELAR C7BDD19A04.\nSe houver várias propostas, use o botão ou envie CONFIRMAR C7BDD19A04 / EDITAR C7BDD19A04.",
+      "saved": true,
+      "semantic": true,
+      "noWriteBeforeConfirm": true,
+      "noDuplicate": true,
+      "proposal_ms": 148.0599000000002,
+      "confirmed_ms": 202.68229999999994,
+      "estimated_usd": 0,
+      "provider": "simulated",
+      "persistence": "SQLite memory",
+      "calls": [],
+      "sentSimulated": 3
+    },
+    {
+      "id": "renda-01",
+      "type": "text",
+      "pass": true,
+      "proposal_status": "ESCLARECER",
+      "transcript": "ganhei mais 500, adiciona ao saldo",
+      "reply": "*⏳ Aguardando confirmação — ainda não salvo*\n\nRegistrar recebimento\n\n• Mais , adiciona ao saldo\n• R$ 500,00 · 17/10/2026\n• Aumenta o saldo atual.\n\n*1 — Confirmar*\n*2 — Editar*\n\nAinda não foi salvo. Responda em até 10 minutos.\nPara desistir: CANCELAR 12821CB5E3.\nSe houver várias propostas, use o botão ou envie CONFIRMAR 12821CB5E3 / EDITAR 12821CB5E3.",
+      "saved": true,
+      "semantic": true,
+      "noWriteBeforeConfirm": true,
+      "noDuplicate": true,
+      "proposal_ms": 83.4335000000001,
+      "confirmed_ms": 94.73000000000002,
+      "estimated_usd": 0,
+      "provider": "simulated",
+      "persistence": "SQLite memory",
+      "calls": [],
+      "sentSimulated": 3
+    },
+    {
+      "id": "gasto-01",
+      "type": "text",
+      "pass": true,
+      "proposal_status": "ESCLARECER",
+      "transcript": "Gastei 25 no McDonald’s",
+      "reply": "*⏳ Aguardando confirmação — ainda não salvo*\n\nRegistrar despesa paga\n\n• mcdonald’s\n• R$ 25,00 · Outras despesas pessoais\n• 17/10/2026 · Pago; reduz o saldo atual\n• Não informado · Não classificado\n\n*1 — Confirmar*\n*2 — Editar*\n\nAinda não foi salvo. Responda em até 10 minutos.\nPara desistir: CANCELAR 280FEA12AA.\nSe houver várias propostas, use o botão ou envie CONFIRMAR 280FEA12AA / EDITAR 280FEA12AA.",
+      "saved": true,
+      "semantic": true,
+      "noWriteBeforeConfirm": true,
+      "noDuplicate": true,
+      "proposal_ms": 51.978399999999965,
+      "confirmed_ms": 63.17699999999968,
+      "estimated_usd": 0,
+      "provider": "simulated",
+      "persistence": "SQLite memory",
+      "calls": [],
+      "sentSimulated": 3
+    },
+    {
+      "id": "moto-01",
+      "type": "text",
+      "pass": true,
+      "proposal_status": "ESCLARECER",
+      "transcript": "Dia 25 vou pagar 800 da última parcela da moto",
+      "reply": "*⏳ Aguardando confirmação — ainda não salvo*\n\nAgendar pagamento futuro\n\n• Última parcela da moto\n• R$ 800,00 · Veículo pessoal\n• 25/10/2026 · Previsto; não reduz o saldo atual\n• Não informado · Não classificado\n\n*1 — Confirmar*\n*2 — Editar*\n\nAinda não foi salvo. Responda em até 10 minutos.\nPara desistir: CANCELAR 00ABDE9FC5.\nSe houver várias propostas, use o botão ou envie CONFIRMAR 00ABDE9FC5 / EDITAR 00ABDE9FC5.",
+      "saved": true,
+      "semantic": true,
+      "noWriteBeforeConfirm": true,
+      "noDuplicate": true,
+      "proposal_ms": 27.859500000000025,
+      "confirmed_ms": 38.42970000000014,
+      "estimated_usd": 0,
+      "provider": "simulated",
+      "persistence": "SQLite memory",
+      "calls": [],
+      "sentSimulated": 3
+    },
+    {
+      "id": "agenda-01",
+      "type": "text",
+      "pass": true,
+      "proposal_status": "ESCLARECER",
+      "transcript": "Amanhã tenho dentista às 15h",
+      "reply": "*⏳ Aguardando confirmação — ainda não salvo*\n\nAgendar / alterar compromisso\n\n• tenho dentista\n• 18/10/2026 às 15:00\n• Lembretes pelo WhatsApp: 24 horas e 5 horas antes, com a conexão ativada.\n\n*1 — Confirmar*\n*2 — Editar*\n\nAinda não foi salvo. Responda em até 10 minutos.\nPara desistir: CANCELAR 54BB84C84E.\nSe houver várias propostas, use o botão ou envie CONFIRMAR 54BB84C84E / EDITAR 54BB84C84E.",
+      "saved": true,
+      "semantic": true,
+      "noWriteBeforeConfirm": true,
+      "noDuplicate": true,
+      "proposal_ms": 31.18650000000025,
+      "confirmed_ms": 38.16910000000007,
+      "estimated_usd": 0,
+      "provider": "simulated",
+      "persistence": "SQLite memory",
+      "calls": [],
+      "sentSimulated": 3
+    },
+    {
+      "id": "saldo-01",
+      "type": "audio",
+      "pass": true,
+      "proposal_status": "ESCLARECER",
+      "transcript": "Atualiza meu saldo de mil e cem para mil e quinhentos.",
+      "reply": "*⏳ Aguardando confirmação — ainda não salvo*\n\nAjustar saldo atual\n\n• Saldo registrado: R$ 1.100,00\n• Saldo correto: R$ 1.500,00\n• Ajuste de conciliação: R$ 400,00\n• Não é receita nem despesa. Preserva o saldo inicial e todos os lançamentos anteriores.\n\n*1 — Confirmar*\n*2 — Editar*\n\nAinda não foi salvo. Responda em até 10 minutos.\nPara desistir: CANCELAR 73CCBFCECD.\nSe houver várias propostas, use o botão ou envie CONFIRMAR 73CCBFCECD / EDITAR 73CCBFCECD.",
+      "saved": true,
+      "semantic": true,
+      "noWriteBeforeConfirm": true,
+      "noDuplicate": true,
+      "proposal_ms": 847.8061000000002,
+      "confirmed_ms": 860.5866000000001,
+      "estimated_usd": 0.00031775,
+      "provider": "simulated",
+      "persistence": "SQLite memory",
+      "calls": [
+        {
+          "model": "gpt-4o-mini-transcribe",
+          "status": 200,
+          "ms": 822.0578999999998,
+          "usage": {
+            "type": "tokens",
+            "total_tokens": 136,
+            "input_tokens": 119,
+            "input_token_details": {
+              "text_tokens": 71,
+              "audio_tokens": 48
+            },
+            "output_tokens": 17
+          }
+        }
+      ],
+      "sentSimulated": 3
+    },
+    {
+      "id": "renda-01",
+      "type": "audio",
+      "pass": true,
+      "proposal_status": "ESCLARECER",
+      "transcript": "ganhei mais quinhentos, adiciona ao saldo.",
+      "reply": "*⏳ Aguardando confirmação — ainda não salvo*\n\nRegistrar recebimento\n\n• Mais , adiciona ao saldo\n• R$ 500,00 · 17/10/2026\n• Aumenta o saldo atual.\n\n*1 — Confirmar*\n*2 — Editar*\n\nAinda não foi salvo. Responda em até 10 minutos.\nPara desistir: CANCELAR EE2D7CA578.\nSe houver várias propostas, use o botão ou envie CONFIRMAR EE2D7CA578 / EDITAR EE2D7CA578.",
+      "saved": true,
+      "semantic": true,
+      "noWriteBeforeConfirm": true,
+      "noDuplicate": true,
+      "proposal_ms": 810.3950999999997,
+      "confirmed_ms": 817.5151999999998,
+      "estimated_usd": 0.00032175,
+      "provider": "simulated",
+      "persistence": "SQLite memory",
+      "calls": [
+        {
+          "model": "gpt-4o-mini-transcribe",
+          "status": 200,
+          "ms": 793.9283999999998,
+          "usage": {
+            "type": "tokens",
+            "total_tokens": 138,
+            "input_tokens": 122,
+            "input_token_details": {
+              "text_tokens": 71,
+              "audio_tokens": 51
+            },
+            "output_tokens": 16
+          }
+        }
+      ],
+      "sentSimulated": 3
+    },
+    {
+      "id": "gasto-01",
+      "type": "audio",
+      "pass": true,
+      "proposal_status": "ESCLARECER",
+      "transcript": "gastei vinte e cinco no McDonald's.",
+      "reply": "*⏳ Aguardando confirmação — ainda não salvo*\n\nRegistrar despesa paga\n\n• mcdonald's\n• R$ 25,00 · Outras despesas pessoais\n• 17/10/2026 · Pago; reduz o saldo atual\n• Não informado · Não classificado\n\n*1 — Confirmar*\n*2 — Editar*\n\nAinda não foi salvo. Responda em até 10 minutos.\nPara desistir: CANCELAR A030522A19.\nSe houver várias propostas, use o botão ou envie CONFIRMAR A030522A19 / EDITAR A030522A19.",
+      "saved": true,
+      "semantic": true,
+      "noWriteBeforeConfirm": true,
+      "noDuplicate": true,
+      "proposal_ms": 785.3739999999998,
+      "confirmed_ms": 792.7363999999998,
+      "estimated_usd": 0.00026275,
+      "provider": "simulated",
+      "persistence": "SQLite memory",
+      "calls": [
+        {
+          "model": "gpt-4o-mini-transcribe",
+          "status": 200,
+          "ms": 763.6884,
+          "usage": {
+            "type": "tokens",
+            "total_tokens": 121,
+            "input_tokens": 109,
+            "input_token_details": {
+              "text_tokens": 71,
+              "audio_tokens": 38
+            },
+            "output_tokens": 12
+          }
+        }
+      ],
+      "sentSimulated": 3
+    },
+    {
+      "id": "moto-01",
+      "type": "audio",
+      "pass": true,
+      "proposal_status": "ESCLARECER",
+      "transcript": "Dia vinte e cinco vou pagar oitocentos da última parcela da moto.",
+      "reply": "*⏳ Aguardando confirmação — ainda não salvo*\n\nAgendar pagamento futuro\n\n• Última parcela da moto\n• R$ 800,00 · Veículo pessoal\n• 25/10/2026 · Previsto; não reduz o saldo atual\n• Não informado · Não classificado\n\n*1 — Confirmar*\n*2 — Editar*\n\nAinda não foi salvo. Responda em até 10 minutos.\nPara desistir: CANCELAR 18728B955E.\nSe houver várias propostas, use o botão ou envie CONFIRMAR 18728B955E / EDITAR 18728B955E.",
+      "saved": true,
+      "semantic": true,
+      "noWriteBeforeConfirm": true,
+      "noDuplicate": true,
+      "proposal_ms": 904.9017000000003,
+      "confirmed_ms": 916.6404999999995,
+      "estimated_usd": 0.00035375,
+      "provider": "simulated",
+      "persistence": "SQLite memory",
+      "calls": [
+        {
+          "model": "gpt-4o-mini-transcribe",
+          "status": 200,
+          "ms": 863.3012000000008,
+          "usage": {
+            "type": "tokens",
+            "total_tokens": 148,
+            "input_tokens": 131,
+            "input_token_details": {
+              "text_tokens": 71,
+              "audio_tokens": 60
+            },
+            "output_tokens": 17
+          }
+        }
+      ],
+      "sentSimulated": 3
+    },
+    {
+      "id": "agenda-01",
+      "type": "audio",
+      "pass": true,
+      "proposal_status": "ESCLARECER",
+      "transcript": "Amanhã tenho dentista às quinze horas.",
+      "reply": "*⏳ Aguardando confirmação — ainda não salvo*\n\nAgendar / alterar compromisso\n\n• tenho dentista\n• 18/10/2026 às 15:00\n• Lembretes pelo WhatsApp: 24 horas e 5 horas antes, com a conexão ativada.\n\n*1 — Confirmar*\n*2 — Editar*\n\nAinda não foi salvo. Responda em até 10 minutos.\nPara desistir: CANCELAR A5156DFCD4.\nSe houver várias propostas, use o botão ou envie CONFIRMAR A5156DFCD4 / EDITAR A5156DFCD4.",
+      "saved": true,
+      "semantic": true,
+      "noWriteBeforeConfirm": true,
+      "noDuplicate": true,
+      "proposal_ms": 785.3437000000004,
+      "confirmed_ms": 798.8057999999992,
+      "estimated_usd": 0.00025975,
+      "provider": "simulated",
+      "persistence": "SQLite memory",
+      "calls": [
+        {
+          "model": "gpt-4o-mini-transcribe",
+          "status": 200,
+          "ms": 751.6824999999999,
+          "usage": {
+            "type": "tokens",
+            "total_tokens": 120,
+            "input_tokens": 108,
+            "input_token_details": {
+              "text_tokens": 71,
+              "audio_tokens": 37
+            },
+            "output_tokens": 12
+          }
+        }
+      ],
+      "sentSimulated": 3
+    }
+  ]
+}

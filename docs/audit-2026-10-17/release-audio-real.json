@@ -1,0 +1,638 @@
+{
+  "summary": {
+    "phase": "release",
+    "mode": "real",
+    "audio": true,
+    "fixture_sha256": "e831019dfae1a451da4ddaa4ad7521870309e1a05679bfb1db9a3400ea0f24cb",
+    "date": "2026-10-17T14:04:02.102Z",
+    "total": 8,
+    "passed": 8,
+    "accuracy": 1,
+    "model_calls": 10,
+    "estimated_usd": 0.008280000000000001,
+    "cost_per_success_usd": 0.0010350000000000001,
+    "p50_ms": 1316.0594,
+    "p95_ms": 3355.5812000000005
+  },
+  "results": [
+    {
+      "id": "saldo-01",
+      "text": "Atualiza meu saldo de 1.100 para 1.500",
+      "expect": {
+        "type": "adjustment",
+        "balance": 150000
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "transcript": "Atualiza meu saldo de mil e cem para mil e quinhentos.",
+      "audio_sha256": "fb31cc68bb02ba084cb27cc70bafbed6a90748c42a4bf12fb5ce6308efd2953c",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Ajustar saldo atual",
+        "documents": [
+          {
+            "id": "24735f38-1e6a-49a9-8b27-11bb81c84fff",
+            "kind": "BALANCE_ADJUSTMENT",
+            "description": "Ajuste do saldo atual",
+            "date": "2026-10-17",
+            "amount_cents": 40000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "previous_balance_cents": 110000,
+              "target_balance_cents": 150000,
+              "delta_cents": 40000,
+              "basis_hash": "fa381f6fea138cf59fb0ea08429fb30e"
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 1316.0594,
+      "estimated_usd": 0.00031775,
+      "calls": [
+        {
+          "model": "gpt-4o-mini-transcribe",
+          "status": 200,
+          "ms": 1121.4009,
+          "usage": {
+            "type": "tokens",
+            "total_tokens": 136,
+            "input_tokens": 119,
+            "input_token_details": {
+              "text_tokens": 71,
+              "audio_tokens": 48
+            },
+            "output_tokens": 17
+          },
+          "request_id": "req_bdd34274981c4fec99dbf5f83f7cc6c8"
+        }
+      ]
+    },
+    {
+      "id": "saldo-05",
+      "text": "O saldo certo é 900 reais, pode corrigir pra mim?",
+      "expect": {
+        "type": "adjustment",
+        "balance": 90000
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "transcript": "O saldo certo é a novecentos reais, pode corrigir para mim.",
+      "audio_sha256": "aa19b30ac0cf5902ed9e32c54c451e772d911e0c1fb335f41fb202eb53e8151d",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Ajustar saldo atual",
+        "documents": [
+          {
+            "id": "6a170510-8c80-4f96-8595-fc5c24329519",
+            "kind": "BALANCE_ADJUSTMENT",
+            "description": "Ajuste do saldo atual",
+            "date": "2026-10-17",
+            "amount_cents": 20000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "previous_balance_cents": 110000,
+              "target_balance_cents": 90000,
+              "delta_cents": -20000,
+              "basis_hash": "fa381f6fea138cf59fb0ea08429fb30e"
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 2089.6987999999997,
+      "estimated_usd": 0.00034975,
+      "calls": [
+        {
+          "model": "gpt-4o-mini-transcribe",
+          "status": 200,
+          "ms": 2076.0577,
+          "usage": {
+            "type": "tokens",
+            "total_tokens": 146,
+            "input_tokens": 128,
+            "input_token_details": {
+              "text_tokens": 71,
+              "audio_tokens": 57
+            },
+            "output_tokens": 18
+          },
+          "request_id": "req_486c93811a0b426586416071d07671b8"
+        }
+      ]
+    },
+    {
+      "id": "renda-01",
+      "text": "Acabei de ganhar mais 500, adiciona ao saldo",
+      "expect": {
+        "type": "income",
+        "amount": 50000,
+        "date": "2026-10-17"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "transcript": "Acabei de ganhar mais quinhentos, adiciona ao saldo.",
+      "audio_sha256": "073cd992aba4b35a72517e9da7d38dcae8fa2b40469671767e883bc5154a8ce0",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar recebimento",
+        "documents": [
+          {
+            "id": "60155869-0ce7-4b97-804a-6b65d3c8c568",
+            "kind": "INCOME",
+            "description": "Mais , adiciona ao saldo",
+            "date": "2026-10-17",
+            "amount_cents": 50000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "salary": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 893.8020999999999,
+      "estimated_usd": 0.00032175,
+      "calls": [
+        {
+          "model": "gpt-4o-mini-transcribe",
+          "status": 200,
+          "ms": 880.6521999999995,
+          "usage": {
+            "type": "tokens",
+            "total_tokens": 138,
+            "input_tokens": 122,
+            "input_token_details": {
+              "text_tokens": 71,
+              "audio_tokens": 51
+            },
+            "output_tokens": 16
+          },
+          "request_id": "req_ab9a5f883e1147029ca2f5c7d5bfb578"
+        }
+      ]
+    },
+    {
+      "id": "renda-04",
+      "text": "Entraram R$ 500 da venda da bicicleta, coloca no meu saldo.",
+      "expect": {
+        "type": "income",
+        "amount": 50000,
+        "date": "2026-10-17"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "transcript": "Entraram quinhentos reais da venda da bicicleta, coloca no meu saldo.",
+      "audio_sha256": "b4098936cb9b608d0e492c172f46253aa4d5dcefcd10ddb6e71b893a294c4e54",
+      "local": {},
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar recebimento",
+        "documents": [
+          {
+            "id": "8b94e781-8a29-4217-832c-d717c71bcf85",
+            "kind": "INCOME",
+            "description": "Venda da bicicleta",
+            "date": "2026-10-17",
+            "amount_cents": 50000,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "salary": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 3214.8660999999993,
+      "estimated_usd": 0.0027857500000000005,
+      "calls": [
+        {
+          "model": "gpt-4o-mini-transcribe",
+          "status": 200,
+          "ms": 824.1180999999997,
+          "usage": {
+            "type": "tokens",
+            "total_tokens": 152,
+            "input_tokens": 134,
+            "input_token_details": {
+              "text_tokens": 71,
+              "audio_tokens": 63
+            },
+            "output_tokens": 18
+          },
+          "request_id": "req_f64059f2de9147b087871d90eb76a3a6"
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "status": 200,
+          "ms": 2375.2978999999996,
+          "usage": {
+            "input_tokens": 7305,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 2944
+            },
+            "output_tokens": 237,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "total_tokens": 7542
+          },
+          "request_id": "req_df99f4d9fd0045b6aa98ca9690c8d55d",
+          "draft": {
+            "intent": "COMMAND",
+            "command": {
+              "balance_cents": 150000,
+              "action": "income_upsert",
+              "target_id": null,
+              "description": "Venda da bicicleta",
+              "date": "2026-10-17",
+              "amount_cents": 50000,
+              "status": "REALIZADO",
+              "category": null,
+              "details": {
+                "notes": "Entrada da venda da bicicleta",
+                "payment_method": "OUTRO",
+                "trip_name": "",
+                "expense_audience": "NAO_INFORMADO",
+                "income_activity": "Venda bicicleta",
+                "expense_nature": null
+              },
+              "dates": null,
+              "count": null,
+              "amount_mode": null,
+              "schedule_type": null,
+              "profile": null,
+              "rate_percent": null,
+              "rate_period": null,
+              "reserve_id": null,
+              "direction": null,
+              "location": null,
+              "time": null,
+              "done": null,
+              "salary": null,
+              "activity": null,
+              "cost_cents": null,
+              "recurring": null,
+              "due_day": null
+            },
+            "items": null,
+            "question": "",
+            "confidence": "ALTA",
+            "target_excerpt": "quinhentos reais da venda da bicicleta",
+            "money_evidence": [
+              {
+                "field": "amount_cents",
+                "excerpt": "quinhentos reais"
+              }
+            ],
+            "date_evidence": [
+              {
+                "field": "date",
+                "excerpt": "hoje"
+              }
+            ],
+            "query": ""
+          }
+        }
+      ]
+    },
+    {
+      "id": "gasto-01",
+      "text": "Gastei 25 no McDonald’s",
+      "expect": {
+        "type": "expense",
+        "amount": 2500,
+        "date": "2026-10-17",
+        "status": "REALIZADO"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "transcript": "gastei vinte e cinco no McDonald's.",
+      "audio_sha256": "2fb40a13adc4557d6d78660a00ed6be22a5b12cbcf217bcae44cd72a8ed28591",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Registrar despesa paga",
+        "documents": [],
+        "expenses": [
+          {
+            "id": "cf7107a9-b27e-4feb-851d-08093e6e327b",
+            "kind": "PESSOAL",
+            "scope": "PESSOAL",
+            "entry_date": "2026-10-17",
+            "description": "mcdonald's",
+            "category": "Outras despesas pessoais",
+            "status": "REALIZADO",
+            "amount_cents": 2500,
+            "details": {
+              "notes": "",
+              "payment_method": "OUTRO",
+              "trip_name": "",
+              "expense_audience": "NAO_INFORMADO",
+              "expense_nature": "NAO_CLASSIFICADO"
+            }
+          }
+        ]
+      },
+      "ms": 929.4418000000005,
+      "estimated_usd": 0.00026275,
+      "calls": [
+        {
+          "model": "gpt-4o-mini-transcribe",
+          "status": 200,
+          "ms": 917.0996999999988,
+          "usage": {
+            "type": "tokens",
+            "total_tokens": 121,
+            "input_tokens": 109,
+            "input_token_details": {
+              "text_tokens": 71,
+              "audio_tokens": 38
+            },
+            "output_tokens": 12
+          },
+          "request_id": "req_f9865975c0fd42d68c9e8149e01cd94a"
+        }
+      ]
+    },
+    {
+      "id": "moto-01",
+      "text": "Dia 25 vou pagar 800 da última parcela da moto",
+      "expect": {
+        "type": "expense",
+        "amount": 80000,
+        "date": "2026-10-25",
+        "status": "PREVISTO"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "transcript": "Dia vinte e cinco vou pagar oitocentos da última parcela da moto.",
+      "audio_sha256": "134ed61b545ba56d43d99675d388424529f0d6e7542aa6ae7e77177eb68e65f8",
+      "local": {
+        "natural": "COMMAND",
+        "question": "",
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Agendar pagamento futuro",
+        "documents": [],
+        "expenses": [
+          {
+            "id": "245964b4-054e-45cb-823b-47fb0d3231c1",
+            "kind": "PESSOAL",
+            "scope": "PESSOAL",
+            "entry_date": "2026-10-25",
+            "description": "Última parcela da moto",
+            "category": "Veículo pessoal",
+            "status": "PREVISTO",
+            "amount_cents": 80000,
+            "details": {
+              "notes": "",
+              "payment_method": "OUTRO",
+              "trip_name": "",
+              "expense_audience": "NAO_INFORMADO",
+              "expense_nature": "NAO_CLASSIFICADO"
+            }
+          }
+        ]
+      },
+      "ms": 1019.0679999999993,
+      "estimated_usd": 0.00035375,
+      "calls": [
+        {
+          "model": "gpt-4o-mini-transcribe",
+          "status": 200,
+          "ms": 990.8250000000007,
+          "usage": {
+            "type": "tokens",
+            "total_tokens": 148,
+            "input_tokens": 131,
+            "input_token_details": {
+              "text_tokens": 71,
+              "audio_tokens": 60
+            },
+            "output_tokens": 17
+          },
+          "request_id": "req_5fff8f83e65e44f9a5cf10dd2fa01031"
+        }
+      ]
+    },
+    {
+      "id": "agenda-01",
+      "text": "Amanhã tenho dentista às 15h",
+      "expect": {
+        "type": "appointment",
+        "date": "2026-10-18",
+        "time": "15:00",
+        "contains": "dentista"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "transcript": "Amanhã tenho dentista às quinze horas.",
+      "audio_sha256": "07736140a3d56ef3c955f6bbaf9a4289292a097041040c68fb3739dc0ea8064b",
+      "local": {
+        "quick": "COMMAND"
+      },
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Agendar / alterar compromisso",
+        "documents": [
+          {
+            "id": "0b5ae6df-19ba-4464-8ade-31a70c1c7699",
+            "kind": "APPOINTMENT",
+            "description": "tenho dentista",
+            "date": "2026-10-18",
+            "amount_cents": 0,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "time": "15:00",
+              "location": "",
+              "done": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 597.0098000000016,
+      "estimated_usd": 0.00025975,
+      "calls": [
+        {
+          "model": "gpt-4o-mini-transcribe",
+          "status": 200,
+          "ms": 586.8045999999995,
+          "usage": {
+            "type": "tokens",
+            "total_tokens": 120,
+            "input_tokens": 108,
+            "input_token_details": {
+              "text_tokens": 71,
+              "audio_tokens": 37
+            },
+            "output_tokens": 12
+          },
+          "request_id": "req_7a22a10b0f1d472289b8b8f27ceb1bae"
+        }
+      ]
+    },
+    {
+      "id": "agenda-05",
+      "text": "Meu dentista ficou pra amanhã, 15h. Coloca na agenda.",
+      "expect": {
+        "type": "appointment",
+        "date": "2026-10-18",
+        "time": "15:00",
+        "contains": "dentista"
+      },
+      "pass": true,
+      "stage": "confirmation-ready",
+      "transcript": "Meu dentista ficou pra amanhã, quinze horas. Coloca na agenda.",
+      "audio_sha256": "02817135b503db7ab7dcb241ce26d6247880ce1c6095fa260b2eba0898a2c5ef",
+      "local": {},
+      "answer": "",
+      "error": "",
+      "plan": {
+        "title": "Agendar / alterar compromisso",
+        "documents": [
+          {
+            "id": "4e2284ae-66b9-4a23-83aa-8378fb18677e",
+            "kind": "APPOINTMENT",
+            "description": "Dentista",
+            "date": "2026-10-18",
+            "amount_cents": 0,
+            "status": "REALIZADO",
+            "active": true,
+            "details": {
+              "time": "15:00",
+              "location": "",
+              "done": false
+            }
+          }
+        ],
+        "expenses": []
+      },
+      "ms": 3355.5812000000005,
+      "estimated_usd": 0.0036287500000000005,
+      "calls": [
+        {
+          "model": "gpt-4o-mini-transcribe",
+          "status": 200,
+          "ms": 658.3424000000014,
+          "usage": {
+            "type": "tokens",
+            "total_tokens": 157,
+            "input_tokens": 140,
+            "input_token_details": {
+              "text_tokens": 71,
+              "audio_tokens": 69
+            },
+            "output_tokens": 17
+          },
+          "request_id": "req_f620bf783512493ca09c9e5848da34a6"
+        },
+        {
+          "model": "gpt-4.1-mini",
+          "status": 200,
+          "ms": 2682.4537,
+          "usage": {
+            "input_tokens": 7304,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens": 204,
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            },
+            "total_tokens": 7508
+          },
+          "request_id": "req_58ba90071de148fa86b470fb53e9e29c",
+          "draft": {
+            "intent": "COMMAND",
+            "command": {
+              "balance_cents": null,
+              "action": "appointment_upsert",
+              "target_id": null,
+              "description": "Dentista",
+              "date": "2026-10-18",
+              "amount_cents": null,
+              "status": null,
+              "category": null,
+              "details": null,
+              "dates": null,
+              "count": null,
+              "amount_mode": null,
+              "schedule_type": null,
+              "profile": null,
+              "rate_percent": null,
+              "rate_period": null,
+              "reserve_id": null,
+              "direction": null,
+              "location": null,
+              "time": "15:00",
+              "done": null,
+              "salary": null,
+              "activity": null,
+              "cost_cents": null,
+              "recurring": null,
+              "due_day": null
+            },
+            "items": null,
+            "question": "",
+            "confidence": "ALTA",
+            "target_excerpt": "dentista para amanhã, quinze horas",
+            "money_evidence": [
+              {
+                "field": "date",
+                "excerpt": "amanhã"
+              },
+              {
+                "field": "time",
+                "excerpt": "quinze horas"
+              }
+            ],
+            "date_evidence": [
+              {
+                "field": "date",
+                "excerpt": "amanhã"
+              }
+            ],
+            "query": ""
+          }
+        }
+      ]
+    }
+  ]
+}
