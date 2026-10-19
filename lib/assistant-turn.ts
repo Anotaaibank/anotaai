@@ -11,6 +11,7 @@ import {assistantQuery} from './assistant-query.ts';
 import {normalizeAssistantText,naturalFinanceTurn,sourceWithVerifiedTarget} from './conversation-language.ts';
 import {conversationReport} from './conversation-reports.ts';
 import {prepareFinanceProposal} from './finance-proposal.ts';
+import {appointmentFacts} from './appointment-language.ts';
 
 type Options={user:string;text:string;state:FinanceState;key:string;secret:string;conversation?:unknown;scope?:'text'|'voice';requestId?:unknown;name?:unknown;section?:unknown;view?:unknown;today?:string;now?:number;transport?:typeof fetch};
 type Result={ok:true;saved:false;conversation_id:string;answer?:string;pending?:{title:string;lines:string[];confirmation:string}};
@@ -39,7 +40,7 @@ export async function assistantTurn(o:Options):Promise<Result>{
    if(resolved.target){const command=typeof draft.command==='string'?JSON.parse(draft.command):draft.command;if(!command||command.target_id!==resolved.target)throw new AppError('A correção não identificou o registro correto. Informe a descrição e o valor.');draft.target_excerpt=resolved.target;}
    // Context identifies a record, never supplies a new date. Keep unchanged fields
    // out of the patch when a model echoes the last record without a user request.
-   if(resolved.target&&!/\b(?:hoje|ontem|anteontem|amanha|dia\s+\d|mes que vem|proximo mes)\b|\b\d{1,4}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/.test(fold(o.text))){const command=typeof draft.command==='string'?JSON.parse(draft.command):draft.command;if(command&&typeof command==='object')draft.command={...command,date:undefined};}
+   if(resolved.target&&!appointmentFacts(o.text,today)?.date&&!/\b(?:hoje|ontem|anteontem|amanha|dia\s+\d|mes que vem|proximo mes)\b|\b\d{1,4}[/-]\d{1,2}(?:[/-]\d{2,4})?\b/.test(fold(o.text))){const command=typeof draft.command==='string'?JSON.parse(draft.command):draft.command;if(command&&typeof command==='object')draft.command={...command,date:undefined};}
    let plan:FinancePlan,incomplete:string[]=[];try{({plan,incomplete}=prepareFinanceProposal(draft,resolved.source,o.state,o.user,requestId,today));}catch(e){if(!(e instanceof AppError)||e.status!==400||resolved.target)throw e;const outside=/somente finanças pessoais/.test(e.message),missingMoney=/valor, a quantidade ou a taxa/.test(e.message)&&monetaryLiterals(resolved.source).length===0;const answer=missingMoney?'Qual foi o valor?':e.message;rememberTurn(c,o.text,{...draft,intent:outside?'OUTSIDE':'CLARIFY',command:null,question:answer},answer,resolved.source);result={...base,answer};c.requests.set(requestId,{text:o.text,result,created:now});while(c.requests.size>24)c.requests.delete(c.requests.keys().next().value!);return result;}
    if(resolved.target&&(!plan.expenses.length&&!plan.documents.length||[...plan.expenses.map(e=>e.payload.id),...plan.documents.map(d=>d.document.id)].some(id=>id!==resolved.target)))throw new AppError('A correção não identificou o registro correto. Informe a descrição e o valor.');
    const confirmation=signFinance(plan,o.user,o.secret,now,incomplete);c.pending={plan,source:resolved.source,confirmation,created:now,incomplete};rememberTurn(c,o.text,draft,'Confira o resumo e confirme no botão, por favor.',resolved.source);result={...base,pending:{title:plan.title,lines:plan.lines,confirmation}};

@@ -16,6 +16,7 @@ import {currentBalanceIntent,currentBalanceDraft,signedBalanceMoney} from './bal
 import {sourceWithVerifiedTarget} from './conversation-language.ts';
 import {statedFinancialStatus} from './financial-message.ts';
 import {prefixedCommand} from './command-prefix.ts';
+import {relativeCalendarPatterns} from './relative-calendar.ts';
 export type FinanceDraftItem={source:string;command:FinanceCommand|null;target_excerpt:string;money_evidence:{field:string;excerpt:string}[];date_evidence:{field:string;excerpt:string}[]};
 export type FinanceDraft={intent:'COMMAND'|'QUERY'|'CLARIFY'|'OUTSIDE'|'HELP';command:FinanceCommand|string|null;items?:FinanceDraftItem[]|null;question:string;confidence:'ALTA'|'BAIXA';target_excerpt:string;money_evidence:{field:string;excerpt:string}[];date_evidence:{field:string;excerpt:string}[];query:string};
 const evidence={type:'array',items:{type:'object',additionalProperties:false,properties:{field:{type:'string'},excerpt:{type:'string'}},required:['field','excerpt']}};
@@ -94,7 +95,13 @@ export function draftCommand(d:FinanceDraft,text:string,state:FinanceState,today
   for(const path of ['amount_cents','cost_cents'] as const){const value=c[path];if(value===undefined)continue;const ev=d.money_evidence.find(e=>e.field===path);if(!ev||!sourceText.includes(fold(ev.excerpt))||literalMoney(ev.excerpt)!==value)throw new AppError('Informe separadamente o valor recebido e o custo da atividade.');let at=sourceText.indexOf(fold(ev.excerpt)),verified=false;while(at>=0){const before=sourceText.slice(0,at),last=[...before.matchAll(/\b(ganhei|ganhar|recebi|receber|rendeu|ganho|faturei|gastei|gastar|gasto|custo|paguei|pagar|gasolina)\b/g)].at(-1)?.[1];if(last&&(['ganhei','ganhar','recebi','receber','rendeu','ganho','faturei'].includes(last))===(path==='amount_cents')){verified=true;break;}at=sourceText.indexOf(fold(ev.excerpt),at+1);}if(!verified)throw new AppError('Confirme qual valor foi recebido e qual foi gasto na atividade.');}
  }
  const dateDirection=c.status==='PREVISTO'||c.action==='expense_schedule'||c.action==='appointment_upsert'?true:(/\b(?:paguei|gastei|comprei|recebi|vendi|pagou|ganhei|tive)\b/.test(sourceText)||c.action==='expense_pay'||c.action==='income_receive')?'past' as const:false;
- const explicitDate=/\b(?:hoje|ontem|anteontem|amanha|dia\s+\d|mes que vem|proximo mes)\b|\d{1,4}[\/-]\d{1,2}/.test(sourceText),dateEvidence=d.date_evidence?.find(e=>e.field==='date'&&e.excerpt&&sourceText.includes(fold(e.excerpt)));
+ const calendarFacts=appointmentFacts(text,today,dateDirection);
+ if(['expense_create','expense_update','expense_pay','income_upsert','income_receive','appointment_upsert'].includes(c.action)){
+  if(!calendarFacts&&(relativeCalendarPatterns().some(p=>p.test(sourceText))||/\bdia\s+\d|\d{1,4}[/-]\d{1,2}/.test(sourceText)))throw new AppError('Confira a data e o horário: há uma data inválida ou informações diferentes no pedido.');
+  if(calendarFacts?.dateQuestion)throw new AppError(calendarFacts.dateQuestion);
+  if(calendarFacts?.date&&!c.recurring&&!c.dates){c.date=calendarFacts.date.value;d={...d,date_evidence:[...(d.date_evidence||[]).filter(e=>e.field!=='date'),{field:'date',excerpt:calendarFacts.date.excerpt}]};}
+ }
+ const explicitDate=!!calendarFacts?.date||/\b(?:hoje|ontem|anteontem|amanha|dia\s+\d|mes que vem|proximo mes)\b|\d{1,4}[\/-]\d{1,2}/.test(sourceText),dateEvidence=d.date_evidence?.find(e=>e.field==='date'&&e.excerpt&&sourceText.includes(fold(e.excerpt)));
  // Missing calendar evidence means retain an edited date or use the documented today default.
  if(c.date&&!dateEvidence&&!explicitDate&&c.action!=='appointment_upsert'&&c.action!=='expense_schedule'&&c.status!=='PREVISTO')delete c.date;
  if(dateEvidence&&c.action!=='profile_upsert'){try{c.date=c.recurring&&recurringDay(text)?nextMonthlyDay(recurringDay(text)!.day,today):financeDate(dateEvidence.excerpt,today,dateDirection);}catch(e){if(explicitDate||c.status==='PREVISTO'||c.action==='expense_schedule'||c.action==='appointment_upsert')throw e;delete c.date;d={...d,date_evidence:d.date_evidence.filter(e=>e.field!=='date')};}}
@@ -108,6 +115,7 @@ export function draftCommand(d:FinanceDraft,text:string,state:FinanceState,today
  if(c.action==='expense_schedule'){if(!d.date_evidence?.some(e=>e.field.startsWith('dates.'))&&c.date)delete c.dates;if(/\b(?:parcelas?|prestacoes?|vezes)\s+de\b|\bpor parcela\b/.test(source))c.amount_mode='PARCELA';else if(/\b(?:em|dividido em|parcelado em)\s+(?:\d+|[a-z ]+?)\s+(?:vezes|x|parcelas)\b/.test(source))c.amount_mode='TOTAL';}
  const dates=['date','profile.opening_date',...(c.dates||[]).map((_,i)=>'dates.'+i)];for(const path of dates){const value=field(c,path);if(value===undefined)continue;const e=d.date_evidence?.find(e=>e.field===path);if(!e){if(c.recurring&&path==='date')continue;if(value!==today||path!=='date'||c.status==='PREVISTO'||c.action==='expense_schedule'||c.action==='appointment_upsert')throw new AppError('Confirme a data do registro.');continue;}if(!e.excerpt||!fold(text).includes(fold(e.excerpt)))throw new AppError('Confirme a data do registro.');put(c,path,c.recurring&&path==="date"&&recurringDay(text)?nextMonthlyDay(recurringDay(text)!.day,today):financeDate(e.excerpt,today,dateDirection));}
  if(['expense_create','income_upsert'].includes(c.action)&&!c.target_id&&c.date&&c.date>today&&statedFinancialStatus(text)!=='REALIZADO')c.status='PREVISTO';
+ if(['expense_create','income_upsert','expense_pay','income_receive'].includes(c.action)&&c.date&&c.date>today&&statedFinancialStatus(text)==='REALIZADO')throw new AppError('Esse valor já foi pago ou recebido, ou é uma previsão para essa data?');
  if(c.action==='expense_create'&&/\b(?:vou pagar|a pagar|nao paguei|despesa futura|pagamento futuro|mes que vem|proximo mes)\b/.test(fold(text)))c.status='PREVISTO';if(c.status==='PREVISTO'&&!c.date&&!c.dates)throw new AppError('Qual é a data de vencimento?');
  const target=c.target_id||c.reserve_id;if(target){const rows=c.action.startsWith('expense_')?state.expenses:state.documents.filter(r=>c.action==='document_archive'&&/recorr|todo mes|mensal/.test(sourceText)?r.kind==='BILL_RULE':true),found=rows.find(r=>r.id===target),excerpt=fold(d.target_excerpt||'');if(!found||excerpt.length<2||!fold(text).includes(excerpt)||!fold(found.description).includes(excerpt)&&!excerpt.includes(target))throw new AppError('Diga o nome exato do registro que deseja alterar.');if(!excerpt.includes(target)&&rows.filter(r=>fold(r.description).includes(excerpt)).length!==1)throw new AppError('Há mais de um registro com esse nome. Informe o vencimento ou selecione no painel.');}return c;
 }
@@ -172,7 +180,7 @@ export function localFinanceInterpretation(text:string,state:FinanceState,today:
    const hasAmount=[...masked.matchAll(new RegExp('(?<![\\p{L}\\d])'+spokenNumber+'(?![\\p{L}\\d])','giu'))].some(m=>!['um','uma'].includes(fold(m[0])));
    const missingMoney=/Qual foi o valor|valor mensal/.test(draft.question)&&!hasAmount;
    const missingDate=/data prevista|primeiro vencimento|dia do m[eê]s/.test(draft.question)&&!facts?.date;
-   const explicitAmbiguity=/Qual registro|Qual conta|Qual compromisso|mais de um|dados diferentes|datas.*inv[aá]lid|valor correto|quantidade de 2 a 60|apenas um valor/.test(draft.question);
+   const explicitAmbiguity=/Qual registro|Qual conta|Qual compromisso|Em qual dia dess|mais de um|dados diferentes|datas.*inv[aá]lid|valor correto|quantidade de 2 a 60|apenas um valor/.test(draft.question);
    if(missingMoney||missingDate||explicitAmbiguity||currentBalanceIntent(text)||prefixedCommand(text,today))return draft;
    continue;
   }

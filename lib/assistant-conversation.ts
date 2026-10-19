@@ -5,7 +5,7 @@ import type {FinancePlan,FinanceState} from './finance.ts';
 import type {FinanceDraft} from './finance-ai.ts';
 import {currentBalanceIntent} from './balance-language.ts';
 import {commandPrefix,continuedPrefixedCommand} from './command-prefix.ts';
-import {continuedAppointment} from './appointment-language.ts';
+import {continuedAppointment,completeCalendarPeriod} from './appointment-language.ts';
 import {continuedMonthlyBill} from './monthly-bills.ts';
 
 type Turn={text:string;intent:FinanceDraft['intent'];answer:string};
@@ -40,7 +40,7 @@ export function resolveAssistantSource(c:AssistantConversation,text:string,state
  reconcileConversation(c,state,now);const value=fold(text);
  if(currentBalanceIntent(text))return {source:text};
  if(commandPrefix(text))return {source:text};
- if(c.incomplete){const continuation=continuedPrefixedCommand(c.incomplete,text,today)||continuedAppointment(c.incomplete,text,today)||continuedMonthlyBill(c.incomplete,text,today);if(continuation)return continuation;}
+ if(c.incomplete){const calendar=completeCalendarPeriod(c.incomplete,text,today);if(calendar)return {source:calendar};const continuation=continuedPrefixedCommand(c.incomplete,text,today)||continuedAppointment(c.incomplete,text,today)||continuedMonthlyBill(c.incomplete,text,today);if(continuation)return continuation;}
  if(contextualCorrection(text)){
   const focus=c.focus;
   let amountOnly=false;try{amountOnly=literalMoney(value.replace(/^(?:na verdade[, ]*)?(?:(?:foram|era|foi|gastei)\s+)?/,'').replace(/[.!?]$/,''))>0;}catch{}

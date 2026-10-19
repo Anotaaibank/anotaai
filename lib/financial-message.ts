@@ -1,5 +1,5 @@
 import {fold,literalMoney,spokenNumber} from './finance-date.ts';
-import {appointmentFacts} from './appointment-language.ts';
+import {appointmentFacts,completeCalendarPeriod} from './appointment-language.ts';
 import {personalCategory} from './personal-expenses.ts';
 import type {FinanceDraft} from './finance-ai.ts';
 import type {FinanceCommand,FinanceState} from './finance.ts';
@@ -28,6 +28,7 @@ export function financialMessageDraft(text:string,state:FinanceState,today:strin
  const future=(isIn?futureIn:futureOut).test(s),past=(isIn?received:paid).test(s);
  const facts=appointmentFacts(text,today,past&&!future?'past':true);
  if(!facts)return reply('Qual é a data correta? Encontrei datas ou horários diferentes ou inválidos.');
+ if(facts.dateQuestion)return reply(facts.dateQuestion);
  if(facts.time)return null; // Mixed financial/event messages retain both via the model.
  let masked=text.normalize('NFC');
  for(const date of facts.dates.slice().sort((a,b)=>b.start-a.start))masked=masked.slice(0,date.start)+' '.repeat(date.end-date.start)+masked.slice(date.end);
@@ -65,6 +66,7 @@ export function financialMessageDraft(text:string,state:FinanceState,today:strin
 }
 
 export function continuedFinancialMessage(previous:string,current:string,state:FinanceState,today:string){
+ const completed=completeCalendarPeriod(previous,current,today);if(completed){const draft=financialMessageDraft(completed,state,today);if(draft?.intent==='COMMAND')return {source:completed,draft};}
  if(financialMessageDraft(previous,state,today)?.question!=='Qual foi o valor?')return null;
  const value=current.trim().replace(/^(?:(?:o valor (?:certo )?(?:e|é)|foi|é|e)\s+)*/i,'').replace(/[.!]+$/,'');
  try{if(literalMoney(value)<=0)return null;}catch{return null;}

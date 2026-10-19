@@ -13,7 +13,7 @@ async function plan(text:string){const d=await extractFinance(text,state,'synthe
 test('entrada recebe vendas salário e trabalho sem perguntar finalidade data ou custo',async()=>{
  for(const [text,amount] of [
   ['Entrada 250 reais',25000],['Entrada 250 reais vendi meu PlayStation',25000],['Entrada: R$ 250,50 vendi minha cadeira',25050],
-  ['Entrada duzentos e cinquenta reais fiz um bico de garçom',25000],['Entrada 80 trabalhei de Uber',8000],['Entrada 6000 salário',600000],['Entrada 250 vendi a cadeira ontem',25000]
+  ['Entrada duzentos e cinquenta reais fiz um bico de garçom',25000],['Entrada 80 trabalhei de Uber',8000],['Entrada 6000 salário',600000]
  ] as const){const p=await plan(text);assert.equal(p.documents.length,1);assert.equal(p.expenses.length,0);const d=p.documents[0].document;assert.equal(d.kind,'INCOME');assert.equal(d.amount_cents,amount);assert.equal(d.date,today);assert.equal(d.status,'REALIZADO');assert.equal(d.details.salary,/salário/.test(text));assert.equal(fastWhatsappQuery(text,today),null);}
 });
 test('saída é despesa imediata inclusive Pix para familiar e aluguel mensal avulso',async()=>{

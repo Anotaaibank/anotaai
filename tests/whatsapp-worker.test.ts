@@ -18,6 +18,23 @@ process.env.ANOTA_DATABASE_PATH=':memory:';
 async function modules(){const hooks=registerHooks({resolve(s,c,next){return next(s==='next/headers'?'next/headers.js':s,c);}});try{return {store:await import('../lib/whatsapp-store.ts'),worker:await import('../lib/whatsapp-worker.ts'),server:await import('../lib/whatsapp-server.ts')};}finally{hooks.deregister();}}
 const sender='5511999999999',phone='5511988888888';
 
+test('calendário relativo por texto e áudio edita confirma e grava data real sem duplicar nem antecipar pagamentos',async()=>{
+ for(const type of ['text','audio'] as const){const c=await context();try{
+  process.env.OPENAI_API_KEY='synthetic-only';let spoken='';
+  globalThis.fetch=async url=>{const path=String(url);if(path.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(path.endsWith('/audio/transcriptions'))return Response.json({text:spoken});assert.ok(/\/send\/(?:text|menu)$/.test(path),'Datas literais não devem chamar o modelo');return Response.json({id:randomUUID()});};
+  add(c.user,{action:'profile_upsert',profile:{opening_balance_cents:100000,opening_date:'2026-01-01'}});
+  let tick=0;async function ask(text:string,kind:'text'|'audio'=type){spoken=text;const id=await c.store.enqueue(c.user,{provider_id:randomUUID(),sender,type:kind,text:kind==='audio'?'':text,sent_at:'2026-10-19T12:00:00Z'});assert.ok(id);localDb().prepare("UPDATE inbox SET data=json_set(data,'$.created_at',?) WHERE id=?").run(new Date(Date.parse('2026-10-19T12:00:00Z')+(++tick)*1000).toISOString(),id);const row=await c.store.claimMessage();assert.equal(row?.id,id);await c.worker.processMessage(row!);return (await c.store.history(c.user)).find(r=>r.id===id)!;}
+  const event=await ask('Agenda dentista no primeiro domingo do mês que vem às 15h');assert.equal(event.status,'ESCLARECER',event.reply);assert.equal(localFinanceState(c.user).documents.filter(d=>d.kind==='APPOINTMENT').length,0);
+  await ask('2','text');const edit=await ask('mude para terça da semana que vem às 16h','text');assert.equal(edit.status,'ESCLARECER',edit.reply);await ask('1','text');await ask('1','text');
+  const appointments=localFinanceState(c.user).documents.filter(d=>d.kind==='APPOINTMENT');assert.equal(appointments.length,1);assert.equal(appointments[0].date,'2026-10-27');assert.equal(appointments[0].details.time,'16:00');
+  assert.equal((await ask('Ontem gastei 25 reais no restaurante')).status,'ESCLARECER');await ask('1','text');await ask('1','text');let s=localFinanceState(c.user);assert.equal(s.expenses.length,1);assert.equal(s.expenses[0].entry_date,'2026-10-18');assert.equal(financeSnapshot(s).balance_cents,97500);
+  assert.equal((await ask('Vou pagar 800 da moto na próxima sexta')).status,'ESCLARECER');await ask('1','text');s=localFinanceState(c.user);assert.equal(s.expenses.find(e=>e.amount_cents===80000)?.entry_date,'2026-10-23');assert.equal(s.expenses.find(e=>e.amount_cents===80000)?.status,'PREVISTO');assert.equal(financeSnapshot(s).balance_cents,97500);
+  assert.equal((await ask('Entrada 250 vendi a cadeira ontem')).status,'ESCLARECER');await ask('1','text');s=localFinanceState(c.user);assert.equal(s.documents.find(d=>d.kind==='INCOME')?.date,'2026-10-18');assert.equal(financeSnapshot(s).balance_cents,122500);
+  const missing=await ask('Agenda 200 reais luz semana que vem');assert.match(missing.reply,/Em qual dia dessa semana/);const completed=await ask('sexta','text');assert.equal(completed.status,'ESCLARECER',completed.reply);await ask('1','text');s=localFinanceState(c.user);assert.equal(s.expenses.find(e=>e.amount_cents===20000)?.entry_date,'2026-10-30');assert.equal(financeSnapshot(s).balance_cents,122500);
+  assert.ok(calendarEntries(s.documents,s.expenses,s.documents).some(e=>e.date==='2026-10-27'&&e.kind==='appointment'));
+ }finally{c.restore();}}
+});
+
 test('entrada saída e agenda por texto e áudio confirmam editam e persistem no mesmo caixa sem duplicar',async()=>{
  for(const type of ['text','audio'] as const){const c=await context();try{
   process.env.OPENAI_API_KEY='synthetic-only';let spoken='';

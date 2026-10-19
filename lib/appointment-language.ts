@@ -1,10 +1,11 @@
 import {financeDate,fold,literalMoney} from './finance-date.ts';
 import type {FinanceDraft} from './finance-ai.ts';
+import {relativeCalendarPatterns,relativeCalendarPeriods} from './relative-calendar.ts';
 
 const number='(?:\\d{1,2}|(?:vinte|trinta)(?: e (?:um|dois|tres|quatro|cinco|seis|sete|oito|nove))?|zero|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|treze|quatorze|catorze|quinze|dezesseis|dezessete|dezoito|dezenove)';
 const months='(?:janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)';
 type Span={start:number;end:number;excerpt:string;value:string};
-type Facts={date?:Span;dates:Span[];time?:Span;description:string};
+type Facts={date?:Span;dates:Span[];time?:Span;description:string;dateQuestion?:string};
 const command=/^(?:(?:ola|oi|por favor|nao)[,! ]+)*(?:(?:eu )?quero (?:que voce )?)?(?:pode )?(?:agenda|agende|agendar|marca|marque|marcar|me lembra|me lembre)\b/i;
 const forbidden=/\b(?:empresas?|lojas?|clientes?|contratos?|estoque|juridico|cnpj|pagar|pagamento|reais|recorr\w*|mensal|todo|toda|semanal|alter\w*|edit\w*|corrig\w*|cancel\w*|arquiv\w*|nao (?:agenda|agende|marca|marque))\b/;
 const value=(s:string)=>/^\d+$/.test(s)?Number(s):literalMoney(s)/100;
@@ -21,6 +22,7 @@ export function appointmentFacts(text:string,today:string,direction:boolean|'pas
  };
  try{
   for(const pattern of [
+   ...relativeCalendarPatterns(),
    /\b\d{4}-\d{2}-\d{2}\b/g,
    /\bdaqui a?\s*(?:\d+|[a-z ]+?)\s+dias?\b/g,
    /\b(?:dia\s+)?\d{1,2}[/-]\d{1,2}(?:[/-]\d{4})?\b/g,
@@ -34,20 +36,25 @@ export function appointmentFacts(text:string,today:string,direction:boolean|'pas
   add(times,/\b(\d{1,2})(?::(\d{2})|h(?:(\d{2}))?|\s+horas?)(?:\s+(?:da|de)\s+(manha|tarde|noite|madrugada))?\b/g,m=>timeValue(m[1],m[2]||m[3],m[4]));
  }catch{return null;}
  if(new Set(dates.map(d=>d.value)).size>1||new Set(times.map(t=>t.value)).size>1)return null;
+ const periods=relativeCalendarPeriods(s,today).filter(p=>!dates.some(d=>p.start>=d.start&&p.end<=d.end));
+ if(dates.length&&periods.some(p=>dates.some(d=>d.value<p.from||d.value>p.to)))return null;
  let title=original;for(const span of [...dates,...times].sort((a,b)=>b.start-a.start))title=title.slice(0,span.start)+' '.repeat(span.end-span.start)+title.slice(span.end);
  title=title.slice(s.match(command)?.[0].length||0).replace(/\b(?:pra mim|para mim|por favor|ou seja|quer dizer|eu tenho|eu vou|eu quero|no próximo|no proximo)\b/gi,' ').replace(/\b(?:um compromisso|o compromisso|um evento)\b/gi,' ')
   .replace(/\s+/g,' ').replace(/(?:\s*[,;:]\s*)+/g,', ').replace(/^[\s,.:;!?-]*(?:(?:no|na|em|para|às|as|um|uma|o|a)\b[\s,.:;!?-]*)*/i,'').replace(/[\s,.:;!?-]+$/,'').trim();
- return {date:dates[0],dates,time:times[0],description:title};
+ return {date:dates[0],dates,time:times[0],description:title,...(!dates.length&&periods.length?{dateQuestion:periods[0].question}:{})};
 }
 export function naturalAppointmentDraft(text:string,today:string):FinanceDraft|null{
  const source=fold(text);if(text.length>900||source.includes('\n')||!command.test(source)||forbidden.test(source))return null;
- const facts=appointmentFacts(text,today);if(!facts?.date||!facts.time&&/\bme lembr[ae]\b/.test(source)||facts.description.length>160)return null;
+ const facts=appointmentFacts(text,today);
+ if(facts?.dateQuestion)return {intent:'CLARIFY',command:null,question:facts.dateQuestion,query:'',confidence:'ALTA',target_excerpt:'',money_evidence:[],date_evidence:[]};
+ if(!facts?.date||!facts.time&&/\bme lembr[ae]\b/.test(source)||facts.description.length>160)return null;
  if(/\b(?:e outr[oa]|tambem (?:agenda|marca)|outra? (?:reuniao|consulta|compromisso))\b/.test(fold(facts.description)))return null;
  return {intent:'COMMAND',command:{action:'appointment_upsert',description:facts.description||'Compromisso',date:facts.date.value,...(facts.time?{time:facts.time.value}:{})},confidence:'ALTA',question:'',target_excerpt:'',query:'',money_evidence:[],date_evidence:[{field:'date',excerpt:facts.date.excerpt}]};
 }
 // Reuse literal facts only for a short complement or an unmistakable repetition
 // of the same incomplete appointment. Never carry them to another event or date.
 export function continuedAppointment(previous:string,current:string,today:string):{draft:FinanceDraft;source:string}|null{
+ const completed=completeCalendarPeriod(previous,current,today);if(completed){const draft=naturalAppointmentDraft(completed,today);if(draft?.intent==='COMMAND')return {draft,source:completed};}
  if(naturalAppointmentDraft(current,today)&&appointmentFacts(current,today)?.time)return null;
  if(!command.test(fold(previous))||forbidden.test(fold(previous))||forbidden.test(fold(current)))return null;
  const old=appointmentFacts(previous,today),next=appointmentFacts(current,today);if(!old||!next||!old.date)return null;
@@ -61,4 +68,15 @@ export function continuedAppointment(previous:string,current:string,today:string
  if(!time||description.length<2||description.length>160)return null;
  const source=previous+'\nComplemento do mesmo compromisso: '+current;if(source.length>4000)return null;
  return {source,draft:{intent:'COMMAND',command:{action:'appointment_upsert',description,date:date.value,time:time.value},confidence:'ALTA',question:'',target_excerpt:'',query:'',money_evidence:[],date_evidence:[{field:'date',excerpt:date.excerpt}]}};
+}
+
+// Join only the missing day to one verified period from the previous question.
+// Other new requests never inherit that period or the event's other fields.
+export function completeCalendarPeriod(previous:string,current:string,today:string):string|null{
+ if(!appointmentFacts(previous,today)?.dateQuestion)return null;
+ const periods=relativeCalendarPeriods(previous,today);if(periods.length!==1)return null;
+ const day=current.trim().replace(/[.!]+$/,'').replace(/^(?:na|no)\s+/i,''),s=fold(day),period=periods[0],weekly=/semana/.test(fold(previous.slice(period.start,period.end)));
+ if(weekly&&!/^(?:segunda|terca|quarta|quinta|sexta|sabado|domingo)(?:-feira| feira)?$/.test(s)||!weekly&&!/^(?:dia\s+)?(?:\d{1,2}|primeiro)$/.test(s))return null;
+ const literal=previous.slice(period.start,period.end),joined=weekly?day+' da '+literal:(s==='primeiro'?'dia 1':/^dia\b/i.test(day)?day:'dia '+day)+' do '+literal;
+ return previous.slice(0,period.start)+joined+previous.slice(period.end);
 }
