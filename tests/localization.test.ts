@@ -69,6 +69,13 @@ test('custom component props remain opaque and user text is never sent to a tran
  assert.strictEqual(localizedTree(component,'en-US'),component);
  assert.equal(translatedText('João Santos · meu carro vermelho','en-US'),'João Santos · meu carro vermelho');
 });
+test('dynamic greetings, payment counters and AI labels translate without translating the chosen name',()=>{
+ assert.equal(translatedText('Olá, Água,','en-US'),'Hi, Água!');
+ assert.equal(translatedText('Olá, vamos começar?','en-US'),'Hi, ready to get started?');
+ assert.equal(translatedText('Conversar com Lucy','en-US'),'Talk to Lucy');
+ assert.equal(translatedText('Lucy · toque para conversar','en-US'),'Lucy · tap to chat');
+ assert.equal(translatedText('pagamentos','en-US'),'payments');
+});
 test('password controls and dynamically changing summaries can switch back without changing the original tree',()=>{
  for(const source of ['Mostrar senha','Ocultar senha','Salvando…','Confirmar lançamento','Cancelar']){
   const original=createElement('button',{'aria-label':source},source);

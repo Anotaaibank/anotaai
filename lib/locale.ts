@@ -12,7 +12,7 @@ const templates=Object.entries(catalog).filter(([s])=>s.includes('__ANOTEI_')).m
  const tokens=source.match(/__ANOTEI_\d+__/g)||[];
  const pieces=source.split(/__ANOTEI_\d+__/g);
  return {source,target,tokens,pattern:new RegExp('^'+pieces.map(escape).join('([\\s\\S]+?)')+'$')};
-}).filter(t=>t.source.replace(/__ANOTEI_\d+__/g,'').trim().length>=5).sort((a,b)=>b.source.length-a.source.length);
+}).filter(t=>t.source.replace(/__ANOTEI_\d+__/g,'').trim().length>=5||t.source==='Olá, __ANOTEI_0__').sort((a,b)=>b.source.length-a.source.length);
 const cache=new Map<string,string>();
 const monthNames=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 function englishDate(source:string):string|undefined {

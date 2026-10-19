@@ -17,7 +17,7 @@ A preferência pertence à interface deste navegador. Ela não reescreve registr
 
 ## Validação
 
-- `typecheck`, suíte completa (279 testes) e compilação Next.js de produção.
-- Nove testes de localização verificam idioma permitido, cobertura dos menus principais, BRL positivo/negativo, parágrafos de relatórios, datas americanas, configuração de voz, valores de formulário, callbacks, dados opacos e retorno ao português.
+- `typecheck`, suíte completa (280 testes) e compilação Next.js de produção.
+- Dez testes de localização verificam idioma permitido, cobertura dos menus principais, BRL positivo/negativo, parágrafos de relatórios, datas americanas, configuração de voz, valores de formulário, callbacks, dados opacos, saudações dinâmicas e retorno ao português.
 - Navegador: manual e cadastro em inglês; alternância preserva e-mail, senha e estado do olhinho. Verificado em larguras de 390 e 320 pixels; ajustada a quebra do cabeçalho e dos desenhos do manual. Nenhuma conta ou lançamento real foi criado nesses testes.
 - A voz em inglês foi verificada na configuração da sessão, sem simular que houve teste de microfone real. As conversas WhatsApp existentes permanecem cobertas pelos testes anteriores de confirmação e persistência.
