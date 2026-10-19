@@ -1,0 +1,19 @@
+{
+  "verified_at": "2026-10-19T15:52:23.022Z",
+  "production_commit": "fc059f39f17582d5c5a61101d75fbc59a2e8d953",
+  "service": "icom/anotei",
+  "build": "passed",
+  "typecheck": "passed",
+  "tests": {
+    "total": 270,
+    "passed": 270,
+    "failed": 0
+  },
+  "health": {
+    "http": 200,
+    "application": "anota-ai",
+    "status": "ok"
+  },
+  "coverage": "Local rules, app signed proposals, simulated WhatsApp transcription/provider, edit-confirm-persist-idempotency",
+  "real_whatsapp_delivery_tested": false
+}
