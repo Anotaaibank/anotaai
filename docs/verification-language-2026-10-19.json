@@ -1,0 +1,36 @@
+{
+  "commit": "0bb4655352fdeac0a33abe92ba306fdd7f29679f",
+  "deployment": "cmvfnbtlv007707mu866f4vr8",
+  "status": "done",
+  "compiled": true,
+  "typecheck": true,
+  "tests": [
+    "tests 282",
+    "pass 282",
+    "fail 0"
+  ],
+  "hasError": false,
+  "health": {
+    "http": 200,
+    "application": "anota-ai",
+    "status": "ok"
+  },
+  "browser": {
+    "manualEnglish": true,
+    "preferenceSurvivesReload": true,
+    "loginFormValuesPreserved": true,
+    "passwordTogglePreserved": true,
+    "dashboardMenusEnglish": true,
+    "checkoutTitleAndPlanMeaningVerified": true,
+    "mobileWidths": [
+      320,
+      390
+    ],
+    "financialWritesPerformed": false
+  },
+  "voice": {
+    "sessionConfigurationTested": true,
+    "realMicrophoneTested": false
+  },
+  "catalogEntries": 2253
+}
