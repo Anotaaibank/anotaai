@@ -76,6 +76,12 @@ test('dynamic greetings, payment counters and AI labels translate without transl
  assert.equal(translatedText('Lucy · toque para conversar','en-US'),'Lucy · tap to chat');
  assert.equal(translatedText('pagamentos','en-US'),'payments');
 });
+test('subscription copy distinguishes an unlimited usage allowance from free service and preserves the brand',()=>{
+ const copy=translatedText('Pedidos, áudios no WhatsApp e voz no aplicativo sem franquia mensal.','en-US');
+ assert.ok(copy.includes('no monthly usage cap'));assert.doesNotMatch(copy,/no monthly fee|free service/i);
+ assert.equal(translatedText('NA HORA','en-US'),'NA HORA');
+ assert.equal(translatedText('Um plano para','en-US'),'A plan to');
+});
 test('password controls and dynamically changing summaries can switch back without changing the original tree',()=>{
  for(const source of ['Mostrar senha','Ocultar senha','Salvando…','Confirmar lançamento','Cancelar']){
   const original=createElement('button',{'aria-label':source},source);
