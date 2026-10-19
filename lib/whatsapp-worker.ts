@@ -33,6 +33,7 @@ import {localMode} from './server.ts';
 import {normalizeAssistantText,languageGuard,naturalFinanceTurn,sourceWithVerifiedTarget} from './conversation-language.ts';
 import {whatsappConversationContext} from './whatsapp-context.ts';
 import {continuedFinancialMessage} from './financial-message.ts';
+import {continuedPrefixedCommand} from './command-prefix.ts';
 import {assistantTimer} from './assistant-timing.ts';
 import {prepareFinanceProposal} from './finance-proposal.ts';
 import {financeStateForQuery} from './finance-server.ts';
@@ -84,7 +85,7 @@ export async function processMessage(row:Inbox){
   const hint=whatsappConfirmationHint(transcript,recent,row.user_id,row.sender,financeSecret());
   if(hint){await patchMessage(row,{status:'RESOLVIDO',reply:hint});await reply(row,b);return;}
   if(/^confirmar\b/i.test(transcript))throw new Error('Envie CONFIRMAR seguido do código exato da proposta.');
-  const conversation=whatsappConversationContext(recent,row.user_id,row.sender,financeSecret());const unfinished=recent.find(r=>r.status==='ESCLARECER'&&!r.finance_confirmation&&!r.confirmation_used&&r.created_at>(recent.find(s=>s.status==='LANCADO')?.created_at||''))?.transcript;const candidates=conversation.incomplete.length?conversation.incomplete:unfinished?[unfinished]:[],continuationState=candidates.length?await readState():undefined,continuations=candidates.map(source=>({source,result:continuedAppointment(source,transcript,today)||continuedMonthlyBill(source,transcript,today)||continuedFinancialMessage(source,transcript,continuationState!,today)})).filter(item=>item.result);if(continuations.length>1)throw new Error('Qual item você quer completar? '+candidates.join('; '));const continuation=continuations[0]?.result;
+  const conversation=whatsappConversationContext(recent,row.user_id,row.sender,financeSecret());const unfinished=recent.find(r=>r.status==='ESCLARECER'&&!r.finance_confirmation&&!r.confirmation_used&&r.created_at>(recent.find(s=>s.status==='LANCADO')?.created_at||''))?.transcript;const candidates=conversation.incomplete.length?conversation.incomplete:unfinished?[unfinished]:[],continuationState=candidates.length?await readState():undefined,continuations=candidates.map(source=>({source,result:continuedPrefixedCommand(source,transcript,today)||continuedAppointment(source,transcript,today)||continuedMonthlyBill(source,transcript,today)||continuedFinancialMessage(source,transcript,continuationState!,today)})).filter(item=>item.result);if(continuations.length>1)throw new Error('Qual item você quer completar? '+candidates.join('; '));const continuation=continuations[0]?.result;
   if(continuation){await propose(row,b,continuation.draft,continuation.source,await readState(),conversation.incomplete.filter(source=>source!==continuations[0].source));await patchMessage(row,{transcript:continuation.source});return;}
 
   const previous=unfinished||'',source=previous&&/^(?:[\dR$]|(?:é|foi|o valor|amanhã|hoje|dia|às|as)\b)/i.test(transcript)?previous+'\nComplemento: '+transcript:transcript;const state=await readState(),name=await assistantNameForBot(row.user_id),draft=await timer.stage('interpretation',()=>extractFinance(source,state,key||'',today,undefined,name,'resumo',{channel:'whatsapp',...conversation}));

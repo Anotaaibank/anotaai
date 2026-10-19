@@ -65,6 +65,9 @@
     ".next-validation-cloud-personal-20261014/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "artifacts",
+    "output",
+    "tmp"
   ]
 }

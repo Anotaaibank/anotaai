@@ -4,6 +4,7 @@ import {appointmentFacts} from './appointment-language.ts';
 import {recurringDay} from './monthly-bills.ts';
 import {currentBalanceDraft} from './balance-language.ts';
 import {financialMessageDraft} from './financial-message.ts';
+import {prefixedCommand,commandPrefix} from './command-prefix.ts';
 import type {FinanceCommand,FinanceState,FinancePlan} from './finance.ts';
 import type {FinanceDraft} from './finance-ai.ts';
 
@@ -28,15 +29,15 @@ export const languageQuery=(query:Record<string,unknown>)=>empty('QUERY','',JSON
 export function informationOnlyMessage(text:string){const s=fold(text);if(/^(?:qual|quais|quanto|quantos|quantas|como|onde|o que)\b/.test(s))return true;return s.endsWith('?')&&/^(?:eu tenho|tenho|tem|existe|ja paguei|ja recebi|sera que)\b/.test(s)&&!/\b(?:agenda|agende|anota|anote|lanca|lance|registra|registre|marca|marque|cadastre)\b/.test(s);}
 export function languageCommand(command:FinanceCommand,money:{field:string;excerpt:string}[]=[],dates:{field:string;excerpt:string}[]=[],target=''):FinanceDraft{return {...empty('COMMAND'),command,money_evidence:money,date_evidence:dates,target_excerpt:target};}
 export function languageGuard(text:string):FinanceDraft|null{
- const s=fold(text);
+ const s=fold(text),prefix=commandPrefix(text),immediate=prefix?.kind==='entrada'||prefix?.kind==='saida';
  if(/\b(?:se eu|se a gente|suponha|supondo|por exemplo|e so um exemplo|estou simulando|acho que vou|talvez eu)\b/.test(s)||/^(?:eu )?nao (?:paguei|gastei|recebi|agenda|agende|anota|anote|lanca|lance|registre)\b/.test(s)){
   const simulation=s.match(/^(?:se eu|suponha que eu) gastar\s+(.+?)(?:[, ]+)(?:quanto|o que) sobra/);const amount=simulation&&amountAtStart(simulation[1]);
   if(amount&&!amount.rest)return languageQuery({report:'simulation',amount_cents:amount.value});
   return empty('HELP',/^nao paguei/.test(s)?'O pagamento não foi registrado. A conta continua pendente se já estiver cadastrada.':'Não fiz alterações. Para registrar, envie um pedido direto com os dados reais.');
  }
  if(/\b(?:transferi|transfere|transferir)\b/.test(s)&&/\b(?:outra conta|entre (?:as |minhas )?contas|de uma conta|da minha conta.*outra)/.test(s))return empty('HELP','O Anotei ainda não separa várias contas bancárias nem registra transferências entre elas. Não registrei como receita ou despesa. Aportes e resgates de reservas têm uma função própria.');
- if(/\b(?:fatura|limite do cartao|limite de cartao|devo no cartao)\b/.test(s))return empty('HELP','O Anotei registra a forma de pagamento Cartão, mas ainda não controla faturas e limites bancários. Não vou calcular uma fatura sem esses dados.');
- if(/\b(?:quinzenal|quinze em quinze|primeiro dia util|ultimo dia util|toda segunda|toda terca|toda quarta|toda quinta|toda sexta|todo sabado|todo domingo|me avisa uma hora antes|viagem e de \d+ a \d+)\b/.test(s))return empty('HELP','Essa repetição ou configuração de lembrete ainda não está disponível. Posso registrar datas individuais. Contas mensais repetem no dia informado; compromissos com horário usam os lembretes de 24 horas e 5 horas.');
+ if(!immediate&&/\b(?:fatura|limite do cartao|limite de cartao|devo no cartao)\b/.test(s))return empty('HELP','O Anotei registra a forma de pagamento Cartão, mas ainda não controla faturas e limites bancários. Não vou calcular uma fatura sem esses dados.');
+ if(!immediate&&/\b(?:quinzenal|quinze em quinze|primeiro dia util|ultimo dia util|toda segunda|toda terca|toda quarta|toda quinta|toda sexta|todo sabado|todo domingo|me avisa uma hora antes|viagem e de \d+ a \d+)\b/.test(s))return empty('HELP','Essa repetição ou configuração de lembrete ainda não está disponível. Posso registrar datas individuais. Contas mensais repetem no dia informado; compromissos com horário usam os lembretes de 24 horas e 5 horas.');
  if(/^cancela (?:todas|todos)(?: as| os)? proxim/.test(s))return empty('CLARIFY','De qual conta recorrente você quer cancelar os próximos vencimentos? Informe o nome. Vou mostrar o alcance antes de confirmar.');
  return null;
 }
@@ -70,6 +71,7 @@ export function naturalReadQuery(text:string,today:string):string|null{
 }
 export function naturalFinanceTurn(text:string,state:FinanceState,today:string,context:NaturalContext={}):FinanceDraft|null{
  const s=fold(text),guard=languageGuard(text);if(guard)return guard;
+ const prefixed=prefixedCommand(text,today);if(prefixed)return prefixed;
  const balance=currentBalanceDraft(text);if(balance)return balance;
  if(/[;\n]/.test(text)||financialAmountFragments(text).length>1||/\be\s+(?:tambem\s+)?(?:marca|marque|agende|anota|lanca|lança|registra|pago|pagar|paguei)\b/.test(s))return null;
  const read=naturalReadQuery(text,today);if(read)return {...empty('QUERY'),query:read};

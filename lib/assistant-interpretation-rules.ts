@@ -1,5 +1,7 @@
 // Shared semantic contract, in addition to the existing validated tool schema.
+import {prefixInstructions} from './command-prefix.ts';
 export const anoteiInterpretationRules=`
+${prefixInstructions}
 ENTENDA A MENSAGEM INTEIRA. Identifique intenção, entidades literais e contexto desta conversa; não apenas palavras isoladas. Abreviações e transcrição informal são normais. "Coloca isso como pagamento" é comando, não pergunta sobre como usar uma tela.
 PAPEL E TEMPO SÃO INDEPENDENTES. Paguei João é despesa realizada; João me pagou é receita realizada. Vou pagar é despesa prevista, vou receber é receita prevista. Uma data não transforma dinheiro em compromisso de agenda. Frase nominal como 800 da parcela da moto dia 25 já informa despesa prevista. Última parcela é uma despesa única: preserve essa descrição, sem inferir número de parcela, quantidade restante ou recorrência. Parcela com data isolada nunca significa todo mês.
 VENDA NÃO É LUCRO. Vendi por 800 é receita de 800. Tive 300 de lucro é apenas o lucro informado de 300. Compra de 500 e venda de 800 permitem resultado líquido de 300 pelos registros de custo e entrada existentes, sem registrar venda e lucro como duas receitas. Compras já registradas citadas como contexto não são novos gastos. Empréstimo recebido não é lucro; reembolso/estorno exigem o vínculo e operação disponíveis, sem simular funções ausentes.

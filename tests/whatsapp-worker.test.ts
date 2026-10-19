@@ -18,6 +18,20 @@ process.env.ANOTA_DATABASE_PATH=':memory:';
 async function modules(){const hooks=registerHooks({resolve(s,c,next){return next(s==='next/headers'?'next/headers.js':s,c);}});try{return {store:await import('../lib/whatsapp-store.ts'),worker:await import('../lib/whatsapp-worker.ts'),server:await import('../lib/whatsapp-server.ts')};}finally{hooks.deregister();}}
 const sender='5511999999999',phone='5511988888888';
 
+test('entrada saída e agenda por texto e áudio confirmam editam e persistem no mesmo caixa sem duplicar',async()=>{
+ for(const type of ['text','audio'] as const){const c=await context();try{
+  process.env.OPENAI_API_KEY='synthetic-only';let spoken='';
+  globalThis.fetch=async(url)=>{const path=String(url);if(path.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(path.endsWith('/audio/transcriptions'))return Response.json({text:spoken});assert.ok(/\/send\/(?:text|menu)$/.test(path),'Prefixos completos não dependem do modelo');return Response.json({id:randomUUID()});};
+  add(c.user,{action:'profile_upsert',profile:{opening_balance_cents:100000,opening_date:brazilDay()}});
+  async function ask(text:string){spoken=text;return c.message(type==='audio'?'':text,type);}
+  const entry=await ask('Entrada 250 reais vendi meu PlayStation');assert.equal(entry.status,'ESCLARECER',entry.reply);assert.equal(localFinanceState(c.user).documents.filter(d=>d.kind==='INCOME').length,0);
+  await c.message('2');const edited=await c.message('300');assert.equal(edited.status,'ESCLARECER',edited.reply);await c.message('1');await c.message('1');assert.equal(financeSnapshot(localFinanceState(c.user)).balance_cents,130000);
+  const expense=await ask('Saída Pix de 200 reais para a filha');assert.equal(expense.status,'ESCLARECER',expense.reply);await c.message('1');let s=localFinanceState(c.user);assert.equal(s.expenses.length,1);assert.equal(s.expenses[0].entry_date,brazilDay());assert.equal(s.expenses[0].details.payment_method,'PIX');assert.equal(financeSnapshot(s).balance_cents,110000);
+  const future=await ask('Agenda 250 reais do guarda-roupa que eu comprei amanhã');assert.equal(future.status,'ESCLARECER',future.reply);await c.message('1');s=localFinanceState(c.user);assert.equal(s.expenses.length,2);assert.equal(s.expenses.find(e=>e.amount_cents===25000)?.status,'PREVISTO');assert.equal(financeSnapshot(s).balance_cents,110000);
+  const event=await ask('Agenda compromisso tocar na igreja amanhã às 19h');assert.equal(event.status,'ESCLARECER',event.reply);await c.message('1');s=localFinanceState(c.user);assert.equal(s.documents.filter(d=>d.kind==='APPOINTMENT').length,1);assert.equal(s.documents.find(d=>d.kind==='APPOINTMENT')?.details.time,'19:00');assert.equal(s.documents.filter(d=>d.kind==='INCOME').length,1);
+ }finally{c.restore();}}
+});
+
 test('saldo por texto/áudio usa conciliação, 2 edita e 1 confirma sem receita, repetição ou perda de histórico',async()=>{
  for(const type of ['text','audio'] as const){const c=await context();try{
   add(c.user,{action:'profile_upsert',profile:{opening_balance_cents:100000,opening_date:brazilDay()}});add(c.user,{action:'income_upsert',description:'Entrada anterior',amount_cents:30000});add(c.user,{action:'expense_create',description:'Saída anterior',category:'Supermercado',amount_cents:20000});

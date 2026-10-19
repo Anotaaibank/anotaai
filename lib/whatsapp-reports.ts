@@ -9,10 +9,11 @@ import {expandedWhatsappQuery,multipleWhatsappReads} from './whatsapp-intents.ts
 import {conversationReport} from './conversation-reports.ts';
 import {naturalReadQuery,normalizeAssistantText} from './conversation-language.ts';
 import {currentBalanceIntent} from './balance-language.ts';
+import {commandPrefix} from './command-prefix.ts';
 
 // Recognize only unambiguous reads. Writes and unusual filters keep the full interpreter.
 export function fastWhatsappQuery(text:string,today=brazilDay()):string|null{
- text=normalizeAssistantText(text);if(currentBalanceIntent(text))return null;const semantic=naturalReadQuery(text,today);if(semantic)return semantic;
+ text=normalizeAssistantText(text);if(currentBalanceIntent(text)||commandPrefix(text))return null;const semantic=naturalReadQuery(text,today);if(semantic)return semantic;
  if(monetaryLiterals(text).length)return null;
  const legacy=legacyWhatsappQuery(text),expanded=expandedWhatsappQuery(text);if(legacy){const old=JSON.parse(legacy);if(old.report==='balance_overdue'||!old.topic&&!old.report||old.category||old.trip||old.audience||old.nature)return legacy;}return expanded||legacy;
 }

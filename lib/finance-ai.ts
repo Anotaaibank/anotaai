@@ -15,6 +15,7 @@ import {assistantRecordContext} from './assistant-record-context.ts';
 import {currentBalanceIntent,currentBalanceDraft,signedBalanceMoney} from './balance-language.ts';
 import {sourceWithVerifiedTarget} from './conversation-language.ts';
 import {statedFinancialStatus} from './financial-message.ts';
+import {prefixedCommand} from './command-prefix.ts';
 export type FinanceDraftItem={source:string;command:FinanceCommand|null;target_excerpt:string;money_evidence:{field:string;excerpt:string}[];date_evidence:{field:string;excerpt:string}[]};
 export type FinanceDraft={intent:'COMMAND'|'QUERY'|'CLARIFY'|'OUTSIDE'|'HELP';command:FinanceCommand|string|null;items?:FinanceDraftItem[]|null;question:string;confidence:'ALTA'|'BAIXA';target_excerpt:string;money_evidence:{field:string;excerpt:string}[];date_evidence:{field:string;excerpt:string}[];query:string};
 const evidence={type:'array',items:{type:'object',additionalProperties:false,properties:{field:{type:'string'},excerpt:{type:'string'}},required:['field','excerpt']}};
@@ -54,6 +55,9 @@ export function draftCommand(d:FinanceDraft,text:string,state:FinanceState,today
  text=normalizeAssistantText(text);const guarded=languageGuard(text);if(guarded)throw new AppError(guarded.question||'Esse pedido é uma consulta ou simulação; não autoriza um lançamento.');if(informationOnlyMessage(text))throw new AppError('Esse pedido é uma consulta; nenhuma alteração foi preparada.');
  if(/\b(?:minha empresa|minha loja|da minha empresa|da empresa|estoque|clientes|contratos|juridico|pessoa juridica)\b/.test(fold(text)))throw new AppError('Este aplicativo registra somente finanças pessoais.');
  if(d.intent!=='COMMAND'||d.confidence!=='ALTA')throw new AppError(d.question||'Informe o que deseja registrar, o valor e a data do agendamento.');
+ const prefixed=prefixedCommand(text,today);
+ if(prefixed?.intent==='COMMAND'&&prefixed.command)return financeCommand(prefixed.command);
+ if(prefixed?.intent==='CLARIFY')throw new AppError(prefixed.question);
  let c:FinanceCommand;try{c=financeCommand(clean(typeof d.command==='string'?JSON.parse(d.command):d.command));}catch{throw new AppError('Não consegui entender o comando. Informe os dados novamente.');}
  const actionFields:Record<string,string[]>={balance_adjust:['balance_cents'],extra_activity:['description','activity','date','amount_cents','cost_cents','status','category','details'],profile_upsert:['profile'],expense_create:['description','date','amount_cents','status','category','details'],expense_update:['target_id','description','date','amount_cents','status','category','details'],expense_schedule:['description','date','amount_cents','category','details','dates','count','amount_mode','schedule_type','recurring','due_day'],expense_pay:['target_id','date','amount_cents'],expense_archive:['target_id'],expense_restore:['target_id'],income_upsert:['target_id','description','date','amount_cents','status','salary','activity'],income_receive:['target_id','date','amount_cents'],reserve_upsert:['target_id','description','date','amount_cents','rate_percent','rate_period'],reserve_transfer:['reserve_id','date','amount_cents','direction'],appointment_upsert:['target_id','description','date','time','location','done'],document_archive:['target_id'],document_restore:['target_id']};
  if(currentBalanceIntent(text)&&c.action!=='balance_adjust')throw new AppError('Para corrigir o saldo atual, informe o valor final desejado. Não vou alterar o saldo inicial nem registrar uma receita.');
@@ -132,7 +136,7 @@ export function quickFinanceDraft(text:string,today:string):FinanceDraft|null{
 export function prepareFinanceDraft(d:FinanceDraft,text:string,state:FinanceState,user:string,id:string,today=brazilDay()):FinancePlan{
  text=normalizeAssistantText(text);
  if(/\b(?:minha empresa|minha loja|da minha empresa|da empresa|estoque|clientes|contratos|juridico|pessoa juridica)\b/.test(fold(text)))throw new AppError('Este aplicativo registra somente finanças pessoais.');
- if(!d.items?.length){const command=draftCommand(d,text,state,today);if(multipleFinanceItems(text)&&['expense_create','expense_schedule','appointment_upsert'].includes(command.action))throw new AppError('Identifiquei mais de um item. Envie uma conta por linha para eu conferir a lista inteira.');return buildFinancePlan(command,state,user,id,today);}
+ if(!d.items?.length){const command=draftCommand(d,text,state,today);if(prefixedCommand(text,today)?.intent!=='COMMAND'&&multipleFinanceItems(text)&&['expense_create','expense_schedule','appointment_upsert'].includes(command.action))throw new AppError('Identifiquei mais de um item. Envie uma conta por linha para eu conferir a lista inteira.');return buildFinancePlan(command,state,user,id,today);}
  if(d.intent!=='COMMAND'||d.confidence!=='ALTA'||d.command||d.items.length<2||d.items.length>5)throw new AppError('Envie até cinco contas ou compromissos por vez, com os dados de cada item.');
  const plan:FinancePlan={id,documents:[],expenses:[],checks:[],title:'Conferir '+d.items.length+' registros',lines:[]},sources=new Set<string>();let remaining=fold(text);
  for(const [index,item] of d.items.entries()){
@@ -169,7 +173,7 @@ export function localFinanceInterpretation(text:string,state:FinanceState,today:
    const missingMoney=/Qual foi o valor|valor mensal/.test(draft.question)&&!hasAmount;
    const missingDate=/data prevista|primeiro vencimento|dia do m[eê]s/.test(draft.question)&&!facts?.date;
    const explicitAmbiguity=/Qual registro|Qual conta|Qual compromisso|mais de um|dados diferentes|datas.*inv[aá]lid|valor correto|quantidade de 2 a 60|apenas um valor/.test(draft.question);
-   if(missingMoney||missingDate||explicitAmbiguity||currentBalanceIntent(text))return draft;
+   if(missingMoney||missingDate||explicitAmbiguity||currentBalanceIntent(text)||prefixedCommand(text,today))return draft;
    continue;
   }
   if(draft.intent!=='COMMAND')return draft;
