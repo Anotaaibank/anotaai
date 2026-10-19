@@ -14,6 +14,10 @@ import './registration.css';
 import './subscription-usage.css';
 import './mobile-app.css';
 import './checkout.css';
+import './localization.css';
+import {cookies} from 'next/headers';
+import {LanguageProvider} from '@/components/Localization';
+import {appLocale,localeCookie} from '@/lib/locale';
 export const viewport:Viewport={width:'device-width',initialScale:1,viewportFit:'cover',themeColor:'#165449'};
 export const metadata:Metadata={title:'Anotei na Hora · Suas finanças pessoais',description:'Falou. Anotou. Organizou. Salário, saldo, contas e renda extra com inteligência artificial por voz e WhatsApp.'};
-export default function Layout({children}:{children:React.ReactNode}){return <html lang="pt-BR"><body>{children}</body></html>;}
+export default async function Layout({children}:{children:React.ReactNode}){const locale=appLocale((await cookies()).get(localeCookie)?.value);return <html lang={locale}><body><LanguageProvider initialLocale={locale}>{children}</LanguageProvider></body></html>;}

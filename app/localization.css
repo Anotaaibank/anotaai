@@ -1,0 +1,11 @@
+:root{--anotei-language-height:44px}
+.anotei-language-toolbar{box-sizing:border-box;position:sticky;top:0;z-index:75;min-height:var(--anotei-language-height);display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:4px max(16px,env(safe-area-inset-right)) 4px max(12px,env(safe-area-inset-left));background:#edf5ee;color:#244d40;border-bottom:1px solid #cedfd1;font:12px Arial,sans-serif}
+.anotei-language-toolbar button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;max-width:100%;padding:7px 12px;border:1px solid #a8c7b3;border-radius:9px;background:#fff;color:#164c38;font:600 12px Arial,sans-serif;cursor:pointer;touch-action:manipulation}
+.anotei-language-toolbar button:focus-visible{outline:3px solid #ba934a;outline-offset:2px}
+.anota-sidebar{top:var(--anotei-language-height)!important;height:calc(100dvh - var(--anotei-language-height))}
+.anota-personal-app .anota-topbar{top:var(--anotei-language-height)}
+.manual-topbar{top:var(--anotei-language-height)}
+@media(max-width:767px){.anotei-language-toolbar{gap:8px}.anotei-language-toolbar>span{font-size:11px}.anota-personal-app .anota-topbar{top:var(--anotei-language-height)}html[lang=en-US] .anota-bottom-nav button{font-size:10px;overflow-wrap:anywhere}}
+.manual-download:is(button){font-family:inherit;cursor:pointer}
+@media(max-width:550px){.manual-topbar{flex-wrap:wrap}.manual-topbar>div{min-width:0;max-width:100%;width:100%;flex-wrap:wrap;justify-content:space-between}.manual-topbar>div :is(a,button){white-space:normal;font-size:11px}.manual-layout>*{min-width:0}.manual-index nav{grid-template-columns:repeat(2,minmax(0,1fr))}.manual-index nav a{min-width:0;overflow-wrap:anywhere}.manual-illustration{flex-wrap:wrap}.manual-calendar-drawing{min-width:0;max-width:100%}.manual-calendar-drawing>div{flex-wrap:wrap}.manual-flow-drawing{flex-wrap:wrap;min-width:0}}
+@media print{.anotei-language-toolbar{display:none}}

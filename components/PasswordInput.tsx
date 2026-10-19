@@ -1,4 +1,6 @@
 'use client';
+import {Localize} from '@/components/Localization';
+
 
 import {useEffect, useState} from 'react';
 import {Eye, EyeOff} from 'lucide-react';
@@ -9,7 +11,7 @@ export default function PasswordInput({register, disabled, name='password', labe
   const id='anotei-'+name;
   useEffect(() => setVisible(false), [register]);
 
-  return <div className="login-password-field">
+  return <Localize><div className="login-password-field">
     <label htmlFor={id}>{label}</label>
     <div className="login-password-control">
       <input id={id} name={name} type={visible ? 'text' : 'password'} required
@@ -21,5 +23,5 @@ export default function PasswordInput({register, disabled, name='password', labe
         {visible ? <EyeOff aria-hidden="true"/> : <Eye aria-hidden="true"/>}
       </button>
     </div>
-  </div>;
+  </div></Localize>;
 }

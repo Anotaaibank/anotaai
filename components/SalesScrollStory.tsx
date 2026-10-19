@@ -1,4 +1,6 @@
 'use client';
+import {Localize} from '@/components/Localization';
+
 
 import {useLayoutEffect, useRef, useState, type CSSProperties} from 'react';
 import {ArrowDown, ArrowUpRight, Bell, CalendarDays, Check, MessageCircle, Mic, Sparkles, Wallet} from 'lucide-react';
@@ -66,7 +68,7 @@ export default function SalesScrollStory() {
   };
  }, []);
 
- return <div className="s3-story" ref={track} data-mode={mode} style={initialStyle}>
+ return <Localize><div className="s3-story" ref={track} data-mode={mode} style={initialStyle}>
   <div className="s3-pin" ref={pin}>
    <div className="s3-scene-heading"><span><Sparkles size={13}/>DE UMA CONVERSA À VIDA ORGANIZADA</span><a href="#planos">Ver planos <ArrowUpRight size={13}/></a></div>
    <div className="s3-art" aria-hidden="true">
@@ -98,5 +100,5 @@ export default function SalesScrollStory() {
    <p className="s2-sr-only">Exemplo de funcionamento: uma mensagem informa um gasto de 85 reais no supermercado e uma conta de internet de 120 reais para o dia 15. A IA organiza o resumo. Depois da confirmação, o gasto reduz um saldo ilustrativo de mil para 915 reais. A conta futura entra no calendário com lembrete e só reduz o saldo quando paga. Use os quatro botões para explorar cada etapa.</p>
   </div>
   <noscript><style>{'.anotei-sales .s3-story{height:auto!important}.anotei-sales .s3-pin{position:relative!important}.anotei-sales .s3-story{--s3-message:1!important;--s3-summary:1!important;--s3-confirmed:1!important;--s3-card:1!important;--s3-dashboard:1!important;--s3-dock:1!important;--s3-progress:1!important}.anotei-sales .s3-steps,.anotei-sales .s3-footnote>span{display:none}'}</style></noscript>
- </div>;
+ </div></Localize>;
 }

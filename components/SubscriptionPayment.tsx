@@ -1,4 +1,6 @@
 'use client';
+import {Localize} from '@/components/Localization';
+
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {ArrowLeft,ArrowRight,Check,ShieldCheck} from 'lucide-react';
 import {currency} from '@/lib/model';
@@ -36,7 +38,7 @@ export default function SubscriptionPayment(){
   catch(e){setError(e instanceof Error?e.message:'Não foi possível informar o pagamento.');}
   finally{submitting.current=false;setBusy(false);}
  }
- return <main className="anotei-registration subscription-payment subscription-checkout">
+ return <Localize><main className="anotei-registration subscription-payment subscription-checkout">
   <header className="checkout-header"><a className="checkout-back" href={data?.access?'/painel':'/conheca#planos'}><ArrowLeft size={19}/>{data?.access?'Voltar ao aplicativo':'Voltar ao Anotei'}</a><span>ANOTEI <b>NA HORA</b></span></header>
   <div className="checkout-layout"><aside className="checkout-intro"><p className="bank-eyebrow">SUA ROTINA MAIS LEVE</p><h1>Um plano para <br/>organizar seu dia.</h1><p>Contas, dinheiro e compromissos juntos. Pelo aplicativo e pelo WhatsApp.</p><ul><li><Check size={18}/>Até dois números na mesma conta</li><li><Check size={18}/>Seus registros sempre com você</li><li><ShieldCheck size={18}/>Você confere antes de confirmar</li></ul></aside>
   <section className="bank-card checkout-card" aria-busy={!data&&!error||busy}>
@@ -60,5 +62,5 @@ export default function SubscriptionPayment(){
    </>}
   </section></div>
   {data?.access&&<details className="checkout-usage"><summary>Acompanhar meu uso</summary><UsagePanel/></details>}
- </main>;
+ </main></Localize>;
 }

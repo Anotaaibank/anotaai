@@ -1,4 +1,6 @@
 'use client';
+import {Localize,OriginalText} from '@/components/Localization';
+
 import {useId,useState} from 'react';
 import type {FinanceDocument} from '@/lib/finance';
 import type {AdminEntry} from '@/lib/expenses';
@@ -14,7 +16,7 @@ export default function OverviewCalendar({documents,expenses,today,onOpenAgenda}
  const select=(day:string)=>{setSelected(day);setMonth(day.slice(0,7));if(!windowDays.includes(day))setExpanded(true);};
  const navigate=(step:number)=>{const target=moveCalendarMonth(month,step);setMonth(target);setSelected(target+'-01');};
  const toggle=()=>{if(expanded){setSelected(today);setMonth(today.slice(0,7));}setExpanded(!expanded);};
- return <section className="bank-panel agenda-calendar overview-calendar" aria-label="Agenda de Compromissos">
+ return <Localize><section className="bank-panel agenda-calendar overview-calendar" aria-label="Agenda de Compromissos">
   <div className="bank-panel-title"><h2>Agenda de Compromissos</h2><button className="overview-expand" aria-expanded={expanded} aria-controls={id+'-days'} onClick={toggle}>{expanded?'Ver próximos 10 dias':'Ver mês completo'}</button></div>
   <div className="overview-calendar-layout"><div>
    <div className="agenda-month-nav">{expanded?<><button aria-label="Mês anterior da visão geral" disabled={month==='2000-01'} onClick={()=>navigate(-1)}>‹</button><h3 aria-live="polite">{label(month+'-01',{month:'long',year:'numeric'})}</h3><button aria-label="Próximo mês da visão geral" disabled={month==='2100-12'} onClick={()=>navigate(1)}>›</button></>:<h3>Hoje e próximos 9 dias <small>{label(today,{day:'2-digit',month:'short'})} — {label(windowDays[9],{day:'2-digit',month:'short'})}</small></h3>}<button className="agenda-today" onClick={()=>select(today)}>Hoje</button></div>
@@ -28,11 +30,11 @@ export default function OverviewCalendar({documents,expenses,today,onOpenAgenda}
     </button>;
    })}</div>
    <div className="agenda-calendar-legend"><span><i className="payable"/> A pagar</span><span><i className="receivable"/> A receber</span><span><i className="income"/> Recebido</span><span><i className="appointment"/> Compromisso</span><span><i className="today"/> Hoje</span></div>
-   {upcoming.length>0&&<div className="overview-upcoming"><h3>Próximos registros</h3>{upcoming.map(e=><button key={e.id} className={'overview-upcoming-item '+e.kind} onClick={()=>select(e.date)}><span>{label(e.date,{day:'2-digit',month:'2-digit'})}<small>{e.kind==='appointment'?String(e.document?.details.time||'Dia inteiro'):kindNames[e.kind]}</small></span><strong>{e.description}</strong>{e.kind!=='appointment'&&<b>{currency(e.amount_cents||0)}</b>}<span aria-hidden="true">↗</span></button>)}</div>}
+   {upcoming.length>0&&<div className="overview-upcoming"><h3>Próximos registros</h3>{upcoming.map(e=><button key={e.id} className={'overview-upcoming-item '+e.kind} onClick={()=>select(e.date)}><span>{label(e.date,{day:'2-digit',month:'2-digit'})}<small>{e.kind==='appointment'?String(e.document?.details.time||'Dia inteiro'):kindNames[e.kind]}</small></span><strong><OriginalText>{e.description}</OriginalText></strong>{e.kind!=='appointment'&&<b>{currency(e.amount_cents||0)}</b>}<span aria-hidden="true">↗</span></button>)}</div>}
   </div>
   <section id={id+'-details'} className="agenda-selected-day" aria-live="polite" aria-label="Detalhes da agenda na visão geral"><p className="agenda-eyebrow">{selected===today?'HOJE':'DIA SELECIONADO'}</p><h3>{label(selected,{weekday:'long',day:'numeric',month:'long'})}</h3>
-   {events.length?events.map(e=><article className={'agenda-event '+e.kind} key={e.id}><div className="agenda-event-time">{e.kind==='appointment'?String(e.document?.details.time||'Dia inteiro'):currency(e.amount_cents||0)}<span>{kindNames[e.kind]}</span></div><h4>{e.description}</h4>{!!e.document?.details.location&&<p>{String(e.document.details.location)}</p>}{e.kind!=='appointment'&&<p>{e.kind==='income'?'Recebimento registrado no extrato.':e.kind==='payable'?'Pagamento ainda não confirmado.':'Recebimento ainda não confirmado.'}</p>}</article>):<div className="overview-empty"><span aria-hidden="true">✦</span><strong>Nenhum registro nesta data</strong><p>Seus compromissos e vencimentos aparecem aqui assim que forem salvos.</p></div>}
+   {events.length?events.map(e=><article className={'agenda-event '+e.kind} key={e.id}><div className="agenda-event-time">{e.kind==='appointment'?String(e.document?.details.time||'Dia inteiro'):currency(e.amount_cents||0)}<span>{kindNames[e.kind]}</span></div><h4><OriginalText>{e.description}</OriginalText></h4>{!!e.document?.details.location&&<p>{String(e.document.details.location)}</p>}{e.kind!=='appointment'&&<p>{e.kind==='income'?'Recebimento registrado no extrato.':e.kind==='payable'?'Pagamento ainda não confirmado.':'Recebimento ainda não confirmado.'}</p>}</article>):<div className="overview-empty"><span aria-hidden="true">✦</span><strong>Nenhum registro nesta data</strong><p>Seus compromissos e vencimentos aparecem aqui assim que forem salvos.</p></div>}
    <button className="overview-open-agenda" onClick={onOpenAgenda}>Abrir Agenda para gerenciar ↗</button>
   </section></div>
- </section>;
+ </section></Localize>;
 }

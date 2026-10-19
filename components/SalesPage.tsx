@@ -1,4 +1,6 @@
 'use client';
+import {Localize} from '@/components/Localization';
+
 import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {ArrowDown,ArrowUpRight,ArrowRight,Check,CalendarDays,Wallet,MessageCircle,Mic,Play,Sparkles,Plus,Minus,Bell,ChartNoAxesCombined,CreditCard,ShieldCheck,Volume2} from 'lucide-react';
 import {BrandOrb} from './Brand';
@@ -8,8 +10,8 @@ import {currency} from '@/lib/model';
 import {subscriptionPaymentCopy} from '@/lib/subscription-billing-policy';
 import {trackLandingEvent,type LandingEventDetails} from '@/lib/landing-events';
 
-function Logo(){return <span className="s2-brand"><BrandOrb/><span>Anotei<b>na Hora<span>.</span></b></span></span>;}
-function Cta({children,source,plan,href='#planos'}:{children:ReactNode;source:NonNullable<LandingEventDetails['source']>;plan?:PlanCode;href?:string}){return <a className="s2-cta" href={href} onClick={()=>{trackLandingEvent('cta_click',{source,...(plan?{plan}:{})});if(plan){trackLandingEvent('plan_selected',{source,plan});trackLandingEvent('registration_start',{source,plan});}}}>{children}<ArrowUpRight size={19}/></a>;}
+function Logo(){return <Localize><span className="s2-brand"><BrandOrb/><span>Anotei<b>na Hora<span>.</span></b></span></span></Localize>;}
+function Cta({children,source,plan,href='#planos'}:{children:ReactNode;source:NonNullable<LandingEventDetails['source']>;plan?:PlanCode;href?:string}){return <Localize><a className="s2-cta" href={href} onClick={()=>{trackLandingEvent('cta_click',{source,...(plan?{plan}:{})});if(plan){trackLandingEvent('plan_selected',{source,plan});trackLandingEvent('registration_start',{source,plan});}}}>{children}<ArrowUpRight size={19}/></a></Localize>;}
 const examples=[
  {id:'expense',title:'Registrar gasto',icon:Wallet,message:'Gastei R$ 30 de gasolina.',heading:'Conferir despesa',lines:['Combustível · R$ 30,00','Hoje · Despesa paga'],result:'Anotado! R$ 30 de combustível registrados. O saldo foi atualizado.'},
  {id:'bill',title:'Lembrar uma conta',icon:Bell,message:'Minha parcela do carro vence dia 10. São R$ 1.200.',heading:'Conferir conta a pagar',lines:['Parcela do carro · R$ 1.200,00','Vencimento: dia 10'],result:'Prontinho! Parcela registrada para o dia 10 em Contas a pagar.'},
@@ -27,7 +29,7 @@ const faqItems=[
 
 function InteractiveExample(){
  const [selected,setSelected]=useState(0),[confirmed,setConfirmed]=useState(false),current=examples[selected],report=current.id==='report';
- return <div className="s2-interactive"><div className="s2-example-chips" role="group" aria-label="Escolha um exemplo">{examples.map((example,index)=><button type="button" key={example.id} aria-pressed={selected===index} onClick={()=>{setSelected(index);setConfirmed(false);trackLandingEvent('demo_interaction',{source:'demo',example:example.id,action:'select'});}}><example.icon size={19}/>{example.title}<ArrowRight size={15}/></button>)}</div>
+ return <Localize><div className="s2-interactive"><div className="s2-example-chips" role="group" aria-label="Escolha um exemplo">{examples.map((example,index)=><button type="button" key={example.id} aria-pressed={selected===index} onClick={()=>{setSelected(index);setConfirmed(false);trackLandingEvent('demo_interaction',{source:'demo',example:example.id,action:'select'});}}><example.icon size={19}/>{example.title}<ArrowRight size={15}/></button>)}</div>
   <div className="s2-demo-grid" key={current.id}><div className="s2-demo-chat"><div className="s2-demo-chat-top"><Logo/><span>Conversa de exemplo</span></div><div className="s2-bubble sent s2-appear"><Mic size={18}/><p>{current.message}</p></div><div className="s2-demo-answer s2-appear"><strong>{current.heading}</strong>{current.lines.map(line=><p key={line}>{line}</p>)}
     {report?<div className="s2-demo-total">{current.result}</div>:<>
      <small>Confira o valor e a data.</small>
@@ -41,10 +43,10 @@ function InteractiveExample(){
     {report?<><strong className="s2-demo-number">R$ 135,00</strong><p>Total das despesas ilustrativas</p><div className="s2-report-bars">{[{label:'Supermercado',amount:85},{label:'Combustível',amount:30},{label:'Padaria',amount:20}].map(row=><div key={row.label}><span>{row.label}<b>{currency(row.amount*100)}</b></span><i><span style={{width:row.amount/135*100+'%'}}/></i></div>)}</div></>:confirmed?<div className="s2-demo-record s2-appear"><span><Check size={18}/>{current.id==='bill'?'Conta registrada':'Gasto registrado'}</span><strong>{current.id==='bill'?'Parcela do carro':'Combustível'}</strong><b>{current.id==='bill'?'R$ 1.200,00':'R$ 30,00'}</b><small>{current.id==='bill'?'Vencimento: dia 10 · A pagar':'Hoje · Pago · Abatido do saldo'}</small>{current.id==='bill'&&<div className="s2-demo-calendar" aria-hidden="true">{[8,9,10,11,12].map(day=><span className={day===10?'highlight':''} key={day}>{day}<i/></span>)}</div>}</div>:<div className="s2-awaiting"><span><MessageCircle size={30}/></span><h3>Você confere.<br/>O Anotei organiza.</h3><p>Toque em “Confirmar exemplo” para ver a anotação aparecer aqui.</p><ArrowDown size={21}/></div>}
    </div>
   </div>
- </div>;
+ </div></Localize>;
 }
 
-function PresentationVideo({src}:{src?:string}){return <div className="s2-video-frame">{src?<video controls playsInline preload="none" aria-label="Vídeo de apresentação do Anotei" onPlay={()=>trackLandingEvent('video_play',{source:'video'})}><source src={src}/></video>:<div className="s2-video-poster" aria-label="Espaço reservado para o vídeo de apresentação"><div className="s2-video-brand"><BrandOrb/><span>Anotei na Hora</span></div><div className="s2-video-story" aria-hidden="true"><span><Mic size={22}/>Você fala.</span><ArrowRight size={18}/><span><Check size={22}/>Você confirma.</span><ArrowRight size={18}/><span><Sparkles size={22}/>Tá organizado.</span></div><div className="s2-video-play" aria-hidden="true"><Play size={26} fill="currentColor"/></div><p>Sua organização começa numa conversa.</p><small>Área reservada para o vídeo de apresentação.</small><div className="s2-video-decoration" aria-hidden="true"><span>ANOTEI · APRESENTAÇÃO</span><i/><Volume2 size={16}/></div></div>}</div>;}
+function PresentationVideo({src}:{src?:string}){return <Localize><div className="s2-video-frame">{src?<video controls playsInline preload="none" aria-label="Vídeo de apresentação do Anotei" onPlay={()=>trackLandingEvent('video_play',{source:'video'})}><source src={src}/></video>:<div className="s2-video-poster" aria-label="Espaço reservado para o vídeo de apresentação"><div className="s2-video-brand"><BrandOrb/><span>Anotei na Hora</span></div><div className="s2-video-story" aria-hidden="true"><span><Mic size={22}/>Você fala.</span><ArrowRight size={18}/><span><Check size={22}/>Você confirma.</span><ArrowRight size={18}/><span><Sparkles size={22}/>Tá organizado.</span></div><div className="s2-video-play" aria-hidden="true"><Play size={26} fill="currentColor"/></div><p>Sua organização começa numa conversa.</p><small>Área reservada para o vídeo de apresentação.</small><div className="s2-video-decoration" aria-hidden="true"><span>ANOTEI · APRESENTAÇÃO</span><i/><Volume2 size={16}/></div></div>}</div></Localize>;}
 
 export default function SalesPage(){
  const hero=useRef<HTMLDivElement>(null),plans=useRef<HTMLElement>(null),page=useRef<HTMLElement>(null),viewSent=useRef(false),[afterHero,setAfterHero]=useState(false),[plansVisible,setPlansVisible]=useState(false),[faq,setFaq]=useState<number|null>(null);
@@ -55,7 +57,7 @@ export default function SalesPage(){
   let reveals:IntersectionObserver|undefined;if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){reveals=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){entry.target.classList.add('s2-revealed');reveals?.unobserve(entry.target);}},{threshold:.08});page.current?.querySelectorAll('[data-reveal]').forEach(element=>{element.classList.add('s2-will-reveal');reveals!.observe(element);});}
   return()=>{heroObserver.disconnect();plansObserver.disconnect();reveals?.disconnect();};
  },[]);
- return <main className="anotei-sales" ref={page} id="inicio"><a className="s2-skip" href="#como-funciona">Pular para o conteúdo</a>
+ return <Localize><main className="anotei-sales" ref={page} id="inicio"><a className="s2-skip" href="#como-funciona">Pular para o conteúdo</a>
   <div className="s2-dark"><header className="s2-nav s2-wrap"><a href="#inicio" aria-label="Anotei na Hora, início"><Logo/></a><nav aria-label="Navegação da apresentação"><a href="#como-funciona">Como funciona</a><a href="#na-pratica">Experimente</a><a href="#planos">Planos</a></nav><a className="s2-login" href="/">Já tenho conta <ArrowUpRight size={15}/></a></header>
    <section className="s2-hero s2-wrap" aria-labelledby="s2-headline"><div className="s2-hero-copy" ref={hero}><p className="s2-ai-seal"><Sparkles size={15}/>Seu assistente pessoal com Inteligência Artificial</p><h1 id="s2-headline">Suas contas organizadas.<br/><em>Sem complicação.</em></h1><p className="s2-lead">Mandou um áudio ou mensagem no WhatsApp? O Anotei organiza seus gastos, suas contas e seus compromissos para você.</p><ul className="s2-hero-checks"><li><Check/>Sem planilhas</li><li><Check/>Sem aplicativos complicados</li><li><Check/>Tudo pelo WhatsApp</li></ul><p className="s2-start-price">A partir de <strong>{currency(subscriptionPlans.BASICO.monthly_cents)}</strong> por 30 dias.</p><Cta source="hero">QUERO ORGANIZAR MINHA VIDA</Cta><small className="s2-hero-micro">Simples de começar. Fácil de usar.</small></div><SalesScrollStory/></section>
    <div className="s2-ribbon"><span><Mic size={16}/>Você fala.</span><i/><span><Check size={17}/>Você confirma.</span><i/><span><Sparkles size={16}/>O Anotei organiza.</span></div>
@@ -72,5 +74,5 @@ export default function SalesPage(){
   <section className="s2-final" aria-labelledby="s2-final-title"><div className="s2-wrap" data-reveal><BrandOrb/><h2 id="s2-final-title">Sua vida já é corrida.<br/>Organizar suas contas<br/><em>não precisa ser.</em></h2><p>Comece hoje a ter mais controle sobre seus gastos, contas e compromissos. Tudo de um jeito simples, pelo WhatsApp.</p><Cta source="final">QUERO COMEÇAR AGORA</Cta><small>A partir de {currency(subscriptionPlans.BASICO.monthly_cents)} por 30 dias.</small></div></section>
   <footer className="s2-footer s2-wrap"><a href="#inicio"><Logo/></a><p>Falou. Anotou. Organizou.</p><nav aria-label="Links úteis"><a href="/">Entrar</a><a href="/manual">Como usar</a><a href="#planos" onClick={()=>trackLandingEvent('cta_click',{source:'footer'})}>Planos</a></nav><small>Anotei na Hora · Seu assistente de organização pessoal.</small></footer>
   <div className={'s2-mobile-cta'+(afterHero&&!plansVisible?' visible':'')} inert={!afterHero||plansVisible} aria-hidden={!afterHero||plansVisible}><span><small>A partir de</small><strong>{currency(subscriptionPlans.BASICO.monthly_cents)}<small>/ 30 dias</small></strong></span><Cta source="mobile">QUERO COMEÇAR</Cta></div>
- </main>;
+ </main></Localize>;
 }

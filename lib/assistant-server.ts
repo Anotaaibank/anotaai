@@ -2,6 +2,7 @@ import {createHash,randomUUID} from 'node:crypto';
 import {callIdFromLocation,createVoiceLimiter,VoiceError,voiceDurationMs,voiceSession} from './assistant-session.ts';
 import {assistantConversations} from './assistant-conversation.ts';
 import {reserveUsage,settleUsage,type UsageReservation} from './subscription-usage.ts';
+import type {AppLocale} from './locale.ts';
 
 
 type VoiceCall={user:string;callId:string;expiresAt:number;reads:number;timer:ReturnType<typeof setTimeout>;usage:UsageReservation};
@@ -24,14 +25,14 @@ export async function closeVoice(user:string,id:string){
  const call=calls.get(id);if(!call||call.user!==user)return;
  calls.delete(id);assistantConversations.close(user,id);clearTimeout(call.timer);limiter.end(user);const [ended]=await Promise.all([hangup(call.callId),settleUsage(user,call.usage.id,'VOICE',call.usage.granted)]);if(call.usage.expires_at){const {service}=await import('./server.ts');await service('anota_usage_events?user_id=eq.'+user+'&kind=eq.VOICE&event_id=eq.'+call.usage.id,'PATCH',{needs_hangup:!ended,expires_at:new Date().toISOString()});}
 }
-export async function startVoice(user:string,input:{sdp:string;section:string},signal:AbortSignal,name:unknown=undefined){
+export async function startVoice(user:string,input:{sdp:string;section:string},signal:AbortSignal,name:unknown=undefined,locale:AppLocale='pt-BR'){
  if(!voiceConfigured())throw new VoiceError('A voz ainda aguarda ativação pelo administrador. As orientações rápidas estão disponíveis abaixo.',503);
  limiter.begin(user);
  let callId:string|null=null;
  let usage:UsageReservation|undefined;
  try{
   usage=await reserveUsage(user,'VOICE',randomUUID(),voiceDurationMs/1000);
-  const form=new FormData();form.set('sdp',input.sdp);form.set('session',JSON.stringify(voiceSession(input.section,name)));
+  const form=new FormData();form.set('sdp',input.sdp);form.set('session',JSON.stringify(voiceSession(input.section,name,locale)));
   const response=await fetch('https://api.openai.com/v1/realtime/calls',{method:'POST',body:form,headers:{Authorization:`Bearer ${process.env.OPENAI_API_KEY!.trim()}`,'OpenAI-Safety-Identifier':createHash('sha256').update(`anota-ai:${user}`).digest('hex')},signal:AbortSignal.any([signal,AbortSignal.timeout(30000)]),cache:'no-store'});
   if(!response.ok){await response.body?.cancel();throw new VoiceError(response.status===429?'O serviço de voz está ocupado ou sem cota. Peça ao administrador para conferir a API.':'Não foi possível conectar a voz. Peça ao administrador para conferir a configuração da API.',502);}
   callId=callIdFromLocation(response.headers.get('Location'));const sdp=await response.text();
