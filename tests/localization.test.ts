@@ -82,6 +82,12 @@ test('subscription copy distinguishes an unlimited usage allowance from free ser
  assert.equal(translatedText('NA HORA','en-US'),'NA HORA');
  assert.equal(translatedText('Um plano para','en-US'),'A plan to');
 });
+test('English forms explain the Brazilian decimal input format without changing the submitted amount',()=>{
+ const input=createElement('label',null,'Valor (R$)',createElement('input',{inputMode:'decimal',name:'amount',defaultValue:'1.500,00',placeholder:'Ex.: 25,00 de gasolina'}));
+ const html=renderToStaticMarkup(localizedTree(input,'en-US'));
+ assert.ok(html.includes('value="1.500,00"'));assert.ok(html.includes('Use comma for decimals: 1.500,00'));
+ assert.ok(html.includes('25,00'));assert.ok(html.includes('comma for decimals'));
+});
 test('password controls and dynamically changing summaries can switch back without changing the original tree',()=>{
  for(const source of ['Mostrar senha','Ocultar senha','Salvando…','Confirmar lançamento','Cancelar']){
   const original=createElement('button',{'aria-label':source},source);

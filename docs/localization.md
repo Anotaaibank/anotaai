@@ -13,11 +13,11 @@ O botão global **Traduzir para inglês / Usar português** alterna a apresenta�
 
 ## Limites deliberados
 
-A preferência pertence à interface deste navegador. Ela não reescreve registros, não converte BRL em dólares, não muda o fuso de Brasília, não traduz conversas antigas nem modifica a configuração do bot de WhatsApp. A interpretação financeira e os documentos assinados mantêm sua representação interna original. Textos livres gerados pela IA e conteúdos cadastrados pelo usuário não têm cobertura garantida pelo catálogo estático; a voz recebe a orientação de falar o idioma escolhido.
+A preferência pertence à interface deste navegador. Ela não reescreve registros, não converte BRL em dólares, não muda o fuso de Brasília, não traduz conversas antigas nem modifica a configuração do bot de WhatsApp. Os campos numéricos preservam o formato brasileiro e exibem a orientação `Use comma for decimals: 1.500,00`; não há reinterpretação silenciosa de valores digitados. A interpretação financeira e os documentos assinados mantêm sua representação interna original. Textos livres gerados pela IA e conteúdos cadastrados pelo usuário não têm cobertura garantida pelo catálogo estático; a voz recebe a orientação de falar o idioma escolhido.
 
 ## Validação
 
-- `typecheck`, suíte completa (281 testes) e compilação Next.js de produção.
-- Onze testes de localização verificam idioma permitido, cobertura dos menus principais, BRL positivo/negativo, parágrafos de relatórios, datas americanas, configuração de voz, valores de formulário, callbacks, dados opacos, saudações dinâmicas, fidelidade do texto de assinatura e retorno ao português.
+- `typecheck`, suíte completa (282 testes) e compilação Next.js de produção.
+- Doze testes de localização verificam idioma permitido, cobertura dos menus principais, BRL positivo/negativo, parágrafos de relatórios, datas americanas, configuração de voz, valores de formulário, callbacks, dados opacos, saudações dinâmicas, fidelidade do texto de assinatura, orientação de números brasileiros e retorno ao português.
 - Navegador: manual e cadastro em inglês; alternância preserva e-mail, senha e estado do olhinho. Verificado em larguras de 390 e 320 pixels; ajustada a quebra do cabeçalho e dos desenhos do manual. Nenhuma conta ou lançamento real foi criado nesses testes.
 - A voz em inglês foi verificada na configuração da sessão, sem simular que houve teste de microfone real. As conversas WhatsApp existentes permanecem cobertas pelos testes anteriores de confirmação e persistência.

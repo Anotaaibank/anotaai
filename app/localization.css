@@ -7,5 +7,6 @@
 .manual-topbar{top:var(--anotei-language-height)}
 @media(max-width:767px){.anotei-language-toolbar{gap:8px}.anotei-language-toolbar>span{font-size:11px}.anota-personal-app .anota-topbar{top:var(--anotei-language-height)}html[lang=en-US] .anota-bottom-nav button{font-size:10px;overflow-wrap:anywhere}}
 .manual-download:is(button){font-family:inherit;cursor:pointer}
+.locale-number-hint{display:block;font:11px/1.5 Arial,sans-serif;color:#4e6b59;margin-top:5px}
 @media(max-width:550px){.manual-topbar{flex-wrap:wrap}.manual-topbar>div{min-width:0;max-width:100%;width:100%;flex-wrap:wrap;justify-content:space-between}.manual-topbar>div :is(a,button){white-space:normal;font-size:11px}.manual-layout>*{min-width:0}.manual-index nav{grid-template-columns:repeat(2,minmax(0,1fr))}.manual-index nav a{min-width:0;overflow-wrap:anywhere}.manual-illustration{flex-wrap:wrap}.manual-calendar-drawing{min-width:0;max-width:100%}.manual-calendar-drawing>div{flex-wrap:wrap}.manual-flow-drawing{flex-wrap:wrap;min-width:0}}
 @media print{.anotei-language-toolbar{display:none}}

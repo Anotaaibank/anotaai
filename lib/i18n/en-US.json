@@ -1159,7 +1159,7 @@
   "Informe o saldo atual correto para o ajuste.": "Provide the correct current balance for the adjustment.",
   "Informe o valor com clareza": "Enter the amount clearly",
   "Informe o valor da simulação.": "Provide the simulation amount.",
-  "Informe o valor em reais. Exemplo: 250,00.": "Provide the amount in reais. Example: 250.00.",
+  "Informe o valor em reais. Exemplo: 250,00.": "Enter the amount in Brazilian reais. Use a comma for cents, for example 250,00.",
   "Informe o valor mensal com até duas casas decimais.": "Enter the monthly amount with up to two decimal places.",
   "Informe o valor recebido antes dos custos. O custo é abatido uma única vez no saldo e no resultado da atividade.": "Enter the amount received before costs. The cost is deducted once from the balance and the activity result.",
   "Informe os dados": "Enter the data",
