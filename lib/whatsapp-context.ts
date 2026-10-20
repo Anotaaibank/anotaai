@@ -6,7 +6,7 @@ import type {Inbox} from './whatsapp-store.ts';
 // A saved focus must come from a successful, signed operation for this sender.
 // Its old signature is context only; every new write gets a fresh confirmation.
 export function whatsappConversationContext(rows:Inbox[],user:string,sender:string,key:string,now=Date.now()){
- const recent=rows.filter(r=>r.user_id===user&&r.sender===sender&&Date.parse(r.created_at)>now-900000&&Date.parse(r.created_at)<=now).sort((a,b)=>b.created_at.localeCompare(a.created_at));
+ const recent=rows.filter(r=>!r.context_reset_at&&r.user_id===user&&r.sender===sender&&Date.parse(r.created_at)>now-900000&&Date.parse(r.created_at)<=now).sort((a,b)=>b.created_at.localeCompare(a.created_at));
  let focus:FinancePlan|undefined,incomplete:string[]=[];
  const saved=recent.find(r=>r.status==='LANCADO');
  if(saved?.finance_confirmation&&saved.confirmation_used&&!recent.some(r=>r.status==='ESCLARECER'&&!r.confirmation_used&&r.created_at>saved.created_at)){try{focus=readFinance(saved.finance_confirmation,whatsappActor(user,sender),key,Date.parse(saved.created_at));incomplete=readFinanceContinuation(saved.finance_confirmation,whatsappActor(user,sender),key,Date.parse(saved.created_at));}catch{/* Invalid signatures never provide record IDs. */}}

@@ -2251,5 +2251,17 @@
   "pausado": "paused",
   "Olá, __ANOTEI_0__,": "Hi, __ANOTEI_0__!",
   "Olá, vamos começar?": "Hi, ready to get started?",
-  "Microfone ativo": "Microphone on"
+  "Microfone ativo": "Microphone on",
+  "Reiniciar conversa da IA": "Restart AI conversation",
+  "Reiniciar a conversa deste WhatsApp?": "Restart this WhatsApp conversation?",
+  "O próximo pedido de": "The next request from",
+  "começa sem o contexto anterior. As propostas e edições pendentes deste número serão canceladas.": "will start without previous context. Pending proposals and edits for this number will be canceled.",
+  "Cadastro, senha, assinatura, saldo, contas, agenda e histórico de lançamentos serão preservados. O outro número do casal não será alterado. Não é necessário cadastrar o telefone novamente.": "The account, password, subscription, balance, bills, calendar, and transaction history will be kept. The other household number will not be affected. There is no need to register the phone again.",
+  "Mensagens já entregues ou que já estejam saindo pelo provedor não podem ser recolhidas. As conversas anteriores continuam disponíveis para consulta.": "Messages already delivered or being sent by the provider cannot be recalled. Previous conversations remain available to review.",
+  "Confirmar reinício": "Confirm restart",
+  "Conversa reiniciada. O próximo pedido começa sem o contexto anterior. Cadastro e lançamentos foram preservados.": "Conversation restarted. The next request starts without previous context. The account and transactions have been kept.",
+  "Confirme o reinício da conversa e atualize a lista.": "Confirm the conversation restart and refresh the list.",
+  "Cadastro não encontrado para reiniciar a conversa.": "No registered account was found to restart this conversation.",
+  "O cadastro mudou. Atualize a lista.": "The account has changed. Refresh the list.",
+  "Conversa reiniciada pela gestão. Envie um novo pedido.": "Conversation restarted by the administrator. Send a new request."
 }

@@ -11,3 +11,8 @@ export function subscriberLinkInput(raw:unknown){
  if(Object.keys(b).some(k=>!['phone','user_id','email','expected'].includes(k))||!uuid(b.user_id)||typeof b.email!=='string'||!b.email.trim()||typeof b.expected!=='string'||!Number.isFinite(Date.parse(b.expected)))throw new AppError('Selecione o cadastro existente e confira o e-mail e o número.');
  return {phone:phoneBR(b.phone),user_id:b.user_id as string,email:b.email.trim().toLowerCase(),expected:b.expected};
 }
+export function subscriberResetInput(raw:unknown){
+ const b=object(raw);
+ if(Object.keys(b).some(k=>!['phone','expected','request_id','confirmed'].includes(k))||b.confirmed!==true||!uuid(b.request_id)||typeof b.expected!=='string'||!Number.isFinite(Date.parse(b.expected)))throw new AppError('Confirme o reinício da conversa e atualize a lista.');
+ return {phone:phoneBR(b.phone),expected:b.expected,request_id:b.request_id as string};
+}

@@ -382,3 +382,14 @@ test('edição inválida ou expirada não prende um novo pedido completo nem per
   const fresh=await c.message('Lança 30 reais de gasolina.');assert.equal(fresh.status,'ESCLARECER',fresh.reply);assert.match(fresh.reply,/30,00/);await c.message('CONFIRMAR '+first.confirmation_code);assert.equal(localFinanceState(c.user).expenses.length,0);await c.message('1');assert.equal(localFinanceState(c.user).expenses.length,1);assert.equal(localFinanceState(c.user).expenses[0].amount_cents,3000);
  }finally{c.restore();}
 });
+
+test('edição ainda válida não captura um novo pedido com prefixo por texto ou áudio',async()=>{
+ for(const type of ['text','audio'] as const){const c=await context();try{
+  process.env.OPENAI_API_KEY='synthetic-only';let spoken='';
+  globalThis.fetch=async url=>{const path=String(url);if(path.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(path.endsWith('/audio/transcriptions'))return Response.json({text:spoken});assert.ok(/\/send\/(?:text|menu)$/.test(path),'Novo prefixo não precisa do modelo');return Response.json({id:randomUUID()});};
+  const first=await c.message('Saída 25 reais de sorvete');const edit=await c.message('2');assert.match(edit.reply,/Editar proposta/);
+  spoken='Entrada 80 reais vendi uma cadeira';const fresh=await c.message(type==='text'?spoken:'',type);assert.equal(fresh.status,'ESCLARECER',fresh.reply);assert.match(fresh.reply,/80,00/);assert.doesNotMatch(fresh.reply,/sorvete/i);
+  await c.message('1');const state=localFinanceState(c.user);assert.equal(state.expenses.length,0);assert.equal(state.documents.filter(d=>d.kind==='INCOME').length,1);assert.match(state.documents.find(d=>d.kind==='INCOME')!.description,/cadeira/);
+  await c.message('CONFIRMAR '+first.confirmation_code);assert.equal(localFinanceState(c.user).expenses.length,0);
+ }finally{c.restore();}}
+});
