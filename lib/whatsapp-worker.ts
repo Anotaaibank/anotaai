@@ -1,7 +1,7 @@
 import {assistantNameForBot} from './assistant-preferences.ts';
 import {getBot,claimMessage,patchMessage,history,pendingReplies,replyClaim,reminderBots,enqueueReminder,type Inbox,type Bot} from './whatsapp-store.ts';
 import {credentials,statusBot} from './whatsapp-server.ts';
-import {extractFinance,prepareFinanceDraft,quickFinanceDraft} from './finance-ai.ts';
+import {extractFinance,prepareFinanceDraft,quickFinanceDraft,independentFinanceRequest} from './finance-ai.ts';
 import {financeStateForBot,financeSecret,applyFinanceForBot,appointmentsForBot} from './finance-server.ts';
 import {fastWhatsappQuery,whatsappQueryAnswer} from './whatsapp-reports.ts';
 import {multipleWhatsappReads} from './whatsapp-intents.ts';
@@ -33,7 +33,7 @@ import {localMode} from './server.ts';
 import {normalizeAssistantText,languageGuard,naturalFinanceTurn,sourceWithVerifiedTarget} from './conversation-language.ts';
 import {whatsappConversationContext} from './whatsapp-context.ts';
 import {continuedFinancialMessage} from './financial-message.ts';
-import {commandPrefix,continuedPrefixedCommand} from './command-prefix.ts';
+import {continuedPrefixedCommand} from './command-prefix.ts';
 import {assistantTimer} from './assistant-timing.ts';
 import {prepareFinanceProposal} from './finance-proposal.ts';
 import {financeStateForQuery} from './finance-server.ts';
@@ -72,10 +72,10 @@ export async function processMessage(row:Inbox){
   const feedback=feedbackRequest(transcript);if(feedback){const id=stableId(row.user_id+':feedback:'+row.id),plan={id,feedback:feedbackInput({...feedback,id})},code=id.replaceAll('-','').slice(0,10).toUpperCase();await patchMessage(row,{status:'ESCLARECER',finance_confirmation:signFeedback(plan,row.user_id,row.sender,financeSecret()),confirmation_code:code,confirmation_used:false,reply:feedbackReply(plan,code)});await reply(row,b);return;}
   const help=whatsappHelp(transcript);if(help){await patchMessage(row,{status:'RESOLVIDO',reply:help});await reply(row,b);return;}
   const quick=fastWhatsappQuery(transcript,today);if(quick){await patchMessage(row,{status:'RESOLVIDO',reply:await timer.stage('query',()=>answerForBot(row.user_id,quick,transcript))});await reply(row,b);return;}
-  const recent=(await history(row.user_id)).filter(r=>!r.context_reset_at&&r.id!==row.id&&r.sender===row.sender&&(Date.parse(r.created_at)>Date.parse(row.created_at)-900000||r.finance_confirmation&&!r.confirmation_used)&&Date.parse(r.created_at)<=Date.parse(row.created_at)).sort((a,b)=>b.created_at.localeCompare(a.created_at));
+  const recent=(await history(row.user_id,row.sender)).filter(r=>!r.context_reset_at&&r.id!==row.id&&r.sender===row.sender&&(Date.parse(r.created_at)>Date.parse(row.created_at)-900000||r.finance_confirmation&&!r.confirmation_used)&&Date.parse(r.created_at)<=Date.parse(row.created_at)).sort((a,b)=>b.created_at.localeCompare(a.created_at));
   // A new command must not be swallowed by a still-valid edit or an unrelated
   // incomplete turn. The old edit is cancelled, never silently saved.
-  const newRequest=!!commandPrefix(transcript)||/^(?:eu )?(?:lanca|lance|anota|anote|registra|registre|gastei|gasto|paguei|ganhei|recebi|agende)\b/i.test(transcript.normalize('NFD').replace(/[\u0300-\u036f]/g,''))&&quickFinanceDraft(transcript,today)?.intent==='COMMAND';
+  const newRequest=independentFinanceRequest(transcript,today);
   if(newRequest)for(const pending of recent.filter(r=>r.finance_confirmation?.startsWith(editingPrefix)&&!r.confirmation_used))await patchMessage(pending,{confirmation_used:true,finance_confirmation:''});
   if(expenseStatusQuestion(transcript)){const last=recent.find(r=>r.status==='LANCADO');await patchMessage(row,{status:'RESOLVIDO',reply:last?'Seu último lançamento foi registrado. '+last.reply:'Não encontrei um lançamento confirmado nos últimos 15 minutos. Confira seu histórico no painel.'});await reply(row,b);return;}
   const feedbackChoice=whatsappFeedbackChoice(transcript,recent,row.user_id,row.sender,financeSecret());

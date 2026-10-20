@@ -15,7 +15,7 @@ import {assistantRecordContext} from './assistant-record-context.ts';
 import {currentBalanceIntent,currentBalanceDraft,signedBalanceMoney} from './balance-language.ts';
 import {sourceWithVerifiedTarget} from './conversation-language.ts';
 import {statedFinancialStatus} from './financial-message.ts';
-import {prefixedCommand} from './command-prefix.ts';
+import {prefixedCommand,commandPrefix} from './command-prefix.ts';
 import {relativeCalendarPatterns} from './relative-calendar.ts';
 export type FinanceDraftItem={source:string;command:FinanceCommand|null;target_excerpt:string;money_evidence:{field:string;excerpt:string}[];date_evidence:{field:string;excerpt:string}[]};
 export type FinanceDraft={intent:'COMMAND'|'QUERY'|'CLARIFY'|'OUTSIDE'|'HELP';command:FinanceCommand|string|null;items?:FinanceDraftItem[]|null;question:string;confidence:'ALTA'|'BAIXA';target_excerpt:string;money_evidence:{field:string;excerpt:string}[];date_evidence:{field:string;excerpt:string}[];query:string};
@@ -140,6 +140,16 @@ export function quickFinanceDraft(text:string,today:string):FinanceDraft|null{
  const list=quickFinanceList(text,today);if(list)return list;
  if(multipleFinanceItems(text))return null;
  return quickMonthlyBillDraft(text,today)||quickPlannedExpenseDraft(text,today)||quickExpenseDraft(text,today)||quickAppointmentDraft(text,today);
+}
+// Decide the conversational boundary from the same account-independent parser,
+// not a whitelist of first words. Dates and polite openings may precede a verb.
+// A short answer without its own operation still belongs to the pending turn.
+export function independentFinanceRequest(text:string,today:string){
+ if(commandPrefix(text))return true;
+ // An explicit repair can restate the event while omitting an already supplied
+ // time. Keep that legitimate continuation distinct from a new standalone turn.
+ if(/^(?:nao[,!]?\s+(?:eu\s+)?(?:quero|quis|falei|disse|pedi)|na verdade|quer dizer|corrigindo|o (?:valor|horario) certo)\b/.test(fold(text)))return false;
+ return quickFinanceDraft(text,today)?.intent==='COMMAND';
 }
 export function prepareFinanceDraft(d:FinanceDraft,text:string,state:FinanceState,user:string,id:string,today=brazilDay()):FinancePlan{
  text=normalizeAssistantText(text);

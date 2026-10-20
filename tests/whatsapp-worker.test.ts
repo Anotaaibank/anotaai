@@ -167,6 +167,58 @@ test('consulta mantém categoria no mês passado e baixa encontra conta existent
  }finally{c.restore();}
 });
 function add(user:string,c:FinanceCommand){const p=buildFinancePlan(c,localFinanceState(user),user,randomUUID());applyLocalFinance(user,p,'MANUAL');return p;}
+test('mesmo comando completo mantém interpretação em contas novas e compartilhadas com históricos diferentes',async()=>{
+ const failures:string[]=[];
+ for(const channel of ['text','audio'] as const)for(const kind of ['own','shared'] as const)for(const prior of ['empty','incomplete','editing','saved'] as const){
+  const c=await context(),oldPublic=process.env.ANOTA_PUBLIC_URL;let member:string|undefined;
+  try{
+   process.env.OPENAI_API_KEY='synthetic-only';process.env.ANOTA_PUBLIC_URL='https://anotei.example';let spoken='';
+   globalThis.fetch=async url=>{const u=String(url);if(u.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(u.endsWith('/audio/transcriptions'))return Response.json({text:spoken});assert.ok(/\/send\/(?:text|menu)$/.test(u),'Comando completo não deve cair na edição anterior ou no modelo');return Response.json({id:randomUUID()});};
+   let actor=c.user;
+   if(kind==='shared'){
+    const members=await import('../lib/whatsapp-members-local.ts'),invite=members.createPersonalInvitation(c.user,sender,c.bot.updated_at,Date.now(),'Assinante Teste');
+    const token=(await import('../lib/secret-box.ts')).unseal(invite.token_cipher,c.server.encryptionSecret(),'anotei-invitation:'+invite.id);
+    member=registerLocal(randomUUID()+'@example.test','parity-test-only','Conta nova').user.id;members.bindPersonalInvitation(token,member);actor=member;
+   }
+   add(actor,{action:'profile_upsert',profile:{opening_balance_cents:200000,opening_date:brazilDay()}});
+   async function ask(text:string,type:'text'|'audio'='text'){
+    spoken=text;const id=await c.store.enqueue(actor,{provider_id:randomUUID(),sender,type,text:type==='audio'?'':text,sent_at:new Date().toISOString()});assert.ok(id);
+    const row=await c.store.claimMessage();assert.equal(row?.id,id);await c.worker.processMessage(row!);return (await c.store.history(actor)).find(r=>r.id===id)!;
+   }
+   if(prior==='incomplete')await ask('Entrada do trabalho');
+   if(prior==='editing'){await ask('Saída 25 reais de almoço');await ask('2');}
+   if(prior==='saved'){await ask('Entrada 50 reais vendi um livro');await ask('1');}
+   for(const [text,action]of [['Hoje gastei 35 reais e 80 centavos na lavanderia','expense'],['Entrada 80 reais do Uber','income'],['Por favor, agenda dentista amanhã às 15h','appointment']] as const){
+    const before=localFinanceState(actor),proposal=await ask(text,channel);
+    assert.equal(proposal.status,'ESCLARECER',proposal.reply);assert.ok(proposal.finance_confirmation,'O resumo precisa ter confirmação assinada');assert.deepEqual(localFinanceState(actor),before);
+    if(action==='expense')assert.match(proposal.reply,/lavanderia/i);
+    const saved=await ask('CONFIRMAR '+proposal.confirmation_code);assert.equal(saved.status,'LANCADO',saved.reply);await ask('CONFIRMAR '+proposal.confirmation_code);
+    const state=localFinanceState(actor);
+    if(action==='expense'){assert.equal(state.expenses.length,1,'Uma saída completa deve gerar uma despesa: '+proposal.reply);assert.equal(state.expenses[0].amount_cents,3580);assert.match(state.expenses[0].description,/lavanderia/i);}
+    if(action==='income')assert.equal(state.documents.filter(d=>d.kind==='INCOME'&&d.amount_cents===8000).length,1);
+    if(action==='appointment')assert.equal(state.documents.filter(d=>d.kind==='APPOINTMENT'&&d.details.time==='15:00').length,1);
+   }
+   if(member){assert.equal(localFinanceState(c.user).expenses.length,0);assert.equal(localFinanceState(c.user).documents.length,0);}
+  }catch(error){failures.push([channel,kind,prior,error instanceof Error?error.message:String(error)].join(' / '));}
+  finally{
+   if(member){localDb().prepare('DELETE FROM inbox WHERE user_id=?').run(member);localDb().prepare('DELETE FROM bots WHERE user_id=?').run(member);}
+   localDb().prepare('DELETE FROM whatsapp_invitations WHERE owner_id=?').run(c.user);localDb().prepare('DELETE FROM subscriber_labels WHERE owner_id=?').run(c.user);
+   if(oldPublic===undefined)delete process.env.ANOTA_PUBLIC_URL;else process.env.ANOTA_PUBLIC_URL=oldPublic;c.restore();
+  }
+ }
+ assert.deepEqual(failures,[],'A interpretação precisa ser a mesma em todas as contas e históricos');
+});
+test('conversa movimentada do segundo número não esconde a confirmação do primeiro',async()=>{
+ const c=await context();try{
+  const second='5511977777777';await c.store.putBot({...c.bot,allowed_phones:[sender,second]},c.bot.updated_at);
+  globalThis.fetch=async url=>{assert.ok(/\/send\/(?:text|menu)$/.test(String(url)));return Response.json({id:randomUUID()});};
+  const proposal=await c.message('Saída 50 reais de gasolina');assert.ok(proposal.finance_confirmation);
+  for(let i=0;i<55;i++)assert.equal((await c.message('Qual é meu saldo?', 'text',second)).status,'RESOLVIDO');
+  assert.equal((await c.message('1')).status,'LANCADO');await c.message('1');
+  const state=localFinanceState(c.user);assert.equal(state.expenses.length,1);assert.equal(state.expenses[0].amount_cents,5000);
+  assert.ok((await c.store.history(c.user,second)).every(row=>row.sender===second));
+ }finally{c.restore();}
+});
 async function context(){const old={storage:process.env.ANOTA_STORAGE,url:process.env.ANOTA_WHATSAPP_URL,key:process.env.OPENAI_API_KEY},transport=globalThis.fetch;process.env.ANOTA_STORAGE='local';process.env.ANOTA_WHATSAPP_URL='https://provider.example';delete process.env.OPENAI_API_KEY;const m=await modules(),user=registerLocal(randomUUID()+'@example.test','whatsapp-test-only','Teste').user.id;
  const bot:import('../lib/whatsapp-store.ts').Bot={user_id:user,phone,allowed_phones:[sender],enabled:true,status:'PRONTO',instance_id:'synthetic-instance',token_cipher:seal('synthetic-token',m.server.encryptionSecret(),'anota-ai-bot:'+user),hook_cipher:'unused-test',updated_at:new Date().toISOString()};await m.store.putBot(bot,null);
  return {...m,user,bot,async message(text:string,type:'text'|'audio'='text',number=sender){const id=await m.store.enqueue(user,{provider_id:randomUUID(),sender:number,type,text:type==='audio'?'':text,sent_at:new Date().toISOString()});assert.ok(id);const row=await m.store.claimMessage();assert.ok(row);assert.equal(row.id,id);await m.worker.processMessage(row);return (await m.store.history(user)).find(r=>r.id===id)!;},restore(){localDb().prepare('DELETE FROM inbox WHERE user_id=?').run(user);localDb().prepare('DELETE FROM bots WHERE user_id=?').run(user);globalThis.fetch=transport;for(const [k,v]of Object.entries({ANOTA_STORAGE:old.storage,ANOTA_WHATSAPP_URL:old.url,OPENAI_API_KEY:old.key})){if(v===undefined)delete process.env[k];else process.env[k]=v;}}};
