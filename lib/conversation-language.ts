@@ -1,4 +1,4 @@
-import {fold,literalMoney,financeDate,spokenNumber} from './finance-date.ts';
+import {fold,literalMoney,financeDate,spokenNumber,moneyNumber} from './finance-date.ts';
 import {personalCategory} from './personal-expenses.ts';
 import {appointmentFacts} from './appointment-language.ts';
 import {recurringDay} from './monthly-bills.ts';
@@ -11,11 +11,14 @@ import type {FinanceDraft} from './finance-ai.ts';
 // This layer extracts literal entities and resolves existing records. Unusual
 // language still goes to the structured interpreter; no model decides ownership.
 export {spokenNumber} from './finance-date.ts';
-const amountPattern=new RegExp('^(?:r\\$\\s*)?('+spokenNumber+')(?:\\s+reais?)?\\b','i');
+const amountPattern=new RegExp('^'+moneyNumber+'\\b','i');
 function amountAtStart(text:string){const m=text.match(amountPattern);if(!m)return null;try{const amount=literalMoney(m[0]);if(amount<=0||amount>1000000000)return null;return {value:amount,excerpt:m[0],rest:text.slice(m[0].length).trim()};}catch{return null;}}
 export function financialAmountFragments(text:string){const pattern=new RegExp('(?:^|[,;\\n]|\\be\\b)\\s*(?:(?:anota|anote|lanca|lança|lance|gastei|registra|registre)\\s+)?(?:r\\$\\s*)?'+spokenNumber+'(?:\\s+reais?)?\\s+(?:de|do|da|com|no|na)\\s+(?!(?:janeiro|fevereiro|marco|março|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\\b)[a-zá-ú]+','gi');return [...text.matchAll(pattern)].map(m=>m[0]);}
 export function normalizeAssistantText(text:string){
  let value=text.normalize('NFC').trim().replace(/\b(hj|qto|qts|vc|agnda|sldo|boelto)\b/gi,w=>({hj:'hoje',qto:'quanto',qts:'quantos',vc:'você',agnda:'agenda',sldo:'saldo',boelto:'boleto'}[w.toLowerCase()]||w));
+ // ASR can put a space after the decimal comma. Join only two decimal digits
+ // immediately followed by the explicit currency unit, not arbitrary lists.
+ value=value.replace(/(\d),[ \t]+(\d{2})(?=\s+reais?\b)/gi,'$1,$2');
  value=value.replace(/\bacabei de (ganhar|receber|gastar)\b/gi,(_all,verb:string)=>({ganhar:'ganhei',receber:'recebi',gastar:'gastei'}[verb.toLowerCase()]||verb));
  // Resolve only an explicit, adjacent self-correction. Conflicting facts without
  // a correction marker remain ambiguous and cannot create a write.

@@ -393,3 +393,19 @@ test('edição ainda válida não captura um novo pedido com prefixo por texto o
   await c.message('CONFIRMAR '+first.confirmation_code);assert.equal(localFinanceState(c.user).expenses.length,0);
  }finally{c.restore();}}
 });
+
+test('centavos por texto e áudio chegam à confirmação e ao saldo sem soma errada nem repetição de pergunta',async()=>{
+ for(const type of ['text','audio'] as const){for(const example of [
+  {text:'Saída 35,80 reais na costureira ontem',cents:3580,yesterday:true},
+  {text:'Saída trinta e cinco e oitenta centavos, costureira, ontem',cents:3580,yesterday:true},
+  {text:'Anota aí, ontem eu gastei 38 reais e 80 centavos na costureira',cents:3880,yesterday:true},
+  {text:'Gasto oitenta reais hoje de almoço.',cents:8000,yesterday:false}
+ ]){const c=await context();try{
+  process.env.OPENAI_API_KEY='synthetic-only';let transcript=example.text;
+  globalThis.fetch=async url=>{const path=String(url);if(path.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(path.endsWith('/audio/transcriptions'))return Response.json({text:transcript});assert.ok(/\/send\/(?:text|menu)$/.test(path),'Um valor literal não deve precisar do modelo');return Response.json({id:randomUUID()});};
+  const first=await c.message('Saída 10 reais de sorvete');await c.message('2');
+  const proposal=await c.message(type==='text'?transcript:'',type);assert.equal(proposal.status,'ESCLARECER',proposal.reply);assert.match(proposal.reply,/1 — Confirmar/);assert.doesNotMatch(proposal.reply,/sorvete|Confirme o valor/);assert.equal(localFinanceState(c.user).expenses.length,0);
+  transcript='1';await c.message('1');await c.message('CONFIRMAR '+proposal.confirmation_code);const state=localFinanceState(c.user);assert.equal(state.expenses.length,1);assert.equal(state.expenses[0].amount_cents,example.cents);assert.equal(state.expenses[0].entry_date,example.yesterday?financeDate('ontem',brazilDay()):brazilDay());assert.equal(financeSnapshot(state).balance_cents,-example.cents);
+  await c.message('CONFIRMAR '+first.confirmation_code);assert.equal(localFinanceState(c.user).expenses.length,1);
+ }finally{c.restore();}}}
+});

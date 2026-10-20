@@ -1,4 +1,4 @@
-import {fold,literalMoney,spokenNumber,monetaryLiterals} from './finance-date.ts';
+import {fold,literalMoney,spokenNumber,moneyNumber,monetaryLiterals} from './finance-date.ts';
 import {appointmentFacts,completeCalendarPeriod} from './appointment-language.ts';
 import {personalCategory} from './personal-expenses.ts';
 import {expenseContext} from './expense-context.ts';
@@ -16,7 +16,7 @@ export function commandPrefix(text:string){
 }
 const clarify=(question:string):FinanceDraft=>({intent:'CLARIFY',command:null,question,query:'',confidence:'ALTA',target_excerpt:'',money_evidence:[],date_evidence:[]});
 const clean=(s:string)=>s.replace(/\s+/g,' ').replace(/^[\s,.:;!-]*(?:(?:de|do|da|no|na|em|por|o|a)\b[\s,.:;!-]*)*/i,'').replace(/[\s,.:;!?-]+$/,'').trim();
-const moneyPattern=()=>new RegExp('(?<![\\p{L}\\d])(?:R\\$\\s*)?'+spokenNumber+'(?:\\s+reais?(?:\\s+(?:e\\s+)?'+spokenNumber+'\\s+centavos?)?)?(?![\\p{L}\\d])','giu');
+const moneyPattern=()=>new RegExp('(?<![\\p{L}\\d])'+moneyNumber+'(?![\\p{L}\\d])','giu');
 
 // Explicit communication protocol. Labels select the operation before tense or
 // merchant-name heuristics. All writes still require a signed confirmation.

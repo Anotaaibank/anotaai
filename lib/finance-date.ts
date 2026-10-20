@@ -4,8 +4,36 @@ export const spokenNumber='(?:\\d+(?:[.,]\\d+)*(?:\\s+mil)?|(?:zero|um|uma|dois|
 export const fold=(s:string)=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 const units:Record<string,number>={zero:0,um:1,uma:1,dois:2,duas:2,tres:3,quatro:4,cinco:5,seis:6,sete:7,oito:8,nove:9,dez:10,onze:11,doze:12,treze:13,quatorze:14,catorze:14,quinze:15,dezesseis:16,dezessete:17,dezoito:18,dezenove:19,vinte:20,trinta:30,quarenta:40,cinquenta:50,sessenta:60,setenta:70,oitenta:80,noventa:90,cem:100,cento:100,duzentos:200,trezentos:300,quatrocentos:400,quinhentos:500,seiscentos:600,setecentos:700,oitocentos:800,novecentos:900};
 function words(s:string){let total=0,part=0,found=false;for(const word of fold(s).split(/\s+/)){if(word==='e')continue;if(word==='mil'){total+=(part||1)*1000;part=0;found=true;}else if(word==='milhao'||word==='milhoes'){total+=(part||1)*1000000;part=0;found=true;}else if(word in units){part+=units[word];found=true;}else throw new AppError('Confirme o valor em reais.');}if(!found)throw new AppError('Confirme o valor em reais.');return total+part;}
-export function literalMoney(excerpt:string):number{let s=fold(excerpt).replace(/^r\$\s*/,'').replace(/\s*reais?\s*$/,'').trim();const thousand=s.match(/^(\d+(?:[.,]\d+)?)\s+mil$/);if(thousand)return literalMoney(thousand[1])*1000;if(/^-?\d+(?:[.,]\d+)*$/.test(s)){if(s.includes(','))s=s.replaceAll('.','').replace(',','.');else s=s.replace(/\.(?=\d{3}(?:\.|$))/g,'');const n=Number(s)*100;if(Number.isSafeInteger(n))return n;}const [main,cent]=s.split(/\s+reais?\s+(?:e\s+)?/);if(cent)return words(main)*100+words(cent.replace(/\s+centavos?$/,''));return words(s)*100;}
-export function monetaryLiterals(text:string){const word=Object.keys(units).concat('mil','milhao','milhoes','e').join('|'),pattern=new RegExp('(?:r\\$\\s*-?\\d+(?:[.,]\\d+)*(?:\\s+mil)?|-?\\d+(?:[.,]\\d+)*(?:\\s+mil)?\\s+reais?|(?:'+word+')(?:\\s+(?:'+word+'))*\\s+reais?)','g');return [...fold(text).matchAll(pattern)].map(m=>m[0]).filter(s=>{try{literalMoney(s);return true;}catch{return false;}});}
+// Money is kept as decimal digits until integer cents are assembled. Multiplying
+// a binary floating-point value (e.g. 35.8) by 100 can incorrectly reject it.
+function numericMoney(s:string){
+ const negative=s.startsWith('-'),raw=negative?s.slice(1):s;let whole:string,fraction='';
+ if(raw.includes(',')){const m=raw.match(/^(\d+|\d{1,3}(?:\.\d{3})+),(\d{1,2})$/);if(!m)throw new AppError('Confirme o valor em reais.');whole=m[1].replaceAll('.','');fraction=m[2];}
+ else if(/^\d{1,3}(?:\.\d{3})+$/.test(raw))whole=raw.replaceAll('.','');
+ else {const m=raw.match(/^(\d+)(?:\.(\d{1,2}))?$/);if(!m)throw new AppError('Confirme o valor em reais.');whole=m[1];fraction=m[2]||'';}
+ const cents=(BigInt(whole)*100n+BigInt(fraction.padEnd(2,'0')||'0'))*(negative?-1n:1n),value=Number(cents);if(!Number.isSafeInteger(value))throw new AppError('Confirme o valor em reais.');return value;
+}
+function centNumber(s:string):number|null{
+ const text=fold(s);if(/^\d{1,2}$/.test(text))return Number(text);
+ if(/^(?:zero|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|treze|quatorze|catorze|quinze|dezesseis|dezessete|dezoito|dezenove)$/.test(text)||/^(?:vinte|trinta|quarenta|cinquenta|sessenta|setenta|oitenta|noventa)(?: e (?:um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove))?$/.test(text))return words(text);
+ return null;
+}
+export function literalMoney(excerpt:string):number{
+ const s=fold(excerpt).replace(/^r\$\s*/,'').trim(),currency=s.match(/^(.+?)\s*rea(?:l|is)(?:\s+(?:e\s+)?(.+?)\s+centavos?)?$/);
+ if(currency){const main=literalMoney(currency[1]);if(!currency[2])return main;const cent=centNumber(currency[2]);if(cent===null||main%100!==0)throw new AppError('Confirme o valor em reais.');return main+(main<0?-cent:cent);}
+ if(/\s+centavos?$/.test(s)){
+  const body=s.replace(/\s+centavos?$/,''),onlyCents=centNumber(body);if(onlyCents!==null)return onlyCents;
+  // With an omitted "reais", only an explicit centavos suffix gives the split.
+  // Prefer the complete valid cents phrase (vinte e cinco), never a partial unit.
+  for(const split of body.matchAll(/\s+e\s+/g)){const cent=centNumber(body.slice(split.index!+split[0].length));if(cent===null)continue;const main=literalMoney(body.slice(0,split.index));if(main%100===0)return main+(main<0?-cent:cent);}
+  throw new AppError('Confirme o valor em reais.');
+ }
+ const thousand=s.match(/^(\d+(?:[.,]\d+)?)\s+mil$/);if(thousand){const value=literalMoney(thousand[1])*1000;if(!Number.isSafeInteger(value))throw new AppError('Confirme o valor em reais.');return value;}
+ if(/^-?\d/.test(s))return numericMoney(s);
+ const value=words(s)*100;if(!Number.isSafeInteger(value))throw new AppError('Confirme o valor em reais.');return value;
+}
+export const moneyNumber='(?:R\\$\\s*)?-?'+spokenNumber+'(?:\\s+rea(?:l|is)(?:\\s+(?:e\\s+)?'+spokenNumber+'\\s+centavos?)?|\\s+(?:e\\s+'+spokenNumber+'\\s+)?centavos?)?';
+export function monetaryLiterals(text:string){const pattern=new RegExp('(?<![\\p{L}\\d])'+moneyNumber+'(?![\\p{L}\\d])','giu');return [...fold(text).matchAll(pattern)].map(m=>m[0]).filter(s=>/r\$|rea(?:l|is)\b|centavos?\b/.test(s)).filter(s=>{try{literalMoney(s);return true;}catch{return false;}});}
 function iso(year:number,month:number,day:number){const value=`${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;if(!realDate(value))throw new AppError('Essa data não existe. Informe o vencimento completo.');return value;}
 export function financeDate(excerpt:string,today=brazilDay(),future:boolean|'past'=false):string{const literalCalendar=relativeCalendarDate(fold(excerpt).replace(/\s+(?:as|pelas)\s+.+$/,''),today,future);if(literalCalendar)return literalCalendar;const s=fold(excerpt).replace(/\s+(?:as|pelas)\s+.+$/,'').replace(/^(?:(?:no|na|em|para)\s+)?proximo\s+(?=dia\s)/,'').replace(/^(?:no |na |em |para )/, '').replace(/do proximo mes$/,'do mes proximo').replace(/deste mes$/,'do mes atual').replace(/\s+agora(?=[,.; ]*$)/,'').replace(/[,.; ]+$/,''),base=new Date(today+'T12:00:00Z'),year=base.getUTCFullYear(),month=base.getUTCMonth()+1;
  const repeated=s.split(/\s*(?:,|;|\bou seja\b|\bquer dizer\b)\s*/).filter(Boolean);if(repeated.length>1){const dates=repeated.map(part=>financeDate(part,today,future));if(new Set(dates).size!==1)throw new AppError('Foram informadas datas diferentes. Qual delas devo usar?');return dates[0];}

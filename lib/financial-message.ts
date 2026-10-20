@@ -1,4 +1,4 @@
-import {fold,literalMoney,spokenNumber} from './finance-date.ts';
+import {fold,literalMoney,moneyNumber} from './finance-date.ts';
 import {appointmentFacts,completeCalendarPeriod} from './appointment-language.ts';
 import {personalCategory} from './personal-expenses.ts';
 import type {FinanceDraft} from './finance-ai.ts';
@@ -8,9 +8,9 @@ const reply=(question:string):FinanceDraft=>({intent:'CLARIFY',question,query:''
 const command=(c:FinanceCommand,amount?:string,date?:string):FinanceDraft=>({...reply(''),intent:'COMMAND',command:c,money_evidence:amount?[{field:'amount_cents',excerpt:amount}]:[],date_evidence:date?[{field:'date',excerpt:date}]:[]});
 const futureOut=/\b(?:(?:vou|irei|preciso|devo|tenho que|tenho de)\s+(?:pagar|gastar|quitar)|pagarei|a pagar|vai vencer|vence|vencimento)\b/;
 const futureIn=/\b(?:(?:vou|irei|tenho que|tenho a)\s+receber|receberei|a receber|(?:vai|ira)\s+me\s+pagar|me\s+(?:pagara|vai pagar))\b/;
-const paid=/\b(?:paguei|gastei|comprei|quitei)\b/;
+const paid=/\b(?:paguei|gastei|gasto|comprei|quitei)\b/;
 const received=/\b(?:recebi|ganhei|entrou|caiu|vendi|tive)\b|\bme\s+(?:pagou|pagaram)\b/;
-const outgoing=/\b(?:paguei|gastei|comprei|quitei|quitar|pagar|pagarei|parcela|prestacao|boleto|aluguel|mensalidade|conserto)\b/;
+const outgoing=/\b(?:paguei|gastei|gasto|comprei|quitei|quitar|pagar|pagarei|parcela|prestacao|boleto|aluguel|mensalidade|conserto)\b/;
 const incoming=/\b(?:recebi|ganhei|recebo|receber|receberei|vendi|entrou|caiu|lucro)\b|\bme\s+(?:pagou|pagaram|paga|pagara|vai pagar)\b|\b(?:vai|ira)\s+me\s+pagar\b/;
 export function statedFinancialStatus(text:string){const s=fold(text);return futureOut.test(s)||futureIn.test(s)?'PREVISTO' as const:paid.test(s)||received.test(s)?'REALIZADO' as const:undefined;}
 
@@ -32,14 +32,14 @@ export function financialMessageDraft(text:string,state:FinanceState,today:strin
  if(facts.time)return null; // Mixed financial/event messages retain both via the model.
  let masked=text.normalize('NFC');
  for(const date of facts.dates.slice().sort((a,b)=>b.start-a.start))masked=masked.slice(0,date.start)+' '.repeat(date.end-date.start)+masked.slice(date.end);
- const pattern=new RegExp('(?<![\\p{L}\\d])(?:R\\$\\s*)?'+spokenNumber+'(?:\\s+reais?(?:\\s+(?:e\\s+)?'+spokenNumber+'\\s+centavos?)?)?(?![\\p{L}\\d])','giu');
+ const pattern=new RegExp('(?<![\\p{L}\\d])'+moneyNumber+'(?![\\p{L}\\d])','giu');
  const amounts=[...masked.matchAll(pattern)].filter(m=>!['um','uma'].includes(fold(m[0]))).map(m=>({start:m.index!,end:m.index!+m[0].length,excerpt:m[0],amount:literalMoney(m[0])}));
  if(!amounts.length)return reply('Qual foi o valor?');
  if(new Set(amounts.map(m=>m.amount)).size>1)return reply('Qual é o valor correto para este lançamento?');
  const amount=amounts[0];if(amount.amount<=0||amount.amount>1000000000)return reply('Qual é o valor em reais, maior que zero?');
  let description=masked;
  for(const span of amounts.slice().reverse())description=description.slice(0,span.start)+' '.repeat(span.end-span.start)+description.slice(span.end);
- description=description.replace(/\b(?:(?:eu\s+)?(?:vou|irei|preciso|devo|tenho que|tenho de)\s+(?:pagar|gastar|quitar|receber)|(?:vai|irá|ira)\s+me\s+pagar|me\s+(?:pagou|pagaram|paga|pagará|pagara|vai pagar)|paguei|gastei|comprei|quitei|recebi|ganhei|recebo|receberei|pagarei|vendi|entrou|caiu|tive)\b/gi,' ')
+ description=description.replace(/\b(?:(?:eu\s+)?(?:vou|irei|preciso|devo|tenho que|tenho de)\s+(?:pagar|gastar|quitar|receber)|(?:vai|irá|ira)\s+me\s+pagar|me\s+(?:pagou|pagaram|paga|pagará|pagara|vai pagar)|paguei|gastei|gasto|comprei|quitei|recebi|ganhei|recebo|receberei|pagarei|vendi|entrou|caiu|tive)\b/gi,' ')
   .replace(/^(?:(?:por favor|anota|anote|lança|lanca|lance|registra|registre|agenda|agende|pra mim|para mim|agora|eu)\b[, ]*)+/i,'')
   .replace(/\b(?:por favor|aqui|agora|já|ja)\b/gi,' ').replace(/\s+/g,' ').replace(/^[\s,.:;-]*(?:(?:de|do|da|no|na|em|por|o|a|um|uma)\b[\s,.:;-]*)*/i,'').replace(/[\s,.:;!-]+$/,'').trim();
  description=description.replace(/(?:^|\s)é\s+de\b|\bo\s+valor\s+(?:é\s+)?de\b/gi,' ').replace(/\s+/g,' ').trim();

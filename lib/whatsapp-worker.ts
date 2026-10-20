@@ -75,7 +75,7 @@ export async function processMessage(row:Inbox){
   const recent=(await history(row.user_id)).filter(r=>!r.context_reset_at&&r.id!==row.id&&r.sender===row.sender&&(Date.parse(r.created_at)>Date.parse(row.created_at)-900000||r.finance_confirmation&&!r.confirmation_used)&&Date.parse(r.created_at)<=Date.parse(row.created_at)).sort((a,b)=>b.created_at.localeCompare(a.created_at));
   // A new command must not be swallowed by a still-valid edit or an unrelated
   // incomplete turn. The old edit is cancelled, never silently saved.
-  const newRequest=!!commandPrefix(transcript)||/^(?:eu )?(?:lanca|lance|anota|anote|registra|registre|gastei|paguei|ganhei|recebi|agende)\b/i.test(transcript.normalize('NFD').replace(/[\u0300-\u036f]/g,''))&&quickFinanceDraft(transcript,today)?.intent==='COMMAND';
+  const newRequest=!!commandPrefix(transcript)||/^(?:eu )?(?:lanca|lance|anota|anote|registra|registre|gastei|gasto|paguei|ganhei|recebi|agende)\b/i.test(transcript.normalize('NFD').replace(/[\u0300-\u036f]/g,''))&&quickFinanceDraft(transcript,today)?.intent==='COMMAND';
   if(newRequest)for(const pending of recent.filter(r=>r.finance_confirmation?.startsWith(editingPrefix)&&!r.confirmation_used))await patchMessage(pending,{confirmation_used:true,finance_confirmation:''});
   if(expenseStatusQuestion(transcript)){const last=recent.find(r=>r.status==='LANCADO');await patchMessage(row,{status:'RESOLVIDO',reply:last?'Seu último lançamento foi registrado. '+last.reply:'Não encontrei um lançamento confirmado nos últimos 15 minutos. Confira seu histórico no painel.'});await reply(row,b);return;}
   const feedbackChoice=whatsappFeedbackChoice(transcript,recent,row.user_id,row.sender,financeSecret());
