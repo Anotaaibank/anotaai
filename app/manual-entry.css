@@ -1,0 +1,32 @@
+.overview-heading{flex-wrap:wrap}
+.overview-heading>.bank-actions{flex-wrap:wrap;justify-content:flex-end}
+.anota-personal-app .manual-entry-launch{display:inline-flex;align-items:center;gap:10px;text-align:left;min-height:54px}
+.manual-entry-launch span,.manual-entry-options span,.manual-expense-kind span{display:grid;gap:5px;min-width:0}
+.manual-entry-launch strong{font-size:14px}
+.anota-personal-app .manual-entry-launch small{font-size:10px;color:inherit;font-weight:400;line-height:1.4;white-space:normal}
+.manual-transactions{max-width:560px}
+.anota-personal-app .manual-entry-scope .anota-modal-backdrop{padding-top:60px;padding-bottom:16px}
+.anota-personal-app .manual-entry-scope .anota-modal{max-height:calc(100dvh - 76px)}
+.manual-entry-scope .anota-modal form>fieldset{border:0;padding:0;margin:0;min-width:0}
+.manual-entry-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:22px 0}
+.anota-personal-app .manual-entry-options button{display:flex;align-items:flex-start;gap:12px;text-align:left;padding:22px 18px;min-height:116px;background:#edf6e9;border:1px solid #93b89b;color:#174d3b;border-radius:16px}
+.manual-entry-options svg{flex-shrink:0}
+.manual-entry-options strong{font-size:18px}
+.manual-entry-options small,.manual-expense-kind small{font-size:12px;line-height:1.5;color:#476650}
+.manual-entry-options button:focus-visible,.manual-expense-kind label:focus-within{outline:3px solid #3f8161;outline-offset:3px}
+.anota-personal-app .manual-expense-kind{border:0;padding:0;margin:6px 0 18px;min-width:0}
+.manual-expense-kind legend{font-size:14px;font-weight:700;margin-bottom:12px;color:#174d3b}
+.manual-expense-kind>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.anota-personal-app .manual-expense-kind label{display:flex;align-items:flex-start;gap:10px;border:1px solid #bfd2bd;border-radius:12px;padding:14px;margin:0;cursor:pointer;min-width:0;background:#f6faf4}
+.anota-personal-app .manual-expense-kind label.selected{background:#e2f0df;border-color:#49825c;box-shadow:inset 0 0 0 1px #49825c}
+.anota-personal-app .manual-expense-kind input{width:18px;height:18px;min-height:18px;margin:1px 0 0;flex-shrink:0;accent-color:#236b48}
+@media(max-width:760px){
+ .anota-personal-app .overview-heading>.bank-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:stretch}
+ .overview-heading>.bank-actions>.period-label{grid-column:1/-1}
+ .anota-personal-app .manual-entry-launch{min-width:0;padding:12px 10px;gap:6px}
+ .manual-entry-launch strong{font-size:13px}
+ .manual-entry-launch svg{flex-shrink:0}
+ .manual-entry-options{grid-template-columns:minmax(0,1fr)}
+ .anota-personal-app .manual-entry-options button{min-height:88px;padding:20px 16px}
+ .manual-expense-kind>div{grid-template-columns:minmax(0,1fr)}
+}

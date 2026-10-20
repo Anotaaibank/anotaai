@@ -15,6 +15,7 @@ import './subscription-usage.css';
 import './mobile-app.css';
 import './checkout.css';
 import './localization.css';
+import './manual-entry.css';
 import {cookies} from 'next/headers';
 import {LanguageProvider} from '@/components/Localization';
 import {appLocale,localeCookie} from '@/lib/locale';
