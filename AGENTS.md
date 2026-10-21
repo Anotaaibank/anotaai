@@ -15,3 +15,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Aplicativo nativo (mobile/)
+
+Expo SDK 58 e React Native ficam isolados do Next.js, com package.json, TypeScript e lockfile próprios. Leia também mobile/AGENTS.md e a documentação correspondente ao SDK. Não substituir o site por template ou WebView. Não importar servidor no bundle nativo.
+
+A API /api/mobile/v1 fica desligada por padrão. Não habilitar, migrar banco ou alterar serviços de produção sem autorização. Reutilizar regras, titular autenticado, confirmação assinada, quota e idempotência. Nenhum segredo em EXPO_PUBLIC_*; somente URL pública da API.
+
+Validar web com node scripts/validate-mobile-backend.mjs e mobile com pnpm --dir mobile run validate --bundles. Usar dados sintéticos, sem chamadas pagas na suite. Distinguir doctor/bundles de testes em aparelho e builds assinadas.
+
+Antes de cloud build: informar custos e obter autorização de upload. Usar pacote sanitizado de mobile/scripts/release.mjs, sem enviar repositório web. Submit, revisão e publicação exigem aprovação própria. Não contratar, criar produtos/gateway ou conta comercial sem aprovação. Não remover bloqueios de release-policy.json para contornar pendências.

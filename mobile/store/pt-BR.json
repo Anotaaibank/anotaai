@@ -1,0 +1,12 @@
+{
+  "status": "rascunho — revisar após concluir e testar os recursos nativos",
+  "name": "Anotei na Hora",
+  "android_short_description": "Organize seu dinheiro e seus compromissos de um jeito simples.",
+  "ios_subtitle": "Dinheiro e agenda organizados",
+  "description_draft": "Veja seu saldo, acompanhe contas e organize compromissos. Registre entradas e saídas e confira o resumo antes de salvar. A agenda reúne compromissos, contas a pagar e valores a receber. Recursos, assinatura, limites e compatibilidade serão descritos na ficha final após os testes.",
+  "support_url": null,
+  "privacy_url": null,
+  "account_deletion_url": null,
+  "reviewer_credentials": "Fornecer por canal seguro após criar conta segregada; nunca neste arquivo.",
+  "screenshots_to_capture": ["Login", "Visão geral", "Agenda sintética", "Confirmação", "Uso", "Privacidade/exclusão após implementação"]
+}

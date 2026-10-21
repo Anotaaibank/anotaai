@@ -1,0 +1,12 @@
+{
+  "applicationIdentifiersApproved": false,
+  "productionApiApproved": false,
+  "nativeAudioValidated": false,
+  "passwordRecoveryReady": false,
+  "accountDeletionReady": false,
+  "privacyAndTermsReviewed": false,
+  "billingReady": false,
+  "realDeviceTestsPassed": false,
+  "dependencyAuditReviewed": false,
+  "storeAssetsApproved": false
+}

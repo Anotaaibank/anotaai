@@ -15,3 +15,6 @@ supabase/.temp
 
 output
 tmp
+
+# Aplicativo nativo isolado do build do servidor
+mobile

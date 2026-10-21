@@ -1,0 +1,303 @@
+{
+  "date": "2026-10-21",
+  "native_version": "0.1.0",
+  "branch": "codex/mobile-foundation",
+  "base_commit": "014f81ca08b5d008f6aa77a7ddb7bbc807e5b6d2",
+  "backend": {
+    "at": "2026-10-21T17:39:02.304Z",
+    "isolated": true,
+    "paid_calls": 0,
+    "production_writes": 0,
+    "results": [
+      {
+        "name": "typecheck",
+        "exit": 0,
+        "duration_ms": 45751
+      },
+      {
+        "name": "tests",
+        "exit": 0,
+        "duration_ms": 42630
+      },
+      {
+        "name": "build",
+        "exit": 0,
+        "duration_ms": 252834
+      }
+    ],
+    "test_count": 304
+  },
+  "native": {
+    "at": "2026-10-21T19:00:43.144Z",
+    "results": [
+      {
+        "name": "typecheck",
+        "exit": 0,
+        "ms": 11204
+      },
+      {
+        "name": "lint",
+        "exit": 0,
+        "ms": 29605
+      },
+      {
+        "name": "tests",
+        "exit": 0,
+        "ms": 843
+      },
+      {
+        "name": "expo-dependencies",
+        "exit": 0,
+        "ms": 3180
+      },
+      {
+        "name": "expo-config",
+        "exit": 0,
+        "ms": 1733
+      },
+      {
+        "name": "bundle-android",
+        "exit": 0,
+        "ms": 115713
+      },
+      {
+        "name": "bundle-ios",
+        "exit": 0,
+        "ms": 83258
+      }
+    ],
+    "test_count": 8,
+    "doctor_passed": 20,
+    "doctor_total": 20,
+    "validation_location": "sanitized temporary working copy outside OneDrive",
+    "original_workspace_export_error": "Metro EINVAL readlink in node_modules",
+    "source_manifest_record": ".data/mobile-working-copy.json"
+  },
+  "http": {
+    "at": "2026-10-21T18:31:39.913Z",
+    "duration_ms": 101113,
+    "checks": [
+      {
+        "name": "existing-account login through native HTTP gateway",
+        "passed": true
+      },
+      {
+        "name": "prepare does not mutate balance",
+        "passed": true
+      },
+      {
+        "name": "income, expense, future payable, appointment and replay persist exactly once",
+        "passed": true
+      },
+      {
+        "name": "owner spoofing is rejected over HTTP",
+        "passed": true
+      },
+      {
+        "name": "logout revokes native HTTP session",
+        "passed": true
+      }
+    ],
+    "synthetic": true,
+    "paid_calls": 0,
+    "production_writes": 0
+  },
+  "access": {
+    "at": "2026-10-21T18:32:45.183Z",
+    "github": {
+      "configured": true,
+      "http_status": 401
+    },
+    "supabase": {
+      "configured": true,
+      "http_status": 401
+    },
+    "web": {
+      "http_status": 200,
+      "application": "anota-ai",
+      "status": "ok"
+    }
+  },
+  "mcp": {
+    "authenticated": true,
+    "documentation_search_and_read": true,
+    "previous_connections_preserved": true
+  },
+  "eas": {
+    "authenticated": true,
+    "account": "anotaai",
+    "cli": "25.2.0",
+    "cloud_project_created": false,
+    "remote_builds": 0,
+    "store_submissions": 0
+  },
+  "audit_mobile": {
+    "counts": {
+      "info": 0,
+      "low": 0,
+      "moderate": 1,
+      "high": 2,
+      "critical": 0
+    },
+    "advisories": [
+      {
+        "module": "uuid",
+        "severity": "moderate",
+        "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+        "patched": ">=11.1.1"
+      },
+      {
+        "module": "node-forge",
+        "severity": "high",
+        "url": "https://github.com/advisories/GHSA-86w9-cpqp-85rv",
+        "patched": null
+      },
+      {
+        "module": "braces",
+        "severity": "high",
+        "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+        "patched": null
+      }
+    ]
+  },
+  "audit_tools": {
+    "counts": {
+      "info": 0,
+      "low": 3,
+      "moderate": 7,
+      "high": 10,
+      "critical": 0
+    },
+    "advisories": [
+      {
+        "module": "diff",
+        "severity": "low",
+        "url": "https://github.com/advisories/GHSA-73rr-hh4g-fpgx",
+        "patched": ">=8.0.3"
+      },
+      {
+        "module": "minimatch",
+        "severity": "high",
+        "url": "https://github.com/advisories/GHSA-3ppc-4f35-3m26",
+        "patched": ">=5.1.7"
+      },
+      {
+        "module": "minimatch",
+        "severity": "high",
+        "url": "https://github.com/advisories/GHSA-7r86-cg39-jmmj",
+        "patched": ">=5.1.8"
+      },
+      {
+        "module": "minimatch",
+        "severity": "high",
+        "url": "https://github.com/advisories/GHSA-23c5-xmqv-rm74",
+        "patched": ">=5.1.8"
+      },
+      {
+        "module": "ajv",
+        "severity": "moderate",
+        "url": "https://github.com/advisories/GHSA-2g4f-4pwh-qvx6",
+        "patched": ">=8.18.0"
+      },
+      {
+        "module": "yaml",
+        "severity": "moderate",
+        "url": "https://github.com/advisories/GHSA-48c2-rrv3-qjmp",
+        "patched": ">=2.8.3"
+      },
+      {
+        "module": "uuid",
+        "severity": "moderate",
+        "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+        "patched": ">=11.1.1"
+      },
+      {
+        "module": "joi",
+        "severity": "moderate",
+        "url": "https://github.com/advisories/GHSA-q7cg-457f-vx79",
+        "patched": ">=17.13.4"
+      },
+      {
+        "module": "ts-deepmerge",
+        "severity": "moderate",
+        "url": "https://github.com/advisories/GHSA-87mf-gv2c-c62c",
+        "patched": ">=8.0.0"
+      },
+      {
+        "module": "nanoid",
+        "severity": "high",
+        "url": "https://github.com/advisories/GHSA-28wg-ghj8-5hjv",
+        "patched": ">=3.3.16"
+      },
+      {
+        "module": "nanoid",
+        "severity": "high",
+        "url": "https://github.com/advisories/GHSA-2v37-7h3g-55p8",
+        "patched": ">=3.3.18"
+      },
+      {
+        "module": "tar",
+        "severity": "high",
+        "url": "https://github.com/advisories/GHSA-r292-9mhp-454m",
+        "patched": ">=7.5.21"
+      },
+      {
+        "module": "nanoid",
+        "severity": "high",
+        "url": "https://github.com/advisories/GHSA-xwg4-73v4-xw9w",
+        "patched": ">=3.3.12"
+      },
+      {
+        "module": "joi",
+        "severity": "low",
+        "url": "https://github.com/advisories/GHSA-6w3j-5fw6-r9vr",
+        "patched": ">=17.13.6"
+      },
+      {
+        "module": "joi",
+        "severity": "low",
+        "url": "https://github.com/advisories/GHSA-gg4h-3hg2-grpc",
+        "patched": ">=17.13.5"
+      },
+      {
+        "module": "node-forge",
+        "severity": "high",
+        "url": "https://github.com/advisories/GHSA-86w9-cpqp-85rv",
+        "patched": null
+      },
+      {
+        "module": "braces",
+        "severity": "high",
+        "url": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
+        "patched": null
+      },
+      {
+        "module": "sprintf-js",
+        "severity": "moderate",
+        "url": "https://github.com/advisories/GHSA-hp3w-g68c-fv3c",
+        "patched": null
+      },
+      {
+        "module": "joi",
+        "severity": "moderate",
+        "url": "https://github.com/advisories/GHSA-wr44-6hxh-3jwq",
+        "patched": ">=17.13.8"
+      },
+      {
+        "module": "joi",
+        "severity": "high",
+        "url": "https://github.com/advisories/GHSA-6h2x-m376-mqjq",
+        "patched": ">=17.13.7"
+      }
+    ]
+  },
+  "visual_qa": {
+    "initial_login_and_password_toggle": true,
+    "hot_refresh_context_error_observed": true,
+    "context_separated": true,
+    "final_clean_visual_verification": false,
+    "real_devices": false
+  },
+  "production_changes": 0,
+  "paid_ai_calls": 0
+}

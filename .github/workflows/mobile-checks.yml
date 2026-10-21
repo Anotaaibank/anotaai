@@ -1,0 +1,31 @@
+name: Mobile checks
+on:
+  pull_request:
+    paths: ['mobile/**', 'lib/**', 'tests/**', 'app/api/**', 'scripts/**', 'package.json', 'pnpm-lock.yaml', 'tsconfig.json', '.github/workflows/mobile-checks.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.19.0'
+      - uses: pnpm/action-setup@d9184bf108216479bc5a137cc391f4d7b14c870b # v6.1.0
+        with:
+          version: '11.25.0'
+      - run: pnpm --dir mobile install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/validate-mobile-backend.mjs
+      - run: node scripts/smoke-mobile-api.mjs
+      - run: pnpm --dir mobile run validate --bundles
+        env:
+          CI: '1'
+          EXPO_NO_TELEMETRY: '1'
+          EXPO_PUBLIC_API_URL: https://example.test
+      # This workflow never builds in EAS, submits, deploys or reads production secrets.
