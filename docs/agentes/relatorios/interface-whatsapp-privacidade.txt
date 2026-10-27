@@ -1,0 +1,41 @@
+PRUI-A — PRIVACIDADE DA TELA WHATSAPP
+Data: 27/10/2026 (São Paulo).
+Commit funcional: 91cecfc9cce33182099b24b71d0eb27e34e6c04f.
+Base da análise estática integrada: 6106183. Worktree exclusivo codex/interface-mobile-hardening; nenhum arquivo do checkout original foi editado.
+
+PROBLEMA E RESULTADO
+A tela conservava result/drafts ao receber falha de acesso. O polling ignorava respostas não-ok; um GET anterior poderia atualizar a tela depois de um erro. O patch limpa a superfície sensível em 401/403/402, bloqueia sua vida de requests e mostra orientação curta de login ou assinatura. Respostas de uma vida anterior, inclusive corpo JSON atrasado, não podem repopular a tela.
+O servidor continua sendo a fronteira de autorização. Não foi adicionado contrato de identidade, acesso de gestor ao inbox, endpoint, permissão ou regra financeira.
+
+IMPLEMENTAÇÃO
+components/whatsapp-view.ts: escopo com epoch, AbortController por request, validação antes/depois de parse JSON, bloqueio irreversível após resposta de acesso negado naquela instância da tela. Não repete POST; erros de transporte não são tratados como sucesso. Suspender invalida a epoch e aborta pedidos, mesmo quando o transporte simulado deliberadamente ignora abort.
+components/Whatsapp.tsx: GET inicial, atualização, polling e POST usam o mesmo escopo. Revogação limpa histórico, QR/código/configuração recebidos, números, nomes/rascunhos, notices e refs de envio. Mantém somente orientação de retorno apropriada. Uma conclusão antiga não altera busy/ref de uma operação nova.
+Em visibility hidden, pagehide ou perda de foco, a subtree do WhatsApp fica oculta e requests são invalidados. Rascunhos manuais permanecem somente em memória. No retorno é exigida nova leitura autorizada antes de revelar a tela. Dados recebidos são renovados; os campos de configuração manualmente alterados (dirty) e rascunhos de nome/telefone não são apagados por simples blur. Após salvar, configuração volta ao snapshot confirmado. O componente desmontado descarta estado React e cancela recursos/listeners. Eventos repetidos de retorno não reativam uma vida já ativa.
+Uma escrita abortada no cliente pode ter chegado ao servidor. Abort não desfaz a ação, não é rollback, não autoriza repetir envio e não reconecta o provedor. Mantido somente o GET de reconciliação que já existia para erro não relacionado a acesso.
+O aviso do casal explicita saldo, despesas, agenda e histórico compartilhados. A nova coluna Remetente usa nome disponível e somente os quatro últimos dígitos; não adiciona número integral ao novo campo. A API existente não fornece nomes dos contatos familiares em todos os casos; nesse caso aparece rótulo genérico e sufixo mascarado. Nenhum dado novo foi buscado para completar o nome.
+Transcrição/resposta do usuário usam OriginalText para preservar conteúdo literal, sem traduzir dados privados. O placeholder vazio Áudio aguardando leitura permanece texto de apresentação traduzível. OriginalText/data-no-translate não são autorização, criptografia ou proteção do browser.
+A copy foi corrigida para reconhecer arquivo temporário durante processamento, transcrição/resposta no histórico e possíveis cópias WhatsApp/provedor, preservando a informação de processamento OpenAI. Não promete apagamento total ou prazo de retenção não comprovado.
+lib/i18n/en-US.json: somente 16 chaves novas, incluindo as três mensagens seguras de PRIV-B, rótulos e copy. Entradas antigas preservadas. Cliente continua tolerando connection com apenas configured, connected e message; campos de pareamento opcionais não são exigidos. O helper backend de PRIV-B não foi copiado/editado nesta frente.
+
+TESTES E EVIDÊNCIAS
+Comando direcionado, guarda offline, dados sintéticos e zero chamadas reais/pagas:
+node --import ./scripts/offline-validation.mjs --experimental-strip-types --test --test-isolation=none tests/whatsapp-view.test.ts tests/whatsapp-contacts.test.ts tests/localization.test.ts
+Resultado final: 29 passaram, zero falhas; duração registrada pelo runner 5244,4473 ms. São 15 testes novos e 14 existentes.
+Os novos testes transpilem e executam o componente/handlers reais com agendamento de hooks, eventos de página/foco e transporte controlados. Cobrem 401/402/403, GET/poll atrasados, corpo JSON tardio, POST negado, erro503, falha real de transporte após POST, ausência de repetição automática, desmontagem, saída/retorno, preservação de rascunhos, remetente mascarado, DTO sem opcionais e placeholder traduzível. Isso é teste de lógica/handlers com adaptadores; não é navegador real, aparelho, teste de cookie real ou prova de autorização do backend em produção.
+node node_modules/typescript/bin/tsc --noEmit --incremental false: passou na versão final. A primeira execução identificou dois casts faltantes apenas no adaptador de teste; corrigidos e checagem refeita. Nenhum erro de produção foi ocultado.
+git diff --check: passou. Nenhuma nova dependência, build, bundle, EAS, conexão de provedor, áudio real, WhatsApp real ou UI autenticada de produção foi usada.
+
+LIMITES E PENDÊNCIAS
+1. Esta API não devolve identidade verificável do titular. A correção cobre a negação de acesso recebida, resposta antiga, desmontagem e ciclos de página/foco. Não prova detectar troca silenciosa de cookie enquanto a página permanece continuamente ativa sem evento ou mudança de contrato. Isso exige decisão/apoio de backend/QA; não foi simulado como garantia alcançada.
+2. Revogação remota não é detectada instantaneamente sem solicitação/sinal. A tela limpa quando recebe401/403/402. O polling existente só ocorre quando há envio pendente; não foi criado monitor contínuo de sessão.
+3. Histórico continua sendo compartilhado pelos dois números da mesma conta; contexto de interpretação separado por sender não cria privacidade individual no app. Não foram criados perfis familiares independentes nem leitura de conversa de assinante pela gestão.
+4. Ocultação no blur não é apagamento de memória/Network/DevTools/cópias do usuário, tampouco impede acesso de operador de infraestrutura ou aparelho WhatsApp. Sem promessa de limpeza forense ou revogação de conteúdo já entregue.
+5. Minimização do payload de histórico, detalhes comerciais sob demanda, retenção/exportação/exclusão e auditoria server de consulta continuam pendentes em seus escopos. Reiniciar conversa não apaga lançamentos nem equivale a apagar histórico.
+6. A integração/global build e QA visual ficam no root, em uma rodada coordenada. Este patch não altera o ledger nem oculta as finanças normais do titular.
+
+ESCOPO DO COMMIT FUNCIONAL
+components/Whatsapp.tsx
+components/whatsapp-view.ts
+tests/whatsapp-view.test.ts
+lib/i18n/en-US.json
+Este relatório foi entregue em commit separado para não atrasar a revisão funcional.
