@@ -13,14 +13,14 @@ import * as lifecycle from '../components/financial-dialog/lifecycle.ts';
 // Actual TSX handlers with simulated hooks. These are not browser/focus tests.
 type Tree={type:unknown;props:Record<string,any>};
 function nodes(value:any):Tree[]{return Array.isArray(value)?value.flatMap(nodes):value?.props?[value,...nodes(value.props.children)]:[];}
-function component(file:string,exportName='default',firstState?:unknown,document:unknown={}){
+function component(file:string,exportName='default',firstState?:unknown,document:unknown={},transport:typeof fetch=async()=>{throw Error('Unexpected network');}){
  const states:unknown[]=[],effects:(()=>unknown)[]=[];let index=0,tree:unknown;
  const react={useState:(initial:unknown)=>{const i=index++;if(!(i in states))states[i]=i===0&&firstState!==undefined?firstState:typeof initial==='function'?initial():initial;return [states[i],(next:unknown)=>{states[i]=next;}];},useRef:(initial:unknown)=>{const i=index++;return states[i]??=( {current:initial});},useEffect:(fn:()=>unknown)=>{effects.push(fn);},useLayoutEffect:(fn:()=>unknown)=>{effects.push(fn);}};
  const jsx=(type:unknown,props:Record<string,unknown>)=>({type,props});
  const imports:Record<string,unknown>={'react':react,'react/jsx-runtime':{jsx,jsxs:jsx,Fragment:'fragment'},'@/lib/model':model,'@/lib/expenses':amounts,'./lifecycle':lifecycle,'@/components/Localization':{Localize:'localize',OriginalText:'original'},'./Localization':{Localize:'localize'}};
  const output=ts.transpileModule(readFileSync(new URL('../'+file,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;
  const exported:Record<string,(props:any)=>unknown>={};
- new Function('require','exports','document',output)((name:string)=>imports[name]??{__esModule:true,default:name,ManualIncomeForm:'manual-income'},exported,document);
+ new Function('require','exports','document','fetch',output)((name:string)=>imports[name]??{__esModule:true,default:name,ManualIncomeForm:'manual-income'},exported,document,transport);
  return {render(props:unknown){index=0;tree=exported[exportName](props);return tree;},get tree(){return tree;},effects};
 }
 
@@ -66,6 +66,22 @@ test('manual adjustment accepts zero/negative, refuses invalid values and ignore
   else assert.deepEqual(commands,[{action:'balance_adjust',balance_cents:expected}]);
   const count=commands.length;view.render({...props,busy:true});nodes(view.tree).find(n=>n.type==='form')!.props.onSubmit({preventDefault:()=>{}});assert.equal(commands.length,count);
  }
+});
+
+test('canceling the balance summary keeps the same mounted draft and restores its dialog',async()=>{
+ const snapshot={...financeSnapshot({documents:[],expenses:[]}),configured:true,balance_cents:110000};
+ const overview=component('components/Finance.tsx','FinanceOverview',snapshot,{},async()=>Response.json({pending:{title:'Ajustar saldo atual',lines:[],confirmation:'synthetic'}}));
+ const render=()=>overview.render({onSaved:()=>{}});render();
+ nodes(overview.tree).find(n=>n.type==='button'&&JSON.stringify(n.props.children).includes('Ajustar saldo atual'))!.props.onClick();render();
+ const editor=()=>nodes(overview.tree).find(n=>n.type==='./BalanceAdjustment')!;
+ const draft=component('components/BalanceAdjustment.tsx');draft.render(editor().props);
+ nodes(draft.tree).find(n=>n.type==='input')!.props.onChange({target:{value:'1.500,00'}});draft.render(editor().props);
+ nodes(draft.tree).find(n=>n.type==='form')!.props.onSubmit({preventDefault:()=>{}});
+ await new Promise(resolve=>setImmediate(resolve));render();
+ assert.ok(editor());assert.equal(editor().props.active,false);
+ const summary=nodes(overview.tree).find(n=>n.type==='./financial-dialog/FinancialDialog');assert.ok(summary);summary.props.onClose();render();
+ assert.equal(editor().props.active,true);draft.render(editor().props);
+ assert.equal(nodes(draft.tree).find(n=>n.type==='input')!.props.value,'1.500,00');
 });
 
 test('manual selector keeps Escape but delegates Escape/Tab to an open native child dialog',()=>{

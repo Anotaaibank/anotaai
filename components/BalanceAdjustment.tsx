@@ -5,8 +5,8 @@ import {currency} from '@/lib/model';
 import type {FinanceCommand} from '@/lib/finance';
 import FinancialDialog from './financial-dialog/FinancialDialog';
 
-export default function BalanceAdjustment({balance,onPrepare,onClose,busy,error:serverError}:{
- balance:number;onPrepare:(command:FinanceCommand)=>void;onClose:()=>void;busy:boolean;error?:string;
+export default function BalanceAdjustment({balance,onPrepare,onClose,busy,error:serverError,active=true}:{
+ balance:number;onPrepare:(command:FinanceCommand)=>void;onClose:()=>void;busy:boolean;error?:string;active?:boolean;
 }){
  const [value,setValue]=useState(adminMoneyText(balance)),[error,setError]=useState('');
  function prepare(){
@@ -18,7 +18,7 @@ export default function BalanceAdjustment({balance,onPrepare,onClose,busy,error:
    onPrepare({action:'balance_adjust',balance_cents:negative?-cents:cents});
   }catch(cause){setError(cause instanceof Error?cause.message:'Confira o saldo correto.');}
  }
- return <FinancialDialog labelledBy="balance-adjustment-title" onClose={onClose} busy={busy}>
+ return <FinancialDialog labelledBy="balance-adjustment-title" onClose={onClose} busy={busy} active={active}>
   <div className="bank-panel-title"><h2 id="balance-adjustment-title">Ajustar saldo atual</h2><button type="button" disabled={busy} aria-label="Fechar ajuste de saldo" onClick={onClose}>×</button></div>
   <p>Saldo registrado agora: <strong>{currency(balance)}</strong>.</p>
   <p className="bank-note">Confira o saldo no seu banco e informe o valor correto. O ajuste preserva o saldo inicial e os lançamentos anteriores. Não é ganho nem despesa.</p>
