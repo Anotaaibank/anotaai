@@ -1,0 +1,237 @@
+ANOTEI — PROPOSTA DE PRIVACIDADE MANTENDO A UAZAPI
+27/10/2026 — America/Sao_Paulo
+Documento de decisão. Pesquisa pública e leitura do código; nada ativado.
+
+RECOMENDAÇÃO
+
+Manter o transporte atual, usar um número e aparelho exclusivos da empresa,
+concentrar o atendimento no Anotei e reduzir as cópias operacionais por uma
+política de retenção e limpeza comprovada em teste. Não migrar para a Cloud API
+nesta proposta. Não contratar um novo provedor ou trocar o número agora.
+
+O resultado possível é reduzir bastante a exposição e impedir acesso casual.
+Não é possível prometer que as mensagens passarão a existir exclusivamente no
+banco da Anotei. O celular do cliente, o aparelho principal da conta, a sessão
+vinculada, o transporte, o processamento de IA e os backups são superfícies
+distintas. A inexistência de conteúdo na tela não prova eliminação dessas cópias.
+
+O QUE CONTINUA IGUAL PARA O ASSINANTE
+
+Texto e áudio no WhatsApp, entradas/saídas/agenda, consultas, resumo e confirmação
+continuam sendo os recursos do produto. Não substituir silenciosamente todos
+os relatórios por links. Um modo de maior privacidade, em que saldos e relatórios
+detalhados só aparecem depois de abrir o aplicativo autenticado, pode ser uma
+opção explícita do assinante; ele reduz conteúdo no WhatsApp, mas muda a experiência.
+
+ARQUITETURA PROPOSTA
+
+WhatsApp do assinante
+    -> sessão Uazapi exclusiva da Anotei
+    -> recebimento autenticado + fila durável + identificação da conta
+    -> transcrição/interpretação + confirmação assinada
+    -> gravação financeira/agenda com recibo e idempotência
+    -> resposta ao assinante
+
+Em paralelo:
+- Aparelho principal corporativo protegido, fora do uso diário da equipe.
+- Painel operacional com autenticação, permissões e auditoria de acesso.
+- Dados estruturados preservados no Anotei.
+- Conteúdo bruto e cópias de transporte sujeitos a retenção específica.
+- Limpeza externa inicialmente desligada, até comprovar segurança e alcance.
+
+1. APARELHO CORPORATIVO, SEM USO PESSOAL
+
+Se o número estiver no telefone pessoal de alguém, planejar a separação antes
+de mudar aparelho ou registro. A migração física pode afetar a sessão atual e
+precisa de verificação própria; não desconectar por tentativa.
+
+O aparelho dedicado deve ter responsável definido, atualizações, bloqueio forte,
+bloqueio do WhatsApp e notificações sem prévia de conteúdo. Não compartilhar PIN,
+conta Google/Apple ou credencial de recuperação. Revisar os aparelhos vinculados
+e manter somente os necessários. Não usar esse número em conversas pessoais.
+
+Definir quais backups são necessários. Evitar cópias em contas pessoais e download
+automático de mídias. Se houver backup, usar proteção e custódia corporativa
+compatíveis com a política de retenção. Não apagar backups existentes sem inventário.
+
+O WhatsApp informa que os dispositivos vinculados funcionam sem conexão contínua
+do aparelho principal, mas dependem de uso dele antes de ultrapassar 14 dias de
+inatividade. Manutenção semanal é uma margem operacional proposta, não uma
+frequência exigida pelo WhatsApp. Aparelho guardado não significa aparelho
+dispensado permanentemente. Nenhuma rotina de manutenção foi agendada aqui.
+
+2. ACESSO PELO SISTEMA, SEM DISTRIBUIR A SESSÃO DO WHATSAPP
+
+Equipe atende pelo Anotei, com identidade individual e acesso mínimo. Não entregar
+token da instância, sessão do WhatsApp Web ou acesso ao telefone para operadores.
+Gestão de assinaturas não deve, por si só, autorizar ler toda conversa financeira.
+Suporte a uma conversa deve ter finalidade, autorização e auditoria próprias.
+
+A separação por usuário autenticado deve existir no servidor em todas as leituras
+e escritas. Uma credencial da ponte acessa a conta do WhatsApp de forma mais ampla
+que a aplicação: o filtro de remetentes do Anotei não reduz os poderes desse token
+no provedor. Restringir painel, credenciais e infraestrutura da ponte é necessário.
+
+As proteções de sessão/DTO já implementadas no código local são parte da base,
+mas não se afirmou que estejam publicadas nem que tenham sido auditadas no
+ambiente real. A conta conjunta de um casal continua compartilhando dados; não
+apresentá-la como duas contas privadas independentes.
+
+3. O QUE A UAZAPI DOCUMENTA — E O QUE AINDA NÃO ESTÁ COMPROVADO
+
+Contrato público consultado: OpenAPI 2.6.9, endpoint POST /chat/delete.
+Existem opções separadas para limpar a conversa no WhatsApp, excluir o chat no
+WhatsApp, remover o chat do banco da instância e remover suas mensagens locais.
+Isso permite investigar uma limpeza do lado da conta da IA, além do banco da ponte.
+
+Não está garantido pelo contrato que uma dessas opções limpe o aparelho principal,
+aparelhos offline, backups e demais cópias. O WhatsApp informa sincronização de
+exclusão de mensagens entre seus aparelhos online; isso não é certificação do
+comportamento do endpoint da Uazapi ou da versão instalada nesta operação.
+
+Um HTTP 200 pode conter uma lista errors. Não registrar sucesso apenas pelo status.
+O contrato não expõe, nesse endpoint, um limite de mensagens por ID/data para
+garantir que somente o conjunto já processado seja apagado. Essa lacuna importa
+quando novas mensagens chegam durante uma limpeza de chat inteiro.
+
+POST /message/delete é descrito como “apagar para todos”. Não usá-lo para uma
+limpeza que deveria preservar os comprovantes e a conversa do assinante.
+
+history_days=0 pede o máximo de histórico, não zero histórico. Não mudar esse
+parâmetro como tentativa de privacidade. Não refazer pareamento para reduzir
+sincronização sem avaliar o efeito sobre a operação.
+
+O guia público declara retenção local do provedor de até sete dias e mídia no CDN
+por dois dias, com condições. Isso não certifica eliminação de logs e backups da
+instância real, nem demonstra onde ela é hospedada ou quem a administra.
+
+4. PILOTO OBRIGATÓRIO ANTES DE AUTOMATIZAR QUALQUER LIMPEZA
+
+Usar um número de teste da IA, outro número autorizado de teste e conteúdo
+fictício. Nenhuma conversa de assinante real será objeto do experimento inicial.
+
+Avaliar cada opção de limpeza separadamente, mantendo as demais desativadas:
+- Comparar a API/banco da instância, aparelho principal e um aparelho vinculado.
+- Comparar aparelho online, aparelho offline e posterior reconexão.
+- Confirmar que a conversa e os recibos no telefone do cliente permanecem.
+- Conferir o histórico e os dados estruturados da conta de teste no Anotei.
+- Testar texto, áudio, resumo, edição, confirmação, replay e resposta perdida.
+- Introduzir mensagem nova durante a limpeza e verificar que ela não é perdida.
+- Verificar leitura de errors e ações parciais, sem repetir exclusão às cegas.
+
+Só propor produção depois de comprovar alcance e ausência de perda de mensagens.
+Uma trava apenas no nosso worker não prova que nenhuma mensagem nova chegará ao
+WhatsApp/provedor no mesmo intervalo. Se faltar garantia de recorte seguro,
+manter a limpeza automática de chats inteiros desligada. Ausência visual de
+conteúdo não serve como evidência de eliminação de backups; estes exigem política
+e comprovação próprias do responsável pela infraestrutura.
+
+Nunca limpar fonte ainda necessária para transcrição, confirmação, reprocessamento,
+reconciliação ou diagnóstico de gravação incerta. A aceitação durável de REQUEST e
+a recuperação de envios incertos continuam prioridades abertas da arquitetura;
+não escondê-las com uma rotina de exclusão.
+
+5. MENSAGENS TEMPORÁRIAS SÃO UMA OPÇÃO, NÃO UMA GARANTIA
+
+Há temporizadores de 24 horas, sete dias e 90 dias. Eles se aplicam a mensagens
+novas e afetam ambos os participantes; não limpam todo o passado. Existem
+exceções envolvendo mensagens mantidas, encaminhadas, citações e backups.
+
+Uma configuração desse tipo precisa ser explicada e aceita pelo usuário, pois
+também altera o histórico dele. Não habilitar em massa como padrão silencioso
+nem tratá-la como solução que deixa os dados somente no banco do Anotei.
+
+6. REDUZIR ACÚMULO NO SERVIDOR SEM APAGAR AS FINANÇAS
+
+Separar pelo menos quatro finalidades:
+- Livro financeiro e agenda estruturados: continuam sendo o registro do usuário.
+- Conteúdo de conversa e áudio: prazo curto e justificado, ainda a definir.
+- Contexto, confirmação e deduplicação: metadados mínimos pelo prazo operacional.
+- Auditoria de acesso e falhas: sem copiar conteúdo financeiro para logs genéricos.
+
+O código lido persiste texto/transcrição/resposta e pode criar áudio temporário
+para conferir duração. Ainda não há comprovação de uma política geral de expurgo
+do conteúdo. A proposta é minimizar esses dados, proteger leitura e cópias e
+definir expiração respeitando processos pendentes. A cifra do banco não impede
+que o servidor autorizado processe dados; um comprometimento completo do servidor
+continua sendo risco residual. Chaves, cópias e contas administrativas exigem
+separação e acesso controlado. Nenhum esquema, política RLS ou segredo foi alterado.
+
+Não confundir reset de conversa com eliminação de histórico. Não excluir operações,
+assinaturas, comprovantes ou saldo para reduzir armazenamento de conversas.
+
+7. COMPARAÇÃO DAS ALTERNATIVAS
+
+A. Manter Uazapi + aparelho dedicado + controles + piloto de limpeza.
+   Recomendação inicial: menor mudança no transporte e nos recursos do cliente.
+   Reduz exposição; alcance da limpeza precisa de prova. Permanece o risco de
+   dependência de uma integração não oficial.
+
+B. Hospedar uma ponte não oficial em infraestrutura própria.
+   Pode reduzir operadores externos se hoje a ponte for de terceiro, mas exige
+   operação, atualizações, proteção da sessão e recuperação. Não remove por si
+   só a necessidade do aparelho principal, suas cópias ou os riscos do protocolo.
+   Primeiro conferir quem hospeda a instância atual, licença e acesso; não assumir
+   que uma migração será mais barata ou que o problema estará resolvido.
+
+C. Conteúdo sensível somente no aplicativo, WhatsApp com confirmação mínima/link.
+   Reduz os dados das respostas no WhatsApp, mas o áudio/texto de entrada ainda
+   passa por esse canal. É alternativa de produto opcional, com impacto na proposta
+   de consultar tudo pelo WhatsApp. Não aplicar sem decisão explícita.
+
+Emulador não é atalho de privacidade: mover o aplicativo do telefone para uma
+máquina virtual continua deixando uma aplicação e uma sessão com as conversas.
+Não foi verificada compatibilidade, suporte ou disponibilidade desse desenho.
+
+8. CUSTO E DECISÃO
+
+Essa proposta não migra o tráfego para a tarifação por mensagem da Cloud API.
+Continuam os custos do contrato atual da ponte, IA/áudio e hospedagem; podem
+existir custos de aparelho, gestão de dispositivos, implementação ou infraestrutura.
+Não foi consultada a fatura nem o contrato atual, portanto não há valor adicional
+fechado ou promessa de operação gratuita. Não cancelar serviços compartilhados
+com outros projetos para tentar economizar na Anotei.
+
+Recomendo aprovar primeiro o desenho A e um piloto isolado, sem exclusões reais.
+Se a limpeza não demonstrar o comportamento necessário, manter as proteções de
+aparelho e aplicação, explicar o risco residual e decidir sobre a opção C. Não
+prometer privacidade absoluta nem construir produção sobre um teste incompleto.
+
+Também permanece o risco de desconexão ou suspensão próprio da integração não
+oficial. A Central de Ajuda do WhatsApp afirma que não valida a segurança e a
+privacidade desses conectores. Isso é uma limitação material, mesmo com o
+servidor e o telefone protegidos.
+
+EVIDÊNCIA E EXECUÇÃO DESTA PESQUISA
+
+Revisão pública independente de transporte e aparelho, consolidação pelo
+orquestrador e leitura dos relatórios/código versionado. Não houve leitura de
+mensagens reais, login em provedor, chamada paga, envio, exclusão, mudança de
+pareamento, retenção ativada, alteração de banco ou publicação. Não foi executado
+teste em aparelho: isso é uma condição pendente do piloto, não um resultado.
+
+FONTES PRIMÁRIAS
+
+Contrato Uazapi, operações e parâmetros:
+https://docs.uazapi.com/openapi-bundled.json
+Guias consolidados Uazapi, retenção e mídia:
+https://docs.uazapi.com/llms-full.txt
+Índice oficial Uazapi:
+https://docs.uazapi.com/llms.txt
+WhatsApp, aparelhos vinculados e limite de inatividade:
+https://faq.whatsapp.com/378279804439436/
+WhatsApp Business, vinculação por QR:
+https://faq.whatsapp.com/878854700132604/
+WhatsApp, histórico e sincronização de exclusão:
+https://faq.whatsapp.com/653480766448040/
+WhatsApp, mensagens temporárias:
+https://faq.whatsapp.com/673193694148537
+WhatsApp, backups criptografados:
+https://faq.whatsapp.com/490592613091019/
+Supabase, configuração segura dos produtos:
+https://supabase.com/docs/guides/security/product-security
+
+Algumas páginas diretas de ajuda e arquivos .md não retornaram corpo utilizável.
+Foram usados o conteúdo indexado do próprio domínio oficial e, para Uazapi, o
+OpenAPI/consolidado público equivalente. Isso não certifica versão e configuração
+da instância real da Anotei. Não foram usados blogs como prova de capacidade.
