@@ -48,3 +48,15 @@ NOVO PEDIDO DE BRUNO — SEGUNDO CONJUNTO EM ANDAMENTO
 Após validar este conjunto, foram atribuídos: cancelamento natural de entradas por data/última origem comprovada; respostas WhatsApp mais claras e curtas; limpeza de conteúdo sensível ao perder sessão; projeção segura do estado de conexão; análise de API oficial sem celular e de retenção/permissões. Essas alterações não estão incluídas no commit nem nas contagens acima. Mudar o provedor, desconectar o número ou apagar históricos não foi executado.
 
 Relatórios específicos e SHAs das frentes documentam reproduções, contratos, fontes e limitações. Nenhuma exceção para um telefone foi usada como solução geral.
+
+FECHAMENTO DO SEGUNDO CONJUNTO
+
+O incremento WhatsApp foi integrado e validado localmente na fonte
+142147491f6c6b74c75c2853e424fd5a647cee99. Tipos, 517 testes, build e 7 verificações
+HTTP aprovados. O relatório 02-whatsapp-conversacao-e-privacidade.txt e o arquivo
+rodada-02-validacao.json documentam escopo, comparação do avaliador original e
+sua classificação explícita, 6 fallbacks ainda não avaliados por modelo real,
+privacidade e limites. A seção anterior “em andamento” registra o estado ao
+fechar CORE01, não o estado final deste incremento. Nenhuma publicação ou
+migração remota foi executada. As prioridades arquiteturais abertas continuam
+abertas.

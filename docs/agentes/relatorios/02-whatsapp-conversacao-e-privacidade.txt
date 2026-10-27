@@ -183,3 +183,25 @@ https://docs.uazapi.com/docs/collections/message-history-retention.md
 As páginas técnicas Meta de migração/coexistência não puderam ser totalmente
 consultadas por restrição/429. Por isso não foi prometida elegibilidade, duração
 do corte, retenção específica Meta ou preço por conversa para este número.
+
+VALIDAÇÃO CONJUNTA FINAL — FONTE 142147491f6c6b74c75c2853e424fd5a647cee99
+
+Tipos: saída 0, 85,445 s. Suíte integrada: 517/517, zero falhas ou testes pulados,
+85,852 s de processo (85,340 s informados pelo runner). Build Next 16.4.3: saída 0,
+400,926 s. HTTP: 7/7, 52,457 s, loopback sintético; o script encerrou o servidor
+e restaurou os arquivos gerados. API mobile segue desligada por padrão no produto.
+
+Avaliador QA original byte a byte:
+SHA256 3eeed3e55374053083d018c7e3757f6e9da7683c43bb37f6a09325582495d3f4
+Resultado: 4/8 antes → 7/8 final. O único erro restante é SETUP exigir chamada
+ao modelo para “Cancela a grana que eu disse.” quando agora há CLARIFY local
+seguro. Essa execução terminou com saída 1 e foi preservada, não apresentada
+como 8/8. No avaliador classificado feb2e52, que exige segurança também na rota
+local, 8/8 grupos passaram dentro da suíte integrada. A matriz de 14 frases
+terminou com 8 decisões locais adequadas, zero inadequadas e 6 fallbacks que
+continuam sem avaliação por modelo real.
+
+Os tempos acima são de testes/build, não de atendimento em produção. Custo pago
+desta execução: zero; custo por comando real e latência ponta a ponta não
+medidos. Não foram enviados pedidos a clientes. Não foi feita publicação,
+migração remota ou desconexão do WhatsApp.

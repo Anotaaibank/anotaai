@@ -1,0 +1,138 @@
+{
+  "date": "2026-10-27",
+  "source_commit": "142147491f6c6b74c75c2853e424fd5a647cee99",
+  "branch": "codex/hardening-20261027",
+  "publication": "not published",
+  "paid_calls": 0,
+  "production_writes": 0,
+  "web": {
+    "at": "2026-10-27T18:00:41.539Z",
+    "isolated": true,
+    "paid_calls": 0,
+    "production_writes": 0,
+    "results": [
+      {
+        "name": "typecheck",
+        "exit": 0,
+        "duration_ms": 85445
+      },
+      {
+        "name": "tests",
+        "exit": 0,
+        "duration_ms": 85852
+      },
+      {
+        "name": "build",
+        "exit": 0,
+        "duration_ms": 400926
+      }
+    ],
+    "tests": {
+      "total": 517,
+      "passed": 517,
+      "failed": 0
+    },
+    "evidence": ".data/hardening-evidence/core02-final"
+  },
+  "http": {
+    "status": "passed",
+    "command": "node scripts/smoke-mobile-api.mjs",
+    "at": "2026-10-27T18:02:21.696Z",
+    "duration_ms": 52457,
+    "checks": [
+      {
+        "name": "WhatsApp view identity comes from the authenticated cookie, not the query",
+        "passed": true
+      },
+      {
+        "name": "anonymous WhatsApp view returns no viewer identity or history",
+        "passed": true
+      },
+      {
+        "name": "existing-account login through native HTTP gateway",
+        "passed": true
+      },
+      {
+        "name": "prepare does not mutate balance",
+        "passed": true
+      },
+      {
+        "name": "income, expense, future payable, appointment and replay persist exactly once",
+        "passed": true
+      },
+      {
+        "name": "owner spoofing is rejected over HTTP",
+        "passed": true
+      },
+      {
+        "name": "logout revokes native HTTP session",
+        "passed": true
+      }
+    ],
+    "synthetic": true,
+    "paid_calls": 0,
+    "production_writes": 0,
+    "source_commit": "142147491f6c6b74c75c2853e424fd5a647cee99"
+  },
+  "independent_qa": {
+    "original_frozen": {
+      "before": {
+        "passed": 4,
+        "total": 8,
+        "duration_ms": 5499.0733
+      },
+      "after_first_increment": {
+        "passed": 6,
+        "total": 8,
+        "duration_ms": 5656.9292
+      },
+      "final": {
+        "executor": "orchestrator, byte-identical QA evaluator in ignored temporary .data path",
+        "sha256": "3eeed3e55374053083d018c7e3757f6e9da7683c43bb37f6a09325582495d3f4",
+        "passed": 7,
+        "total": 8,
+        "exit": 1,
+        "duration_ms": 7014.644,
+        "remaining_failure": "SETUP requires model.calls()===1 for grana; new terminal safe CLARIFY reaches no model. This is not silently counted as an unchanged-evaluator pass.",
+        "evidence": ".data/hardening-evidence/core02-final/original-frozen-evaluator.log"
+      }
+    },
+    "classification_change": {
+      "source": "feb2e52145babc5fb0e2562241c6134dc6b6051d",
+      "reason": "Accept safe local CLARIFY without claiming model boundary exercised; keep target rejection when model is reached",
+      "intermediate": {
+        "passed": 7,
+        "total": 8,
+        "duration_ms": 6415.739
+      }
+    },
+    "final": {
+      "executor": "orchestrator full integrated suite",
+      "evaluator_commit": "feb2e52145babc5fb0e2562241c6134dc6b6051d",
+      "passed_groups": 8,
+      "total_groups": 8,
+      "holdout": {
+        "total": 14,
+        "adequate": 8,
+        "incorrect": 0,
+        "model_fallback_unevaluated": 6
+      },
+      "note": "The raw root diagnostic uses the test default before label; it is NOT a baseline run. Immutable before evidence is stored separately. Independent specialist rerun is recorded separately when available."
+    },
+    "not_a_general_language_accuracy": true
+  },
+  "real_model": "not exercised",
+  "real_asr": "not exercised",
+  "real_whatsapp": "not exercised",
+  "native": "Previously validated 17 tests/types/lint; latest dependency check blocked bundles by release-age policy. Not certified on a device.",
+  "database": "Core01 real disposable PG17.11:9 fixtures,202/202 versus163/202; no SQL changed in Core02; no remote migration applied.",
+  "open": [
+    "durable REQUEST acceptance/recovery",
+    "uncertain WhatsApp delivery reconciliation",
+    "production configuration/RLS/backups verification",
+    "shared state and load evaluation",
+    "actual business-number Cloud API eligibility and migration",
+    "retention policy and support access",
+    "native Expo configuration/bundles/device release gates"
+  ]
+}

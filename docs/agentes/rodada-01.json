@@ -19,7 +19,7 @@
         "manifesto de bootstrap"
       ],
       "workspace": "C:\\Users\\BRUNOL~1\\AppData\\Local\\Temp\\anotei-hardening-TWxG2B\\qa",
-      "status": "integrated; final combined regression pending",
+      "status": "integrated; Core01 real PG approved; Core02 final web gate approved",
       "managed_workspace_pending": "C:\\Users\\Bruno Lira\\.codex\\worktrees\\anotei-qualidade-seguranca\\Anota aí",
       "isolation": "temporary git worktree verified at base commit",
       "integrated_commits": [
@@ -113,7 +113,7 @@
         "testes próprios"
       ],
       "workspace": "C:\\Users\\BRUNOL~1\\AppData\\Local\\Temp\\anotei-hardening-TWxG2B\\produto",
-      "status": "integrated; independent code review in progress",
+      "status": "integrated; independent review and Core01 combined gate approved",
       "managed_workspace_pending": "C:\\Users\\Bruno Lira\\.codex\\worktrees\\produto-plan-flow\\Anota aí",
       "isolation": "temporary git worktree verified at base commit",
       "integrated_commits": [
@@ -141,20 +141,21 @@
     "browser_review": "Two CUA state/tab calls timed out. Synthetic loopback server started/stopped; no visual claim."
   },
   "next_tasks_after_first_patches": [
-    "Recuperação de REQUEST e envios incertos com reconciliação",
-    "Validação integral de JSON/null nos RPCs financeiros",
-    "Recibo financeiro uniforme nos canais web",
-    "Onboarding pós-commit e vínculo seguro de telefone",
-    "Sessões/limitadores compartilhados, consultas e lembretes por vencimento",
-    "Regras comerciais de renovação e cartão somente após decisão correspondente"
+    "durable REQUEST acceptance/recovery",
+    "uncertain WhatsApp delivery reconciliation",
+    "production configuration/RLS/backups verification",
+    "shared state and load evaluation",
+    "actual business-number Cloud API eligibility and migration",
+    "retention policy and support access",
+    "native Expo configuration/bundles/device release gates"
   ],
   "updated_on": "2026-10-27",
-  "integration_commit": "2c2a3f0178fddb57c7334c0a9259eefe2113d291",
+  "integration_commit": "142147491f6c6b74c75c2853e424fd5a647cee99",
   "followups": [
     {
       "id": "BS-B",
       "owner": "Backend + QA",
-      "status": "integrated; real PG202/202,9fixtures; root full pending",
+      "status": "integrated; PG202/202 and9fixtures; Core01 combined types/tests/build approved",
       "commits": [
         "00f9f4a",
         "21e4f1d",
@@ -180,12 +181,12 @@
     {
       "id": "BS-C",
       "owner": "Backend + IA + QA",
-      "status": "global REQUEST lease contract in review; NOT implemented"
+      "status": "global durable REQUEST contract designed; NOT implemented; remains open"
     },
     {
       "id": "IM-B",
       "owner": "Interface e Mobile",
-      "status": "mature SDK58 patches and strict age gate under validation; new immature catalog patches may block bundles"
+      "status": "mature SDK58 patches integrated; types/lint17tests passed; dependency freshness gate blocked bundles; no device certification"
     },
     {
       "id": "PA-B",
@@ -207,38 +208,38 @@
     {
       "id": "I18N-followup",
       "owner": "Produto",
-      "status": "new labels, balance guidance and en-US translation in progress"
+      "status": "integrated; current-balance and WhatsApp labels en-US preserved"
     },
     {
       "id": "IW-D",
       "owner": "IA + independent QA/Produto",
-      "status": "local cancellation patch in review; worker context and model target evidence gates being tested; not yet integrated"
+      "status": "integrated; signed income cancellation, sender provenance, target-proof boundary, edit safeguards; final independent evaluation recorded separately"
     },
     {
       "id": "PA-C",
       "owner": "Produto + IA",
-      "status": "pure message formatter integrated in 94406b2; runtime wrapper pending IW-D",
+      "status": "pure formatter and worker wrapper integrated; no invented totals or success",
       "source": "db9febf7199e3f56481065116050475d67a81dfa"
     },
     {
       "id": "PRIV-B",
       "owner": "Backend + QA",
-      "status": "connection projection integrated in205d432; fake-provider tests and independent read review; combined validation pending"
+      "status": "connection projection integrated; fake-provider and independent review approved; final web gate approved"
     },
     {
       "id": "PRIV-B2",
       "owner": "Backend + Interface + QA",
-      "status": "server-derived viewer identity envelope in progress, to prevent old drafts crossing an account change"
+      "status": "server-derived viewer identity integrated; authenticated and anonymous HTTP checks passed"
     },
     {
       "id": "PRUI-A",
       "owner": "Interface + QA",
-      "status": "revoked/suspended view protection integrated in b18d9aa; request ordering and identity incremental pending"
+      "status": "viewer binding, request ordering and fail-closed sensitive view integrated; no browser/device claim"
     },
     {
       "id": "WhatsApp Cloud API",
       "owner": "QA + Backend + Orquestrador",
-      "status": "architecture recommendation researched; no migration/account creation/disconnection; provider copies and costs require verification"
+      "status": "researched recommendation; no migration/disconnection/account creation. Number eligibility, pricing, cutover and retention require verification"
     }
   ],
   "verified_evidence": {
@@ -370,6 +371,14 @@
         "REQUEST recovery and uncertain delivery runtime remain open; pure delivery policy is not integrated runtime",
         "CORE02 cancellation, response copy and privacy patches are not covered by this source commit"
       ]
+    },
+    "core02": {
+      "source_commit": "142147491f6c6b74c75c2853e424fd5a647cee99",
+      "report": "docs/agentes/relatorios/rodada-02-validacao.json",
+      "tests": "517/517",
+      "types": 0,
+      "build": 0,
+      "http": "7/7; isolated loopback synthetic; no production writes"
     }
   },
   "not_completed": [
