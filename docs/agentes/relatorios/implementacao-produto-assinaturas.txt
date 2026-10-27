@@ -182,3 +182,34 @@ Limitações e entrega:
 - Não existe aqui teste de autorização/RPC real; acesso efetivo permanece pendente de contrato autoritativo do Backend.
 - O teste antigo commerce-growth de relatório/campanha usava validade fixa 2026-11-10 com relógio real e falharia depois dessa data. Após autorização específica do orquestrador, passou a fornecer now explícito 2026-10-27T15:00:00Z a commerceReports e campaignResults. A intenção foi preservada e a suíte foi reexecutada com aprovação.
 - Commit funcional PA-B: 8362bbd36caa7fdcbfe30b6f7cb9ecda804440b0 — fix: separate subscription forecasts from status and payment approval. Este incremento documental segue em commit separado.
+
+10. REVISÃO INDEPENDENTE E COMPLEMENTO DE LOCALIZAÇÃO (27/10/2026)
+
+Revisão somente leitura do integrado 132b82b417d139fd2507cc4f74ba6a6c586d92f4:
+- Os seis arquivos PA-A estavam idênticos a 9259c13; os quatro arquivos funcionais PA-B, idênticos a 8362bbd.
+- Achado P2: components/ManualTransactions.tsx:15 tratava Escape no document, mesmo com diálogo nativo filho aberto, chamando onClose externo e desmontando todo o fluxo. Já o Cancelar da confirmação em Finance.tsx:24 limpava somente pending, voltando à edição. Caminho: Entradas e saídas > Entrada > preencher > conferir > Escape. Causa identificada por handlers, sem execução de navegador. Orquestrador aceitou e assumiu a correção.
+- Risco adicional de consistência, ainda não reproduzido: GETs de SubscriptionPayment.tsx:17-25 não têm versão/cancelamento entre polling e Verificar liberação. Uma resposta antiga PENDENTE pode sobrescrever resposta mais recente APROVADO/access=true até o próximo polling. Não há cobrança ou POST de pagamento neste caminho. Caso com transporte controlado foi sugerido como backlog, não tratado como bug visual observado.
+- Não houve alteração de arquivos, teste executado ou QA visual nessa revisão. CUA indisponível conforme comunicado pelo orquestrador; as duas tentativas de timeout foram dele, não minhas.
+
+Revisão somente leitura do integrado 9369b43acdbbd1e946236f9497bd6927594ead5f, com root 4cef4a8:
+- Finance.tsx:33 direciona conta configurada a balance, e primeiro cadastro a profile. BalanceAdjustment.tsx:18 prepara balance_adjust com alvo em centavos, sem criar INCOME nem alterar PROFILE.
+- /api/finance/route.ts:7 exige titular autenticado, prepara confirmação assinada e só retorna gravação após verifiedFinanceReceipt. lib/finance.ts:27-32 prepara conciliação; :77-85 exige perfil, coerência dos valores e basis_hash/saldo anterior antes da aplicação. A revisão não executou SQL nem nova suite de domínio.
+- Busy bloqueia submit, fieldset, fechamento do cabeçalho e cancelamento nativo. Erro de preparação permanece no editor; erro de confirmação permanece no resumo. Nenhum novo bloqueio de gravação foi encontrado no escopo lido.
+- ManualTransactions.tsx:16 agora deixa Escape/Tab com dialog[open]. FinancialDialog.tsx:11-13 reage a active; ManualIncomeForm usa active=false ao confirmar, mantendo estado do formulário e fechando o diálogo inativo.
+- Achado adicional: BalanceAdjustment era desmontado durante pending (Finance.tsx:37); Cancelar/Escape retornava campo ao saldo anterior, perdendo o alvo digitado (BalanceAdjustment.tsx:11). Exemplo estático: 1.100 > digitar 1.500 > conferir > cancelar > reaparece 1.100. Não há perda de dado já salvo. Orquestrador aceitou e corrigiu em 61d535d19fc0fb578b12383d313baf59b76bf81d.
+- Li o diff 4cef4a8..61d535d: BalanceAdjustment permanece montado em wrapper hidden, recebe active=false na confirmação e reabre com o draft. O teste adicionado exercita prepare > pending > cancel > mesmo valor 1.500,00, com hooks/transporte simulados. Não reexecutei o teste nem considero isso prova de foco no navegador. A validação informada pelo root é 14/14 dirigidos; não é resultado de execução desta frente.
+
+Complemento funcional de localização — a6e6b2807e10b9525574fce42b149af208c52bb4:
+- Somente lib/i18n/en-US.json (+42 entradas), lib/assistant-guide.ts (screenGuide.dinheiro.steps) e lib/user-manual.json (steps de meu-dinheiro).
+- Fontes exatas de texto lidas por git show: PA-B 8e8346a e IM03 4cef4a8. Nenhum componente, env, credencial ou dependência foi copiado/cherry-picked. Root informou que 61d535d não acrescenta texto e a leitura do diff confirma.
+- Termos de interface distinguem current balance, opening balance e income. A explicação do ajuste preserva base/histórico e não o chama de ganho ou despesa. Previsão de planos continua distinta de dinheiro recebido; Pix continua validação administrativa histórica; acesso efetivo permanece não apurado.
+- Os passos de Meu dinheiro usam os nomes atuais e incluem o caminho Ajustar saldo atual > Conferir ajuste > resumo > confirmação. As dezoito outras seções do manual, e os demais campos da seção Meu dinheiro, foram comparados estruturalmente e permaneceram iguais. O guia mudou somente os passos dessa tela, sem ferramentas, regras de interpretação, contratos de IA ou funções.
+- PT-BR original, dados, moeda, valores enviados, URLs e callbacks não foram alterados. Inglês é de apresentação; entrada decimal continua no formato brasileiro explicado pelo app. Não houve tradução remota ou chamada paga.
+
+Validação executada:
+node --experimental-strip-types --test --test-isolation=none tests/localization.test.ts tests/assistant-persona.test.ts
+Resultado: 20/20 aprovados, 0 falhas, em 4.565,5884 ms. Log ignorado: .data/product-locale-tests.log. Testes existentes incluem integridade de BRL/dados/URLs/callbacks, preferência de idioma, guia e contratos de voz. Não medem qualidade de áudio/modelo real nem interação visual.
+
+Conferência adicional por AST/JSON, via stdin local: 37 textos novos de componentes identificados nos commits fonte, nenhum sem entrada de catálogo; títulos/textos de todos os passos de Meu dinheiro com tradução; 18 outras seções e campos fora de steps inalterados. A primeira versão dessa conferência tratou o símbolo × como letra por usar intervalo Unicode amplo; corrigi o filtro para excluí-lo, sem adicionar tradução artificial para pontuação. Conferência final passou. git diff --check também passou.
+
+Não executei types, build, suite pesada, browser, mobile, SQL, chamadas de IA/WhatsApp, push ou deploy nesta etapa; a janela de validação final pertence ao root. Não alterei componentes financeiros. Commit funcional foi comunicado imediatamente para integração antes deste relatório. Este relatório segue em commit documental separado.
