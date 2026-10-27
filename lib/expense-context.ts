@@ -13,13 +13,20 @@ export function expenseContext(text:string,category:string){
  const nature:ExpenseNature=/\b(superflu[oa]s?|opciona(?:l|is))\b/.test(source)?'OPCIONAL':/\b(essencial|necessari[oa]s?)\b/.test(source)?'ESSENCIAL':['Lazer','Viagem / hospedagem','Assinaturas'].includes(category)?'OPCIONAL':['Escola / educação','Plano de saúde','Saúde / medicamentos','Aluguel / moradia','Condomínio','Água','Energia elétrica','Gás','Supermercado'].includes(category)?'ESSENCIAL':'NAO_CLASSIFICADO';
  return {expense_audience:audience,expense_nature:nature};
 }
-export function expenseStatusQuestion(text:string){return /\b(?:voce\s+|ja\s+)?(?:lancou|registrou|salvou)\b|\b(?:foi|esta|ficou)\s+(?:lancad[oa]|registrad[oa]|salv[oa])\b/.test(expenseFold(text));}
+export function expenseStatusQuestion(text:string){
+ const source=expenseFold(text).trim();
+ // A relative clause about a saved record is not a receipt query when the
+ // speaker explicitly asks to create, change or remove something. Let the
+ // normal interpreter validate the intent and require signed confirmation.
+ if(/^(?:entrada|saida|agenda|agendamento)\b/.test(source)||/\b(?:corrige|corrigir|corrija|altera|alterar|altere|muda|mudar|mude|atualiza|atualizar|atualize|ajusta|ajustar|ajuste|exclui|excluir|exclua|apaga|apagar|apague|remove|remover|remova|cancela|cancelar|cancele|desfaz|desfazer|desfaca|estorna|estornar|estorne|lanca|lancar|lance|registra|registrar|registre|salva|salvar|salve)\b/.test(source))return false;
+ return /\b(?:voce\s+|ja\s+)?(?:lancou|registrou|salvou)\b|\b(?:foi|esta|ficou)\s+(?:lancad[oa]|registrad[oa]|salv[oa])\b/.test(source);
+}
 
 // Only explicit work wording can link a cash entry to extra income. A bare
 // merchant/platform name (for example an Uber passenger trip) is not evidence.
 // null means the wording needs the full interpreter; undefined means no cue.
 export function explicitWorkActivity(text:string):string|null|undefined {
- const match=text.match(/\b(?:trabalh(?:ei|ou|ando|o)\s+(?:de|como)|(?:fiz\s+(?:um\s+)?)?bico\s+de|(?:(?:prestei|prestando)\s+(?:um\s+)?|(?:para|pro)\s+(?:o\s+)?)servi[çc]o\s+de|fazendo(?=\s+(?:Uber|99|iFood)\b))\s+(.+)$/iu);
+ const match=text.match(/\b(?:trabalh(?:ei|ou|ando|o)\s+(?:de|como)|(?:fiz\s+(?:um\s+)?|(?:para|pro)\s+(?:(?:o|um)\s+)?)bico\s+de|(?:(?:prestei|prestando)\s+(?:um\s+)?|(?:para|pro)\s+(?:o\s+)?)servi[çc]o\s+de|fazendo(?=\s+(?:Uber|99|iFood)\b))\s+(.+)$/iu);
  if(!match)return undefined;
  const activity=match[1].replace(/[\s,.;!?]+$/u,'').replace(/\s+(?:por favor|viu|obrigad[oa])$/iu,'').trim();
  if(!activity||activity.length>80||/[;\n]/u.test(activity)||/\b(?:reais?|ontem|hoje|amanh[ãa]|ganhei|gastei|recebi|paguei|para|pra|com|e)\b/iu.test(activity))return null;

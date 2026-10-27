@@ -1,0 +1,59 @@
+ANOTEI — IMPLEMENTAÇÃO IA / WHATSAPP — IW-A / ORQ-04
+Data: 2026-10-27. Frente especializada, sob coordenação do orquestrador.
+
+ISOLAMENTO E VERSÃO
+Worktree exclusivo: C:\Users\BRUNOL~1\AppData\Local\Temp\anotei-hardening-TWxG2B\ia
+Branch: codex/ia-whatsapp-rules
+Base: 5ba5048da7703663431db273ba6f25bbb14e92cd
+Primeiro commit: 0f68358f4fc0c817fbd55268cca486302b78f71e (IW-01).
+As alterações restantes e este relatório seguem em commit incremental, sem rebase.
+Não houve push, deploy, SQL remoto, build completo, WhatsApp real ou chamada paga.
+Não foram copiados .env, .data, credenciais ou banco do checkout original.
+Dependências: pnpm install --offline --frozen-lockfile --ignore-scripts; 28 pacotes reutilizados, zero downloads. Package/lock preservados.
+
+IW-01 — CAUSA, CORREÇÃO E LIMITES
+O protocolo literal em command-prefix produzia income_upsert / expense_create sem activity / income_activity. draftCommand retorna esse protocolo validado antes de tentar o modelo: o modelo não poderia reparar a informação perdida. A persistência e as somas já suportavam esses campos.
+O prefixo agora preserva a atividade explicitamente indicada por trabalho/bico/serviço e o vínculo do custo, mantendo as mesmas operações existentes, status, data, categoria e forma de pagamento. A validação de evidência aceita serviço explicitamente mencionado. A regra incompleta encaminha a mensagem ao intérprete completo.
+Não transforma Uber passageiro, serviço pessoal de manicure, salário, venda de bicicleta ou compra de bico de pato em atividade profissional. O complemento incremental restringe bico a frases de trabalho (fiz / para o bico), evitando confundir o nome de um produto com ocupação.
+O custo reduz o caixa uma vez, compõe custo/líquido da atividade e não integra o subtotal pessoal. Datas explícitas passadas prevalecem sobre hoje. Lista de entrada e saída mantém cada vínculo. Não há regra por número ou usuário.
+A extração local permanece deliberadamente conservadora; não é uma classificação semântica universal de profissões.
+
+IW-02 — CAUSA E CORREÇÃO
+expenseStatusQuestion reconhecia lançou/registrou/salvou em qualquer posição. A rota anterior ao modelo encerrava frases como Corrige o almoço que você lançou ontem para 30 reais com o recibo antigo, sem preparar alteração.
+Ordens explícitas de criar, corrigir, alterar ou remover, e prefixos operacionais, agora seguem ao intérprete normal. Consultas puras como Você já lançou? continuam somente leitura. Nenhuma operação é executada pelo detector.
+A rota de recibo foi ajustada para retornar se patchMessage perder CAS, sem enviar o objeto stale. A interface replyClaim e o armazenamento não foram alterados; o patch de Backend deve ser integrado separadamente.
+
+EVIDÊNCIA ANTES / DEPOIS
+Antes de editar implementação: tests/prefixed-activity-regression.test.ts apresentou 1/3 grupos aprovados. Falhas reproduzidas: atividade Uber ausente e atividade garçom ausente na lista. Após IW-01: 3/3 grupos; prefixos + extra-income + regressão: 13/13; tsc exit 0.
+Antes de IW-02: expense-status-routing apresentou 1/2 grupos; a correção foi identificada erroneamente como consulta de recibo. A integração nova apresentou 0/2 grupos (texto e áudio simulado), ambos encerrados como RESOLVIDO com recibo de almoço de 25 reais em vez de preparar 30 reais.
+Após IW-02: os mesmos 4 grupos de detector e integração passaram. Avaliação conjunta final: 54 testes aprovados nos sete arquivos abaixo e typecheck exit 0. Os totais são grupos de testes com várias asserções, não percentuais de compreensão da linguagem.
+
+NÍVEIS DE TESTE
+1. Regras locais reais: prefixos, vínculos, matemática, datas, lista, negativos e desvio da consulta de recibo.
+2. Modelo simulado: 2 respostas de interpretação por modalidade (uma correção por conta), com target/evidência validados pelo servidor. Isso testa o contrato, não a compreensão do modelo real.
+3. ASR simulado: 12 transcrições fixas na modalidade áudio; bytes sintéticos de fixture. Não mede reconhecimento, ruído ou qualidade de áudio real.
+4. Fila + worker + confirmação assinada + persistência SQLite reais locais: duas contas, dois remetentes por conta, presente/passado, confirmação por remetente correto, rejeição da confirmação por outro remetente, consulta sem escrita, edição de registro salvo e repetição sem duplicação. Asserções sobre saldo, renda líquida, despesas pessoais, IDs e isolamento, além das respostas.
+5. Provedor WhatsApp, modelo e transcrição de produção / Postgres remoto: NÃO EXECUTADOS. Transporte externo real: zero. Custo real desta validação: zero chamadas pagas. Não há evidência para estimar latência ou custo por comando em produção nesta rodada.
+A primeira execução conjunta levou 18.299 s para 54 testes, incluindo preparação, SQLite e múltiplos comandos; não é tempo de resposta por comando de usuário. A execução final repetida após o refinamento de bico levou 19.989 s e está no log local. A medida está sujeita à carga de I/O da máquina.
+
+COMANDOS EXECUTADOS
+node --import ./scripts/offline-validation.mjs --experimental-strip-types --test --test-isolation=none tests/prefixed-activity-regression.test.ts
+node --import ./scripts/offline-validation.mjs --experimental-strip-types --test --test-isolation=none tests/expense-status-routing.test.ts
+node --import ./scripts/offline-validation.mjs --experimental-strip-types --test --test-isolation=none tests/whatsapp-iw-regression.test.ts
+node --import ./scripts/offline-validation.mjs --experimental-strip-types --test --test-isolation=none tests/prefixed-activity-regression.test.ts tests/expense-status-routing.test.ts tests/whatsapp-iw-regression.test.ts tests/command-prefix.test.ts tests/extra-income.test.ts tests/whatsapp-worker.test.ts tests/whatsapp-context-integrity.test.ts
+node node_modules/typescript/bin/tsc --noEmit
+git diff --check
+Log sintético da execução conjunta final: .data/iw-targeted-after.log (ignorado, fora do commit).
+
+ARQUIVOS E INTEGRAÇÃO
+lib/command-prefix.ts; lib/expense-context.ts; lib/finance-ai.ts; lib/whatsapp-worker.ts (somente rota de consulta).
+tests/prefixed-activity-regression.test.ts; tests/expense-status-routing.test.ts; tests/whatsapp-iw-regression.test.ts; este relatório.
+Sem alterações em whatsapp-store, SQL, Next APIs, versões, configuração de produção ou limites comerciais.
+O orquestrador deve integrar os SHAs incrementais, executar os testes/builds conjuntos e aplicar revisão independente. Nenhuma liberação de produção foi feita por esta frente.
+
+PENDÊNCIAS FORA DESTE PATCH
+IW-03/04: recuperação/reconciliação de outbox e ACK dependem de desenho coordenado; sem reenvio automático incerto.
+IW-05: idioma da resposta de voz; IW-06: fronteira de novo comando em casos não cobertos pelo parser local.
+IW-07: latência/custo de ponta a ponta real ainda sem medição nesta rodada.
+IW-08/PA-12: planejar migração do modelo de transcrição antes da desativação anunciada, sem trocar modelo agora.
+Demais falhas desconhecidas da linguagem natural não foram demonstradas como resolvidas por estes testes.

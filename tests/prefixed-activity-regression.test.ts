@@ -43,7 +43,7 @@ test('IW-01: lista prefixada mantém o vínculo de cada item e soma o caixa uma 
 
 test('IW-01: passageiro, salário e venda pessoal não ganham atividade de trabalho por inferência',async()=>{
  const user=account();
- for(const text of ['Saída 35 reais de Uber para ir ao trabalho','Saída 25 reais peguei Uber como passageiro','Saída 100 reais serviço de manicure']){const p=await proposal(text,user);assert.equal(p.expenses.length,1);assert.equal(p.expenses[0].payload.details.income_activity,undefined);}
+ for(const text of ['Saída 35 reais de Uber para ir ao trabalho','Saída 25 reais peguei Uber como passageiro','Saída 100 reais serviço de manicure','Saída 12 reais bico de pato']){const p=await proposal(text,user);assert.equal(p.expenses.length,1);assert.equal(p.expenses[0].payload.details.income_activity,undefined);}
  const salary=await proposal('Entrada 6000 reais salário',user);assert.equal(salary.documents[0].document.details.salary,true);assert.equal(salary.documents[0].document.details.activity,undefined);
  const sale=await proposal('Entrada 400 reais vendi minha bicicleta',user);assert.equal(sale.documents[0].document.details.activity,undefined);
 });

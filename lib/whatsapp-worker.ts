@@ -77,7 +77,7 @@ export async function processMessage(row:Inbox){
   // incomplete turn. The old edit is cancelled, never silently saved.
   const newRequest=independentFinanceRequest(transcript,today);
   if(newRequest)for(const pending of recent.filter(r=>r.finance_confirmation?.startsWith(editingPrefix)&&!r.confirmation_used))await patchMessage(pending,{confirmation_used:true,finance_confirmation:''});
-  if(expenseStatusQuestion(transcript)){const last=recent.find(r=>r.status==='LANCADO');await patchMessage(row,{status:'RESOLVIDO',reply:last?'Seu último lançamento foi registrado. '+last.reply:'Não encontrei um lançamento confirmado nos últimos 15 minutos. Confira seu histórico no painel.'});await reply(row,b);return;}
+  if(expenseStatusQuestion(transcript)){const last=recent.find(r=>r.status==='LANCADO');if(!await patchMessage(row,{status:'RESOLVIDO',reply:last?'Seu último lançamento foi registrado. '+last.reply:'Não encontrei um lançamento confirmado nos últimos 15 minutos. Confira seu histórico no painel.'}))return;await reply(row,b);return;}
   const feedbackChoice=whatsappFeedbackChoice(transcript,recent,row.user_id,row.sender,financeSecret());
   if(feedbackChoice){if(!feedbackChoice.cancel)await sendFeedbackForBot(row.user_id,feedbackChoice.plan.feedback,row);const original=recent.find(item=>item.confirmation_code===feedbackChoice.pending.confirmation_code);if(original)await patchMessage(original,{confirmation_used:true,finance_confirmation:''});await patchMessage(row,{status:'RESOLVIDO',reply:feedbackChoice.cancel?'*Feedback cancelado*\n\nNenhum feedback foi enviado.':feedbackReply(feedbackChoice.plan)});await reply(row,b);return;}
   const confirmation=confirmedWhatsappPlan(transcript,recent,row.user_id,row.sender,financeSecret());
