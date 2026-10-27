@@ -55,7 +55,15 @@ test('falha conserva stdout de casos, fixture responsável e aprovações anteri
   ]), error => {
     assert.equal(error.fixture, 'regression.sql'); assert.equal(error.stdout, failure.stdout);
     assert.equal(error.stderr, failure.stderr);
-    assert.deepEqual(error.completed_checks, [{file: 'first.sql', passed: true, rolled_back: true}]); return true;
+    assert.deepEqual(error.completed_checks, [{file: 'first.sql', passed: true, rolled_back: true, stdout: ''}]); return true;
   });
   assert.equal(stopped, true);
+});
+
+test('falha de cleanup não esconde causa primária nem a fase de startup', async () => {
+  const backend = {start: async () => {throw Error('INITDB_TIMEOUT');}, query: async () => '', stop: async () => {throw Error('CLUSTER_PRESERVED');}};
+  await assert.rejects(() => runChecks(backend, createRun(), 'select 1;', []), error => {
+    assert.equal(error.message, 'INITDB_TIMEOUT'); assert.equal(error.phase, 'startup');
+    assert.equal(error.cleanup_error, 'CLUSTER_PRESERVED'); return true;
+  });
 });

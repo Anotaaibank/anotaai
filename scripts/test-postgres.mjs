@@ -1,5 +1,5 @@
 import {spawnSync} from 'node:child_process';
-import {readFileSync, writeFileSync, mkdirSync, mkdtempSync, realpathSync, lstatSync, rmSync, existsSync} from 'node:fs';
+import {readFileSync, writeFileSync, mkdirSync, mkdtempSync, realpathSync, lstatSync, rmSync, existsSync, openSync, closeSync} from 'node:fs';
 import {resolve, join, basename, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {tmpdir} from 'node:os';
@@ -11,14 +11,17 @@ import {parseArguments, freshEnvironment, createRun, loadManifest, safeSqlPath, 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const queryOptions = ['--no-psqlrc', '--no-password', '--set=ON_ERROR_STOP=1', '--tuples-only', '--no-align', '--username=postgres'];
 const markerSql = "select current_setting('anotei.test_run',true);";
-function execute(command, args, {input, env = freshEnvironment(), timeout = 60000, capture = true} = {}) {
-  const result = spawnSync(command, args, {input, env, stdio: capture ? 'pipe' : 'ignore', encoding: 'utf8', windowsHide: true, shell: false, timeout, maxBuffer: 8 * 1024 * 1024});
-  if (result.error) throw Error('Falha ao executar ' + basename(command) + ': ' + result.error.code);
-  if (result.status !== 0) {
-    const error = Error(basename(command) + ' falhou: ' + String(result.stderr || result.stdout).slice(-5000));
+function execute(command, args, {input, env = freshEnvironment(), timeout = 60000, capture = true, logFile} = {}) {
+  const fd = logFile ? openSync(logFile, 'a') : undefined;
+  let result;
+  try {result = spawnSync(command, args, {input, env, stdio: fd !== undefined ? ['ignore', fd, fd] : capture ? 'pipe' : 'ignore', encoding: 'utf8', windowsHide: true, shell: false, timeout, maxBuffer: 8 * 1024 * 1024});}
+  finally {if (fd !== undefined) closeSync(fd);}
+  if (result.error || result.status !== 0) {
+    const diagnostic = result.stderr || result.stdout || (logFile ? readFileSync(logFile, 'utf8') : '') || ('exit=' + result.status + ', signal=' + result.signal);
+    const error = Error(basename(command) + ' falhou' + (result.error ? ' (' + result.error.code + ')' : '') + ': ' + diagnostic.slice(-5000));
     // Synthetic disposable SQL only. Preserve both streams: stderr alone loses
     // the case-by-case SELECT results printed before an expected assertion.
-    error.stdout = result.stdout ?? ''; error.stderr = result.stderr ?? '';
+    error.stdout = result.stdout ?? ''; error.stderr = result.stderr ?? diagnostic;
     throw error;
   }
   return result.stdout ?? '';
@@ -70,11 +73,13 @@ async function portableBackend(bin, run, manifest) {
   let started = false;
   return {
     async start() {
-      execute(executable('initdb'), ['--pgdata', data, '--username=postgres', '--encoding=UTF8', '--locale=C', '--auth=scram-sha-256', '--pwfile', passwordFile], {env});
+      // Disposable test cluster only: skip the initial durability sync. Never
+      // reuse this data directory for production or claim crash-recovery tests.
+      execute(executable('initdb'), ['--pgdata', data, '--username=postgres', '--encoding=UTF8', '--locale=C', '--auth=scram-sha-256', '--pwfile', passwordFile, '--no-sync'], {env, timeout: 180000, logFile: join(temporary, 'initdb.log')});
       // No service installation, inherited PG settings or wildcard listener.
       // Do not let the long-lived Windows server inherit Node's capture pipes.
       // The server writes to its own private log, rather than a parent pipe.
-      try {execute(executable('pg_ctl'), ['--pgdata', data, '--log', join(temporary, 'server.log'), '--wait', '--timeout=30', '--options', '-h 127.0.0.1 -p ' + port + ' -c anotei.test_run=' + run.marker, 'start'], {env, capture: false});}
+      try {execute(executable('pg_ctl'), ['--pgdata', data, '--log', join(temporary, 'server.log'), '--wait', '--timeout=30', '--options', '-h 127.0.0.1 -p ' + port + ' -c anotei.test_run=' + run.marker, 'start'], {env, logFile: join(temporary, 'pgctl.log')});}
       catch (error) {const log = join(temporary, 'server.log'); throw Error(error.message + (existsSync(log) ? '\n' + readFileSync(log, 'utf8').slice(-4000) : ''));}
       started = true;
     },
@@ -88,11 +93,11 @@ async function portableBackend(bin, run, manifest) {
       if (lstatSync(temporary).isSymbolicLink() || dirname(realpathSync(temporary)) !== parent || !basename(temporary).startsWith('anotei-pg-' + run.id + '-') || JSON.parse(readFileSync(join(temporary, 'owner.json'), 'utf8')).id !== run.id) throw Error('Limpeza recusada: pasta não pertence ao teste.');
       // pg_ctl can start Postgres and still time out. Never remove a live data
       // directory merely because the start call did not return successfully.
-      if (started || existsSync(join(data, 'postmaster.pid'))) {execute(executable('pg_ctl'), ['--pgdata', data, '--wait', '--timeout=30', '--mode=immediate', 'stop'], {env, capture: false}); started = false;}
+      if (started || existsSync(join(data, 'postmaster.pid'))) {execute(executable('pg_ctl'), ['--pgdata', data, '--wait', '--timeout=30', '--mode=immediate', 'stop'], {env, logFile: join(temporary, 'pgctl.log')}); started = false;}
       if (existsSync(join(data, 'postmaster.pid'))) throw Error('Cluster ainda ativo: diretório preservado.');
       rmSync(temporary, {recursive: true, force: false});
     },
-    metadata: {engine: 'portable', postgres_major: manifest.postgres_major, host: '127.0.0.1', port, fresh_cluster: true}
+    metadata: {engine: 'portable', postgres_major: manifest.postgres_major, host: '127.0.0.1', port, fresh_cluster: true, initdb_sync: false}
   };
 }
 async function renderFixture(file, sql) {
@@ -107,22 +112,32 @@ async function renderFixture(file, sql) {
   return sql.replace(/__[A-Z_]+__/g, name => {if (!(name in replacements)) throw Error('Placeholder desconhecido.'); return replacements[name];});
 }
 export async function runChecks(backend, run, bootstrap, fixtures) {
+  let phase = 'startup', failure;
   try {
     await backend.start();
+    phase = 'verify-marker';
     assertMarker(await backend.query(markerSql, 'postgres'), run);
+    phase = 'create-database';
     await backend.query('CREATE DATABASE ' + run.database + ';', 'postgres');
+    phase = 'bootstrap';
     await backend.query('BEGIN;\n' + bootstrap + '\nCOMMIT;');
+    phase = 'fixture';
     const checks = [];
     for (const {file, sql} of fixtures) {
+      let stdout = '';
       try {
-        await backend.query(fixtureTransaction(sql));
+        stdout = await backend.query(fixtureTransaction(sql));
         const leftover = await backend.query('select count(*) from auth.users;');
         if (leftover.trim() !== '0') throw Error('Fixture deixou resíduos: ' + file);
       } catch (error) {error.fixture = file; error.completed_checks = [...checks]; throw error;}
-      checks.push({file, passed: true, rolled_back: true});
+      checks.push({file, passed: true, rolled_back: true, stdout});
     }
     return checks;
-  } finally {await backend.stop();}
+  } catch (error) {failure = error; error.phase = phase; throw error;}
+  finally {
+    try {await backend.stop();}
+    catch (cleanup) {if (failure) failure.cleanup_error = cleanup.message; else {cleanup.phase = 'cleanup'; throw cleanup;}}
+  }
 }
 async function main() {
   const options = parseArguments(process.argv.slice(2)), manifest = loadManifest(root), run = createRun();
@@ -138,6 +153,8 @@ async function main() {
     evidence.passed = false; evidence.error = error.message;
     evidence.checks = error.completed_checks ?? [];
     evidence.failure_fixture = error.fixture ?? null;
+    evidence.failure_phase = error.phase ?? null;
+    if (error.cleanup_error) evidence.cleanup_error = error.cleanup_error;
     mkdirSync(resolve(root, '.data'), {recursive: true});
     for (const stream of ['stdout', 'stderr']) if (typeof error[stream] === 'string') {
       const artifact = '.data/postgres-test-failure.' + stream + '.log';

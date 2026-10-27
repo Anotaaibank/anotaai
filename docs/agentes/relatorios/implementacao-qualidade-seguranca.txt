@@ -134,3 +134,67 @@ Isto nao prova exactly-once no provedor WhatsApp, recuperacao de ENVIANDO,
 entrega real, carga, RLS remoto ou SupabaseAuth. A migracao e o worker devem
 seguir o rollout coordenado descrito pelo Backend; nenhum rollout foi feito.
 Build completo permanece com o orquestrador. Nao foi habilitada API mobile.
+
+5. BS-B - COMPARACAO ANTES/DEPOIS EM POSTGRESQL REAL
+
+Baseline preservada ANTES de integrar qualquer SQL de BS-B. Runner continha
+base9+migracoes8 (CAS), SEM finance_document_null_validation.sql. Copiado
+somente o novo fixture do Backend apos combinar guard marker+nome do banco.
+O fixture exige anotei.test_run e anotei_test_<UUID> correspondentes; nenhuma
+flag generica permite usa-lo acidentalmente em banco existente.
+
+Antes, UTC 2026-10-27T16:11:25.849Z, 57.314 ms:
+  8 fixtures anteriores aprovadas; nona FALHOU como esperado, exit1.
+  finance-document-validation: 202 casos, 163 corretos, 39 divergencias.
+  Todos os 39 divergentes eram documentos invalidos aceitos indevidamente.
+  Exemplos: APPOINTMENT.done ausente; id/date/description/status nulos;
+  INCOME.salary ausente; RESERVE.rate_percent/rate_period ausentes;
+  TRANSFER.reserve_id/direction ausentes/nulos; BILL_RULE.payment_method nulo;
+  APPOINTMENT.time/location nulos ou location numerico.
+  Erro final: FINANCE_VALIDATION_REGRESSION. Nao e falha do harness nem teste
+  aprovado. A conexao da fixture falha foi encerrada e o cluster removido.
+  Hash do bootstrap: cbd3e9962e6e46b27826eede7a710155d6988ae1ada6bb318928cf1baca1924e.
+
+Depois de integrar Backend original c34e61ca4cb7121e74ab2d96f2763a04c7a6d34b
+(copia QA 436589c), cadeia base 9 + migracoes 9 e 9 fixtures, PG 17.11 REAL:
+  UTC 2026-10-27T16:23:09.812Z, 38.952 ms, exit 0, 9/9 com rollback.
+  MESMOS 202 casos: 202 corretos, ZERO divergencias; stdout 202|202|0.
+  Hash bootstrap: 94790707e9e9751e7397fe2c10a782a33af83e38a937c2cb4c3e3f0157419095.
+  Conteudo do fixture identico antes/depois, SHA256 normalizado LF:
+  8311ac19e759ae82a8fcf6fdfad22810a43804e3e0ab692c3d79223c7e00956c.
+  Hash bruto depois ad96c96190e140554517f4321a5214d8afb72d01fa74dd899e1af72c7b909831
+  difere somente por 100 quebras CRLF adicionadas pelo Git; diff textual vazio.
+  Esta comparacao mede validacao de documentos SQL, nao linguagem natural.
+  Nao e benchmark: carga/partida variaram; nenhuma melhora de latencia do
+  usuario ou custo por comando pode ser inferida destes tempos do runner.
+
+Evidencias preservadas separadamente:
+  .data/qs-cas-8of8-preserved: evidencia anterior CAS, nao sobrescrita.
+  .data/qs-bsb-before: JSON, stdout 39 casos, stderr, fixture e log da baseline.
+  .data/qs-bsb-after: JSON com stdout de cada fixture e log pos-correcao.
+  .data/qs-bsb-after-startup-failure: duas tentativas de ambiente com 0 fixtures,
+  anteriores ao sucesso. pg_ctl/cleanup de bootstrap single-user falhou sob
+  carga; nao classificados como defeito SQL. Pastas foram preservadas quando
+  o runner nao conseguiu confirmar parada. No retry aprovado, initdb --no-sync
+  (somente descartavel) e timeout 180 s; cluster final encerrado/removido.
+
+Runner agora guarda stdout de sucesso e ambos streams da falha, fixture
+responsavel, checks aprovados anteriores e fase. Cleanup nunca esconde erro
+primario. Guards 8/8, incluindo preservacao de resultados e dupla falha.
+Melhoria inicial do runner em commit QA daa56c1, separado do Backend.
+
+Regressao TypeScript BS-B nesta copia, antes da correcao do teste de origem:
+  typecheck 0; 347 testes, 324 passaram / 23 falharam. Todos os 23 em
+  finance-receipt-handlers: Origin http://receipt.test versus APP_URL
+  http://localhost:3100 do runner oficial produzia 403 antes de applyFinance.
+  Falha encaminhada ao Backend sem afrouxar sameOrigin ou mudar produto.
+  Evidencia preservada em qs-bsb-before/receipt-origin-full-suite-failure.log.
+  Backend corrigiu apenas teste no SHA 461ccb91730d9c3a1d496584cc707eda7afda4cf,
+  cherry-pick local 1f27158. Nao repetida suite completa por QA apos ajuste:
+  coordenador fara full integrado; Backend relatou 347/347 em sua copia.
+  Esses 347/347 nao sao aqui atribuidos a execucao QA.
+
+Nenhum SQL de produto foi editado pela frente QA. Commits Backend foram
+somente integrados para teste. Nenhum acesso remoto/SQL Supabase, WhatsApp real,
+chamada paga, push ou deploy. Revisao integrada independente aguarda alvo
+final do coordenador; esta validacao nao a substitui.
