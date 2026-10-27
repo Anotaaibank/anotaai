@@ -1,7 +1,7 @@
 import {fold,literalMoney,spokenNumber,moneyNumber,monetaryLiterals} from './finance-date.ts';
 import {appointmentFacts,completeCalendarPeriod} from './appointment-language.ts';
 import {personalCategory} from './personal-expenses.ts';
-import {expenseContext} from './expense-context.ts';
+import {expenseContext,explicitWorkActivity} from './expense-context.ts';
 import type {FinanceDraft} from './finance-ai.ts';
 import type {FinanceCommand} from './finance.ts';
 
@@ -57,7 +57,9 @@ export function prefixedCommand(text:string,today:string):FinanceDraft|null{
  if(!description)description=prefix.kind==='entrada'?'Entrada recebida':prefix.kind==='agenda'?'Conta a pagar':'Despesa pessoal';
  if(description.length>160)return null;
  const category=personalCategory('',description),method=/\bpix\b/.test(source)?'PIX':/\bboleto\b/.test(source)?'BOLETO':/\bdinheiro\b/.test(source)?'DINHEIRO':/\b(?:cartao|credito|debito)\b/.test(source)?'CARTAO':/\btransferencia\b/.test(source)?'TRANSFERENCIA':'OUTRO';
- const command:FinanceCommand=prefix.kind==='entrada'?{action:'income_upsert',description,amount_cents:cents,date,status,salary:/\bsalario\b/.test(source)}:{action:'expense_create',description,amount_cents:cents,date,status,category,details:{...expenseContext(text,category),payment_method:method}};
+ const salary=/\bsalario\b/.test(source),activity=salary||prefix.kind==='agenda'?undefined:explicitWorkActivity(description);
+ if(activity===null)return null; // Do not finalize an incomplete activity rule before the full interpreter.
+ const command:FinanceCommand=prefix.kind==='entrada'?{action:'income_upsert',description,amount_cents:cents,date,status,salary,...(activity?{activity}:{})}:{action:'expense_create',description,amount_cents:cents,date,status,category,details:{...expenseContext(text,category),payment_method:method,...(activity?{income_activity:activity}:{})}};
  return {...clarify(''),intent:'COMMAND',command,money_evidence:[{field:'amount_cents',excerpt:amount[0]}],date_evidence:facts.date?[{field:'date',excerpt:facts.date.excerpt}]:[]};
 }
 

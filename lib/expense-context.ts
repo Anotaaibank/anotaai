@@ -14,3 +14,14 @@ export function expenseContext(text:string,category:string){
  return {expense_audience:audience,expense_nature:nature};
 }
 export function expenseStatusQuestion(text:string){return /\b(?:voce\s+|ja\s+)?(?:lancou|registrou|salvou)\b|\b(?:foi|esta|ficou)\s+(?:lancad[oa]|registrad[oa]|salv[oa])\b/.test(expenseFold(text));}
+
+// Only explicit work wording can link a cash entry to extra income. A bare
+// merchant/platform name (for example an Uber passenger trip) is not evidence.
+// null means the wording needs the full interpreter; undefined means no cue.
+export function explicitWorkActivity(text:string):string|null|undefined {
+ const match=text.match(/\b(?:trabalh(?:ei|ou|ando|o)\s+(?:de|como)|(?:fiz\s+(?:um\s+)?)?bico\s+de|(?:(?:prestei|prestando)\s+(?:um\s+)?|(?:para|pro)\s+(?:o\s+)?)servi[çc]o\s+de|fazendo(?=\s+(?:Uber|99|iFood)\b))\s+(.+)$/iu);
+ if(!match)return undefined;
+ const activity=match[1].replace(/[\s,.;!?]+$/u,'').replace(/\s+(?:por favor|viu|obrigad[oa])$/iu,'').trim();
+ if(!activity||activity.length>80||/[;\n]/u.test(activity)||/\b(?:reais?|ontem|hoje|amanh[ãa]|ganhei|gastei|recebi|paguei|para|pra|com|e)\b/iu.test(activity))return null;
+ return activity;
+}
