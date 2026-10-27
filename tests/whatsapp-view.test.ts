@@ -15,7 +15,7 @@ const require=createRequire(import.meta.url);
 function deferred<T>(){let resolve!:(value:T)=>void,reject!:(reason:unknown)=>void;const promise=new Promise<T>((done,fail)=>{resolve=done;reject=fail;});return {promise,resolve,reject};}
 function transport(){const calls:{init:RequestInit;reply:ReturnType<typeof deferred<Response>>}[]=[];return {calls,fetch:((_url:unknown,init:RequestInit={})=>{const reply=deferred<Response>();calls.push({init,reply});return reply.promise;}) as typeof fetch};}
 const response=(status:number,data:unknown)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json'}});
-const data=(text='mensagem sintética privada')=>({can_invite:true,shared_connection:true,integration_ready:true,invitation_ready:true,ai_configured:true,connection:null,settings:{phone:'5511988880000',allowed_phones:['5511999991234'],enabled:true,status:'PRONTO',updated_at:'2026-10-27T10:00:00Z'},access_links:[{phone:'5511999991234',status:'NAO_ENVIADO'}],participants:[{phone:'5511999991234',subscriber_name:'Pessoa Sintética',registered:true,active:true,send_status:'ACEITO',expired:false}],history:[{id:'message-1',sender:'5511999991234',transcript:text,reply:'resposta sintética privada',status:'RESOLVIDO',reply_status:'ACEITO',created_at:'2026-10-27T10:00:00Z'}]});
+const data=(text='mensagem sintética privada',viewer_id='11111111-1111-4111-8111-111111111111')=>({viewer_id,can_invite:true,shared_connection:true,integration_ready:true,invitation_ready:true,ai_configured:true,connection:null,settings:{phone:'5511988880000',allowed_phones:['5511999991234'],enabled:true,status:'PRONTO',updated_at:'2026-10-27T10:00:00Z'},access_links:[{phone:'5511999991234',status:'NAO_ENVIADO'}],participants:[{phone:'5511999991234',subscriber_name:'Pessoa Sintética',registered:true,active:true,send_status:'ACEITO',expired:false}],history:[{id:'message-1',sender:'5511999991234',transcript:text,reply:'resposta sintética privada',status:'RESOLVIDO',reply_status:'ACEITO',created_at:'2026-10-27T10:00:00Z'}]});
 
 /** Actual component and handlers; fake hook scheduling, DOM lifecycle and transport. Not browser/device QA. */
 function screen(){
@@ -123,10 +123,47 @@ test('subscriber view accepts the safe connection DTO without optional pairing f
  const page=screen();page.network.calls[0].reply.resolve(response(200,{...data(),can_invite:false,connection:{configured:true,connected:true,message:'WhatsApp conectado. Use o contato da IA para enviar seus pedidos.'}}));await page.settle();assert.match(page.html(),/WhatsApp conectado/);assert.doesNotMatch(page.html(),/Código:|QR Code para conectar/);page.unmount();
 });
 
-test('temporary blur preserves manual drafts but never displays history or QR before the new access check',async()=>{
+test('same viewer A after blur preserves manual drafts but never reveals history or QR before verification',async()=>{
  const page=screen();page.network.calls[0].reply.resolve(response(200,{...data(),connection:{configured:true,connected:false,message:'conexão sintética',qr:'data:image/png;base64,AAAA'}}));await page.settle();page.fill('Ex.: Ana Silva','Rascunho de Cadastro');page.fill('Ex.: (11) 99999-9999','11911112222');page.fill('DDD + número que será conectado','11922223333');page.blur();assert.doesNotMatch(page.html(),/mensagem sintética privada|Rascunho de Cadastro|11911112222|data:image/);page.focus();assert.doesNotMatch(page.html(),/mensagem sintética privada|Rascunho de Cadastro|11911112222|data:image/);page.network.calls[1].reply.resolve(response(200,data()));await page.settle();assert.match(page.html(),/Rascunho de Cadastro|11911112222/);assert.ok(page.nodes().some(n=>n.type==='input'&&n.props.value==='11922223333'));page.unmount();
 });
 
 test('empty transcript placeholder remains a translatable label rather than original user text',async()=>{
  const page=screen();page.network.calls[0].reply.resolve(response(200,data('')));await page.settle();assert.ok(page.nodes().some(n=>n.type==='td'&&n.props.children==='Áudio aguardando leitura'));assert.ok(hasTranslation('Áudio aguardando leitura'));page.unmount();
+});
+
+const viewerB='22222222-2222-4222-8222-222222222222';
+test('actual A to blur to B200 clears all drafts and never exposes either account content together',async()=>{
+ const page=screen();page.network.calls[0].reply.resolve(response(200,data()));await page.settle();page.fill('Ex.: Ana Silva','Rascunho Exclusivo A');page.fill('Ex.: (11) 99999-9999','11911112222');page.blur();page.focus();
+ page.network.calls[1].reply.resolve(response(200,{...data('conteúdo privado de B',viewerB),connection:{configured:true,connected:false,message:'B provider',paircode:'B-123456'}}));await page.settle();
+ assert.match(page.html(),/A conta mudou ou não pôde ser confirmada/);assert.doesNotMatch(page.html(),/Rascunho Exclusivo A|11911112222|mensagem sintética privada|conteúdo privado de B|B-123456/);page.blur();page.focus();await page.settle();assert.equal(page.network.calls.length,2);page.unmount();
+});
+
+test('actual old GET cannot restore history or QR after a newer POST succeeds in the same epoch',async()=>{
+ const page=screen();page.network.calls[0].reply.resolve(response(200,data()));await page.settle();page.poll();const older=page.network.calls[1];const form=page.nodes().find(n=>n.type==='form');assert.ok(form);form.props.onSubmit({preventDefault(){}});assert.equal(page.network.calls[2].init.method,'POST');
+ page.network.calls[2].reply.resolve(response(200,{...data('estado novo confirmado'),connection:{configured:true,connected:false,message:'new',qr:'data:image/png;base64,TkVX'}}));await page.settle();older.reply.resolve(response(200,{...data('histórico GET antigo'),connection:{configured:true,connected:false,message:'old',qr:'data:image/png;base64,T0xE'}}));await page.settle();
+ assert.match(page.html(),/estado novo confirmado|base64,TkVX/);assert.doesNotMatch(page.html(),/histórico GET antigo|base64,T0xE/);assert.equal(page.network.calls.filter(c=>c.init.method==='POST').length,1);page.unmount();
+});
+
+test('actual newer GET wins over a slow polling GET in the same epoch',async()=>{
+ const page=screen();page.network.calls[0].reply.resolve(response(200,data()));await page.settle();page.poll();const old=page.network.calls[1];page.button('Atualizar conexão e histórico').props.onClick();page.network.calls[2].reply.resolve(response(200,data('leitura mais recente')));await page.settle();old.reply.resolve(response(200,data('leitura superada')));await page.settle();assert.match(page.html(),/leitura mais recente/);assert.doesNotMatch(page.html(),/leitura superada/);page.unmount();
+});
+
+test('actual initial success without viewer_id fails closed before any private body is exposed',async()=>{
+ const page=screen();const {viewer_id:_,...missing}=data('conteúdo sem identidade');page.network.calls[0].reply.resolve(response(200,missing));await page.settle();assert.match(page.html(),/Entre novamente/);assert.doesNotMatch(page.html(),/conteúdo sem identidade|resposta sintética privada/);assert.ok(hasTranslation(whatsappAccessMessage('IDENTITY')));page.unmount();
+});
+
+for(const kind of ['GET','POST'])test('actual missing viewer on '+kind+' clears an already loaded account and draft',async()=>{
+ const page=screen();page.network.calls[0].reply.resolve(response(200,data()));await page.settle();page.fill('Ex.: Ana Silva','Nome Privado A');if(kind==='POST'){const form=page.nodes().find(n=>n.type==='form');assert.ok(form);form.props.onSubmit({preventDefault(){}});}else page.button('Atualizar conexão e histórico').props.onClick();const {viewer_id:_,...missing}=data('resposta sem titular');page.network.calls[1].reply.resolve(response(200,missing));await page.settle();assert.match(page.html(),/Entre novamente/);assert.doesNotMatch(page.html(),/Nome Privado A|resposta sem titular|mensagem sintética privada/);assert.equal(page.network.calls.length,2);page.unmount();
+});
+
+test('actual delayed JSON body still checks identity before any state callback can expose it',async()=>{
+ const page=screen();page.network.calls[0].reply.resolve(response(200,data()));await page.settle();page.poll();const body=deferred<unknown>();page.network.calls[1].reply.resolve({status:200,ok:true,json:()=>body.promise} as Response);await page.settle();page.button('Atualizar conexão e histórico').props.onClick();page.network.calls[2].reply.resolve(response(200,data('resposta atual A')));await page.settle();body.resolve(data('JSON tardio de B',viewerB));await page.settle();assert.match(page.html(),/Entre novamente/);assert.doesNotMatch(page.html(),/JSON tardio de B|resposta atual A/);page.unmount();
+});
+
+test('a resolved response token cannot be accepted by a deferred state callback after a newer request starts',async()=>{
+ const network=transport(),view=createWhatsappView(()=>assert.fail('same viewer must not revoke'),network.fetch);view.activate();const first=view.run();network.calls[0].reply.resolve(response(200,data()));const resolved=await first;assert.equal(resolved.kind,'ok');assert.equal(view.current(resolved.epoch,resolved.sequence),true);const newer=view.run();assert.equal(view.current(resolved.epoch,resolved.sequence),false);network.calls[1].reply.resolve(response(200,data()));await newer;view.suspend();
+});
+
+test('successful HTTP response with an invalid JSON body fails closed rather than retaining old drafts',async()=>{
+ const page=screen();page.network.calls[0].reply.resolve(response(200,data()));await page.settle();page.fill('Ex.: Ana Silva','Nome privado em memória');page.button('Atualizar conexão e histórico').props.onClick();page.network.calls[1].reply.resolve(new Response('not json',{status:200}));await page.settle();assert.match(page.html(),/Entre novamente/);assert.doesNotMatch(page.html(),/Nome privado em memória|mensagem sintética privada/);page.unmount();
 });
