@@ -19,7 +19,7 @@
     "whatsapp:bridge": "node --experimental-strip-types scripts/whatsapp-webhook-bridge.mjs"
   },
   "dependencies": {
-    "next": "16.3.4",
+    "next": "16.4.3",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "lucide-react": "1.31.0"
