@@ -23,7 +23,7 @@ Finance.tsx usa a primitiva na confirmação, no editor geral e no custo de ativ
 Reprodução estrutural da base: os três modais de Finance e o de ExpenseForm eram wrappers section role=dialog/aria-modal, sem showModal/ciclo próprio de foco; somente o caminho por ManualTransactions tinha um guard de teclado externo. A alteração preserva o wrapper ManualTransactions e migra os outros pontos para o protocolo modal nativo. Não alego ter executado a jornada autenticada anterior no navegador.
 
 TESTES WEB DIRECIONADOS
-node --experimental-strip-types --test --test-isolation=none components/financial-dialog/lifecycle.test.ts: 3 passaram. Cobre showModal, cleanup/restauração única, acionador removido e Escape durante busy/idle. Usa adaptadores DOM sintéticos; não comprova sozinho a implementação do navegador.
+node --experimental-strip-types --test --test-isolation=none tests/financial-dialog-lifecycle.test.ts: 3 passaram. Cobre showModal, cleanup/restauração única, acionador removido e Escape durante busy/idle. Usa adaptadores DOM sintéticos; não comprova sozinho a implementação do navegador.
 Com ANOTA_STORAGE=local, banco :memory:, worker/IA desligados e scripts/offline-validation.mjs importado:
 - tests/manual-entry.test.ts, tests/finance.test.ts, tests/overview-calendar.test.ts e o teste lifecycle: 32 passaram.
 - tests/localization.test.ts e o mesmo teste lifecycle: 15 passaram.
@@ -34,7 +34,7 @@ Uma fixture sintética do componente real, com Localize identidade e CSS de moda
 COMMITS E ESCOPO
 Etapa nativa: ba001e50fb1d6508f2e96c9a1b6529db4f2d5352.
 Etapa web: commit incremental seguinte nesse ramo; consultar git log/final da entrega para o SHA.
-Teste lifecycle está colocalizado em components/financial-dialog/lifecycle.test.ts; precisa ser chamado explicitamente, pois o glob atual tests/*.test.ts não o inclui. Não alterei o pipeline de outra frente.
+Após revisão do orquestrador, os três testes foram movidos para tests/financial-dialog-lifecycle.test.ts, com import relativo ajustado. Agora entram automaticamente no glob tests/*.test.ts usado pela suíte/CI/Docker; nenhum package.json ou script de validação foi alterado.
 Não alterados: Login, SalesPage, SubscriptionPayment, PersonalRegistration, backend, SQL, versões, lockfiles, mobile config, preços, modelos e release policy.
 
 FONTES DE COMPORTAMENTO
@@ -47,3 +47,6 @@ https://developer.mozilla.org/en-US/docs/Web/API/HTMLDialogElement/cancel_event
 
 PENDÊNCIAS
 QA em aparelho/simulador para ciclo real de AppState e UI nativa não executado. Integração completa e builds serão feitos pelo orquestrador. IM-03 e continuidade comercial não foram alterados.
+
+REVISÃO DE LOCALIZAÇÃO DOS TESTES
+Conjunto direcionado rerodado após mover: tests/manual-entry.test.ts, tests/finance.test.ts, tests/overview-calendar.test.ts, tests/localization.test.ts e tests/financial-dialog-lifecycle.test.ts — 44 passaram, 0 falhas. Ambiente sintético :memory:, worker/IA desligados e guarda offline ativa; sem produção ou chamadas pagas.

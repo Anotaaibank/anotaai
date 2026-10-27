@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mountFinancialDialog, cancelFinancialDialog} from './lifecycle.ts';
+import {mountFinancialDialog, cancelFinancialDialog} from '../components/financial-dialog/lifecycle.ts';
 
 test('financial modal opens through showModal and restores the connected opener once on disposal', () => {
   let shown = 0, closed = 0, focused = 0;
