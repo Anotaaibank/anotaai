@@ -6,8 +6,9 @@ import {effectivePersonalBot} from './whatsapp-members.ts';
 import type {BotMessage} from './whatsapp-expenses.ts';
 import type {Reminder} from './whatsapp-reminder.ts';
 import {paymentReminderPrefix,type PaymentReminder} from './payment-reminder.ts';
+import {replyVersion,sameReplyFence,canClaimReply,patchedReply} from './whatsapp-reply-state.ts';
 export type Bot={shared_owner_id?:string;connection_user_id?:string;user_id:string;phone:string;allowed_phones:string[];enabled:boolean;status:'NOVO'|'CRIANDO'|'PRONTO'|'INCERTO'|'FALHOU';instance_id:string|null;token_cipher:string|null;hook_cipher:string;updated_at:string};
-export type Inbox={id:string;user_id:string;provider_id:string;sender:string;type:'text'|'audio';text:string;transcript:string;status:'FILA'|'PROCESSANDO'|'LANCADO'|'ESCLARECER'|'ERRO'|'RESOLVIDO';entry_id:string|null;reply:string;reply_status:string;created_at:string;lease:string|null;claimed_at:string|null;finance_confirmation?:string;confirmation_code?:string;confirmation_used?:boolean;context_reset_at?:string|null};
+export type Inbox={id:string;user_id:string;provider_id:string;sender:string;type:'text'|'audio';text:string;transcript:string;status:'FILA'|'PROCESSANDO'|'LANCADO'|'ESCLARECER'|'ERRO'|'RESOLVIDO';entry_id:string|null;reply:string;reply_status:string;created_at:string;lease:string|null;claimed_at:string|null;reply_version?:number;finance_confirmation?:string;confirmation_code?:string;confirmation_used?:boolean;context_reset_at?:string|null};
 export async function rawBot(user:string){if(localMode())return rawLocalBot(user);const [row]=await service<Bot[]>('anota_whatsapp_bots?user_id=eq.'+encodeURIComponent(user));return row||null;}
 export async function getBot(user:string){return effectivePersonalBot(user);}
 export async function putBot(bot:Bot,expected:string|null){if(localMode()){return transaction(()=>{const db=localDb(),old=db.prepare('SELECT updated_at FROM bots WHERE user_id=?').get(bot.user_id) as {updated_at:string}|undefined;if(old&&old.updated_at!==expected)throw new Error('A configuração mudou. Atualize a página.');db.prepare('INSERT INTO bots VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET data=excluded.data,updated_at=excluded.updated_at').run(bot.user_id,JSON.stringify(bot),bot.updated_at);});}if(expected){const result=await service<Bot[]>('anota_whatsapp_bots?user_id=eq.'+bot.user_id+'&updated_at=eq.'+encodeURIComponent(expected),'PATCH',bot);if(!result.length)throw new Error('A configuração mudou. Atualize a página.');}else await service('anota_whatsapp_bots','POST',bot);}
@@ -24,8 +25,32 @@ export async function history(user:string,sender?:string){
 }
 export async function enqueue(user:string,message:BotMessage){const row:Inbox={id:randomUUID(),user_id:user,provider_id:message.provider_id,sender:message.sender,type:message.type,text:message.text,transcript:message.text,status:'FILA',entry_id:null,reply:'',reply_status:'NAO_ENVIADO',created_at:new Date().toISOString(),lease:null,claimed_at:null};if(localMode()){try{localDb().prepare('INSERT INTO inbox VALUES(?,?,?,?)').run(row.id,user,row.provider_id,JSON.stringify(row));return row.id;}catch{return null;}}const rows=await service<Inbox[]>('anota_whatsapp_inbox?on_conflict=user_id,provider_id','POST',row);return rows[0]?.id||null;}
 export async function claimMessage(){if(localMode())return transaction(()=>{const rows=localDb().prepare("SELECT data FROM inbox WHERE json_extract(data,'$.status')='FILA' OR (json_extract(data,'$.status')='PROCESSANDO' AND json_extract(data,'$.claimed_at')<?) ORDER BY rowid LIMIT 1").all(new Date(Date.now()-600000).toISOString()) as {data:string}[];const row=rows[0]?JSON.parse(rows[0].data) as Inbox:null;if(!row)return null;row.status='PROCESSANDO';row.lease=randomUUID();row.claimed_at=new Date().toISOString();localDb().prepare('UPDATE inbox SET data=? WHERE id=?').run(JSON.stringify(row),row.id);return row;});return service<Inbox|null>('rpc/anota_claim_message','POST',{});}
-export async function patchMessage(row:Inbox,patch:Partial<Inbox>){if(localMode())return transaction(()=>{const current=localDb().prepare('SELECT data FROM inbox WHERE id=?').get(row.id) as {data:string}|undefined;if(!current||JSON.parse(current.data).user_id!==row.user_id||JSON.parse(current.data).lease!==row.lease)return false;localDb().prepare('UPDATE inbox SET data=? WHERE id=?').run(JSON.stringify({...JSON.parse(current.data),...patch}),row.id);Object.assign(row,patch);return true;});const updated=await service<Inbox[]>('anota_whatsapp_inbox?id=eq.'+row.id+'&user_id=eq.'+row.user_id+'&lease='+(row.lease?'eq.'+row.lease:'is.null'),'PATCH',patch);Object.assign(row,patch);return updated.length>0;}
-export async function replyClaim(row:Inbox){if(localMode())return transaction(()=>{const current=localDb().prepare('SELECT data FROM inbox WHERE id=?').get(row.id) as {data:string}|undefined;if(!current)return false;const value=JSON.parse(current.data) as Inbox;if(value.user_id!==row.user_id||value.sender!==row.sender||value.lease!==row.lease||!value.reply||value.reply_status!=='NAO_ENVIADO'||!['LANCADO','RESOLVIDO','ESCLARECER','ERRO'].includes(value.status))return false;value.reply_status='ENVIANDO';localDb().prepare('UPDATE inbox SET data=? WHERE id=?').run(JSON.stringify(value),row.id);return true;});return service<boolean>('rpc/anota_reply_claim','POST',{p_id:row.id});}
+/** false means the fence was lost: neither the row object nor the stored reply changed. */
+export async function patchMessage(row:Inbox,patch:Partial<Inbox>):Promise<boolean>{
+ const version=replyVersion(row);
+ // A response patch cannot reassign a message or manufacture its revision.
+ if(version===null||['id','user_id','sender','provider_id','reply_version'].some(key=>key in patch))return false;
+ if(localMode())return transaction(()=>{
+  const stored=localDb().prepare('SELECT data FROM inbox WHERE id=?').get(row.id) as {data:string}|undefined;
+  if(!stored)return false;const current=JSON.parse(stored.data) as Inbox;if(!sameReplyFence(current,row))return false;
+  const next=patchedReply(current,patch);localDb().prepare('UPDATE inbox SET data=? WHERE id=?').run(JSON.stringify(next),row.id);Object.assign(row,next);return true;
+ });
+ const updated=await service<Inbox[]>('anota_whatsapp_inbox?id=eq.'+encodeURIComponent(row.id)+'&user_id=eq.'+encodeURIComponent(row.user_id)+'&sender=eq.'+encodeURIComponent(row.sender)+'&lease='+(row.lease?'eq.'+encodeURIComponent(row.lease):'is.null')+'&reply_version=eq.'+version,'PATCH',patch);
+ if(updated.length!==1)return false;
+ // The trigger owns reply_version; only a successful database receipt updates our snapshot.
+ Object.assign(row,updated[0]);return true;
+}
+/** Only boolean true grants permission to send this exact reply snapshot. Never send on false. */
+export async function replyClaim(row:Inbox):Promise<boolean>{
+ const version=replyVersion(row);if(version===null)return false;
+ if(localMode())return transaction(()=>{
+  const stored=localDb().prepare('SELECT data FROM inbox WHERE id=?').get(row.id) as {data:string}|undefined;
+  if(!stored)return false;const current=JSON.parse(stored.data) as Inbox;if(!canClaimReply(current,row))return false;
+  current.reply_status='ENVIANDO';localDb().prepare('UPDATE inbox SET data=? WHERE id=?').run(JSON.stringify(current),row.id);Object.assign(row,current);return true;
+ });
+ const claimed=await service<unknown>('rpc/anota_reply_claim','POST',{p_id:row.id,p_user:row.user_id,p_sender:row.sender,p_lease:row.lease,p_reply_version:version});
+ if(claimed!==true)return false;row.reply_status='ENVIANDO';return true;
+}
 export async function pendingReplies(reminders=false){if(localMode())return (localDb().prepare("SELECT data FROM inbox WHERE json_extract(data,'$.reply_status')='NAO_ENVIADO' AND json_extract(data,'$.status') IN ('LANCADO','RESOLVIDO','ESCLARECER','ERRO') AND "+(reminders?'':'NOT ')+"(provider_id LIKE 'anotei-reminder:v1:%') ORDER BY rowid LIMIT 5").all() as {data:string}[]).map(r=>JSON.parse(r.data) as Inbox);return service<Inbox[]>('anota_whatsapp_inbox?reply_status=eq.NAO_ENVIADO&status=in.(LANCADO,RESOLVIDO,ESCLARECER,ERRO)&provider_id='+(reminders?'like.':'not.like.')+'anotei-reminder%3Av1%3A*&order=created_at&limit=5');}
 // Reuse the durable outbox and its unique (owner, provider event) key. No new public table.
 export async function enqueueReminder(b:Bot,r:Reminder|PaymentReminder,now=Date.now()){
