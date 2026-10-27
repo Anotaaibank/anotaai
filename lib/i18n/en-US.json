@@ -2325,5 +2325,21 @@
   "Cadastre ou revise os valores iniciais": "Set up or review your starting amounts",
   "Abra Meu dinheiro. No primeiro acesso, toque em Cadastrar renda e saldo inicial. Para rever os valores de partida, use Editar renda e saldo inicial.": "Open My money. The first time, tap Set up income and opening balance. To review your starting amounts later, choose Edit income and opening balance.",
   "Ajuste o saldo de hoje sem apagar o histórico": "Correct today's balance without deleting your history",
-  "Na Visão geral ou em Meu dinheiro, use Ajustar saldo atual no cartão Saldo na conta. Informe o saldo correto e toque em Conferir ajuste. Leia o resumo e confirme. O ajuste não é ganho nem despesa e mantém o saldo inicial e os registros anteriores.": "In Overview or My money, choose Adjust current balance on the Account balance card. Enter the correct balance and tap Review adjustment. Read the summary and confirm. The adjustment is not income or an expense, and it keeps your opening balance and previous records unchanged."
+  "Na Visão geral ou em Meu dinheiro, use Ajustar saldo atual no cartão Saldo na conta. Informe o saldo correto e toque em Conferir ajuste. Leia o resumo e confirme. O ajuste não é ganho nem despesa e mantém o saldo inicial e os registros anteriores.": "In Overview or My money, choose Adjust current balance on the Account balance card. Enter the correct balance and tap Review adjustment. Read the summary and confirm. The adjustment is not income or an expense, and it keeps your opening balance and previous records unchanged.",
+  "Sem resposta. Confira o histórico antes de repetir uma ação.": "No response. Check your history before trying an action again.",
+  "Confira sua assinatura para voltar a acessar o WhatsApp no aplicativo.": "Check your subscription to access WhatsApp in the app again.",
+  "Sua sessão terminou. Entre novamente.": "Your session has ended. Sign in again.",
+  "Seu acesso mudou. Entre novamente para continuar.": "Your access has changed. Sign in again to continue.",
+  "Ver minha assinatura": "View my subscription",
+  "Entrar novamente": "Sign in again",
+  "Remetente": "Sender",
+  "Contato da conta": "Account contact",
+  "Número indisponível": "Number unavailable",
+  "Os dois números do casal compartilham saldo, despesas, agenda e o histórico de mensagens desta conta. A administração cadastra os números; você não precisa ler QR Code.": "Both partners’ numbers share this account’s balance, expenses, calendar, and message history. The administrator adds the numbers; you do not need to scan a QR code.",
+  "WhatsApp conectado. Use o contato da IA para enviar seus pedidos.": "WhatsApp is connected. Send your requests to the AI contact.",
+  "A conexão do WhatsApp está sendo verificada.": "The WhatsApp connection is being checked.",
+  "O contato da IA ainda não está disponível.": "The AI contact is not available yet.",
+  "Acesso ao WhatsApp": "WhatsApp access",
+  "O conteúdo fica oculto até a verificação do acesso desta conta.": "Content stays hidden until access to this account is verified.",
+  "Compromissos confirmados com data e horário recebem lembretes 24 horas e 5 horas antes, nos números autorizados, enquanto a conexão e o serviço estiverem ativos. Contas pendentes recebem lembretes no dia anterior e no dia do vencimento, entre 9h e 21h (horário de Brasília). Áudios de números autorizados são processados pela OpenAI. Durante o processamento, o áudio pode passar por um arquivo temporário. A transcrição e a resposta ficam no histórico da conta. WhatsApp e provedor também podem manter cópias conforme suas políticas.": "Confirmed appointments with a date and time receive reminders 24 hours and 5 hours in advance on authorized numbers while the connection and service remain active. Unpaid bills receive reminders the day before and on the due date, between 9 a.m. and 9 p.m. Brasília time. Audio from authorized numbers is processed by OpenAI. During processing, audio may pass through a temporary file. The transcript and response remain in the account history. WhatsApp and the provider may also retain copies according to their policies."
 }
