@@ -6,6 +6,7 @@ import {ArrowLeft,ArrowRight,Check,ShieldCheck} from 'lucide-react';
 import {currency} from '@/lib/model';
 import type {PixSettings,PixPayment} from '@/lib/subscription-access';
 import {subscriptionPlans,planFrom,type PlanCode} from '@/lib/subscription-plans';
+import {browserPlanStorage,checkoutHref,checkoutLoginHref,checkoutPlan,planFromSearch,rememberPlan,rememberedPlan} from '@/lib/plan-navigation';
 import UsagePanel from './UsagePanel';
 import SubscriptionPaymentMethods from './SubscriptionPaymentMethods';
 
@@ -15,15 +16,16 @@ export default function SubscriptionPayment(){
  const initialized=useRef(false),heading=useRef<HTMLHeadingElement>(null),submitting=useRef(false),paymentNavigation=useRef(false),request=useRef<{key:string;id:string}|null>(null);
  const load=useCallback(async()=>{
   const r=await fetch('/api/assinatura',{cache:'no-store'});
-  if(r.status===401){location.assign('/?next=assinatura');return;}
+  if(r.status===401){location.replace(checkoutLoginHref(location.search,rememberedPlan(browserPlanStorage())));return;}
   const d:Data&{error?:string}=await r.json();
   if(!r.ok)throw new Error(d.error||'Não foi possível carregar seu plano.');
   setData(d);
-  if(!initialized.current){const pending=d.requests.find(p=>p.status==='PENDENTE');setPlan(pending?.plan_code||d.subscription?.plan_code||'BASICO');if(pending)setStep('payment');initialized.current=true;}
+  if(!initialized.current){const pending=d.requests.find(p=>p.status==='PENDENTE'),choice=checkoutPlan({search:location.search,pendingPlan:pending?.plan_code,currentPlan:d.subscription?.plan_code,rememberedPlan:rememberedPlan(browserPlanStorage())});setPlan(choice);rememberPlan(browserPlanStorage(),null);history.replaceState(history.state,'',checkoutHref(choice,location.hash));if(pending)setStep('payment');initialized.current=true;}
  },[]);
  useEffect(()=>{void load().catch(e=>setError(e.message));const timer=setInterval(()=>{if(document.visibilityState==='visible'&&!submitting.current)void load().catch(()=>{});},15000);return()=>clearInterval(timer);},[load]);
- useEffect(()=>{const previous=history.scrollRestoration;history.scrollRestoration='manual';const restore=()=>{setStep(location.hash==='#pagamento'?'payment':'plan');paymentNavigation.current=false;window.scrollTo({top:0,behavior:'instant'});heading.current?.focus({preventScroll:true});};restore();window.addEventListener('popstate',restore);return()=>{history.scrollRestoration=previous;window.removeEventListener('popstate',restore);};},[]);
+ useEffect(()=>{const previous=history.scrollRestoration;history.scrollRestoration='manual';const restore=()=>{const choice=planFromSearch(location.search);if(choice)setPlan(choice);setStep(location.hash==='#pagamento'?'payment':'plan');paymentNavigation.current=false;window.scrollTo({top:0,behavior:'instant'});heading.current?.focus({preventScroll:true});};restore();window.addEventListener('popstate',restore);return()=>{history.scrollRestoration=previous;window.removeEventListener('popstate',restore);};},[]);
  const settings=data?.settings,ready=!!settings?.pix_key&&!!settings.receiver,pending=data?.requests.find(p=>p.status==='PENDENTE'),selected=planFrom(pending?.plan_code||plan),paymentStep=!!pending||step==='payment';
+ function changePlan(next:PlanCode){setPlan(next);history.replaceState(history.state,'',checkoutHref(next,location.hash));}
  function changeStep(next:'plan'|'payment'){
   if(next==='payment'&&location.hash!=='#pagamento'){history.pushState(history.state,'','#pagamento');paymentNavigation.current=true;}
   else if(next==='plan'){if(paymentNavigation.current)history.back();else history.replaceState(history.state,'','#planos');paymentNavigation.current=false;}
@@ -46,7 +48,7 @@ export default function SubscriptionPayment(){
    <h2 ref={heading} tabIndex={-1}>{pending?'Pagamento em análise':paymentStep?'Confira e pague':data?.access?'Meu plano e renovação':'Escolha seu plano'}</h2>
    {!data?<><p role="status">{error||'Carregando os planos…'}</p>{error&&<button type="button" onClick={()=>{setError('');void load().catch(e=>setError(e.message));}}>Tentar novamente</button>}</>:<>
     {data.subscription?.renewal_date&&<p className="checkout-current">Plano atual: {planFrom(data.subscription.plan_code).name} · acesso até {data.subscription.renewal_date.split('-').reverse().join('/')}</p>}
-    {!paymentStep?<><fieldset className="checkout-plans" disabled={busy}><legend>Selecione um plano mensal</legend>{Object.values(subscriptionPlans).map(p=><label className={'checkout-plan'+(plan===p.code?' is-selected':'')} key={p.code}><input type="radio" name="plan" value={p.code} checked={plan===p.code} onChange={()=>setPlan(p.code)}/><span><strong>{p.name}</strong><span className="checkout-price">{currency(p.monthly_cents)}<small>/mês</small></span><span className="checkout-plan-description">{p.code==='BASICO'?'150 pedidos, 10 min de áudios no WhatsApp e 10 min de voz no aplicativo.':'Pedidos, áudios no WhatsApp e voz no aplicativo sem franquia mensal.'}</span><small>Até dois números compartilham a conta.</small></span></label>)}</fieldset>
+    {!paymentStep?<><fieldset className="checkout-plans" disabled={busy}><legend>Selecione um plano mensal</legend>{Object.values(subscriptionPlans).map(p=><label className={'checkout-plan'+(plan===p.code?' is-selected':'')} key={p.code}><input type="radio" name="plan" value={p.code} checked={plan===p.code} onChange={()=>changePlan(p.code)}/><span><strong>{p.name}</strong><span className="checkout-price">{currency(p.monthly_cents)}<small>/mês</small></span><span className="checkout-plan-description">{p.code==='BASICO'?'150 pedidos, 10 min de áudios no WhatsApp e 10 min de voz no aplicativo.':'Pedidos, áudios no WhatsApp e voz no aplicativo sem franquia mensal.'}</span><small>Até dois números compartilham a conta.</small></span></label>)}</fieldset>
      <p className="bank-note">Usar as telas manualmente não gasta pedidos da IA. No Pix, cada aprovação libera o período de acesso informado no pagamento.</p>
      <button type="button" className="bank-primary checkout-continue" onClick={()=>changeStep('payment')}>Continuar com {selected.name}<ArrowRight size={19}/></button>
     </>:<>
@@ -58,7 +60,7 @@ export default function SubscriptionPayment(){
     </>}
     {error&&<p className="bank-error" role="alert">{error}</p>}{notice&&<p className="bank-note checkout-notice" role="status">{notice}</p>}
     {data.access&&<a className="checkout-app-link" href="/painel">Abrir meu Anotei<ArrowRight size={17}/></a>}
-    <div className="checkout-account"><span>Precisa usar outra conta?</span><button type="button" disabled={busy} onClick={()=>{setBusy(true);void fetch('/api/session',{method:'DELETE'}).then(r=>{if(!r.ok)throw new Error('Não foi possível sair. Tente novamente.');location.assign('/');}).catch(e=>{setError(e.message);setBusy(false);});}}>Sair da conta</button></div>
+    <div className="checkout-account"><span>Precisa usar outra conta?</span><button type="button" disabled={busy} onClick={()=>{setBusy(true);void fetch('/api/session',{method:'DELETE'}).then(r=>{if(!r.ok)throw new Error('Não foi possível sair. Tente novamente.');rememberPlan(browserPlanStorage(),null);location.assign(checkoutLoginHref(location.search));}).catch(e=>{setError(e.message);setBusy(false);});}}>Sair da conta</button></div>
    </>}
   </section></div>
   {data?.access&&<details className="checkout-usage"><summary>Acompanhar meu uso</summary><UsagePanel/></details>}
