@@ -1,0 +1,66 @@
+IM-B — PATCHES COMPATÍVEIS EXPO SDK 58 E POLÍTICA DE DEPENDÊNCIAS
+Data da validação: 2026-10-27T16:34:37.243Z
+Base incremental: 2a485c857c3cd44b696f643658ea8a3698f6be0b
+Cópia exclusiva: C:\Users\BRUNOL~1\AppData\Local\Temp\anotei-hardening-TWxG2B\interface
+Branch: codex/interface-mobile-hardening
+
+ENTREGA
+Atualizados 13 pacotes Expo em patches exatos, mantendo SDK 58, React 19.3.0, React Native 0.88.0 e TypeScript 6.0.3. Lockfile regenerado pela instalação oficial Expo/pnpm. O specifier existente de expo-asset foi fixado sem alterar sua resolução; a consistência foi confirmada por instalação congelada.
+@expo/ui: 58.0.21 -> 58.0.23; publicado 2026-10-23T23:25:20.202Z
+expo: 58.0.16 -> 58.0.19; publicado 2026-10-23T23:27:17.387Z
+expo-asset: ~58.0.17 -> 58.0.18; publicado 2026-10-21T18:18:17.257Z
+expo-audio: 58.0.9 -> 58.0.10; publicado 2026-10-21T18:16:03.288Z
+expo-constants: 58.0.12 -> 58.0.13; publicado 2026-10-21T18:15:46.225Z
+expo-dev-client: 58.0.14 -> 58.0.15; publicado 2026-10-23T23:25:18.799Z
+expo-font: 58.0.9 -> 58.0.10; publicado 2026-10-23T23:23:44.232Z
+expo-glass-effect: 58.0.4 -> 58.0.5; publicado 2026-10-23T23:23:40.402Z
+expo-image: 58.0.16 -> 58.0.17; publicado 2026-10-23T23:24:56.934Z
+expo-linking: 58.0.13 -> 58.0.14; publicado 2026-10-21T18:22:34.297Z
+expo-router: 58.0.24 -> 58.0.26; publicado 2026-10-23T23:26:56.555Z
+expo-splash-screen: 58.0.10 -> 58.0.11; publicado 2026-10-21T18:16:22.669Z
+expo-status-bar: 58.0.3 -> 58.0.4; publicado 2026-10-21T18:14:26.934Z
+
+
+PROTEÇÕES E INCIDENTE DE INSTALAÇÃO
+A tentativa inicial expo install --fix --pnpm usou intervalos compatíveis e o catálogo mudou durante a execução. O pnpm 11, sem modo estrito explícito, selecionou expo 58.0.20 recém-publicado e adicionou dez entradas minimumReleaseAgeExclude automaticamente. Isso foi detectado, a árvore de instalação desta tarefa foi interrompida e as alterações automáticas de manifest/lock/política foram restauradas antes da instalação final. Nenhuma dessas exceções ou resoluções imaturas permanece no resultado. A instalação intermediária chegou a materializar dependências locais novas; não foi publicada, validada como aprovada ou usada em produção.
+O orquestrador autorizou versionar minimumReleaseAgeStrict: true em mobile/pnpm-workspace.yaml. Mantida a espera padrão pnpm de 1440 minutos e allowBuilds/unrs-resolver:false. Sem minimumReleaseAgeExclude, clock override, catálogo falso, expo.install.exclude ou ignore de checagens.
+Instalação oficial final com versões explícitas e --save-exact executou a instalação dos pacotes. A CLI encerrou 1 depois, na auto-configuração de plugins em app.config.ts dinâmico; isso não é registrado como sucesso integral do comando. O pnpm install --frozen-lockfile posterior passou, verificando 794 entradas contra a política de supply chain em 21,5 s. A inspeção das chaves packages do lockfile confirmou ausência das versões imaturas identificadas.
+
+RODADA ÚNICA DE VALIDAÇÃO FINAL
+node scripts/validate.mjs --bundles, workdir mobile. CI=1; EXPO_NO_TELEMETRY=1; EXPO_PUBLIC_API_URL=https://example.test. Ambiente sem chaves herdadas, sem chamadas pagas, contas reais, EAS ou produção.
+typecheck: exit 0; 31489 ms
+lint: exit 0; 149778 ms
+tests: exit 0; 2769 ms
+expo-dependencies: exit 1; 8132 ms
+Testes: 17 passaram, zero falhas. Tempo total do processo: 192379 ms. Exit geral 1.
+expo-config e bundles Android/iOS não foram alcançados porque o gate de dependências encerra o script. Nenhuma segunda rodada ou exportação isolada foi feita. Testes são sintéticos, não equivalem a testes em aparelho ou builds assinadas.
+
+BLOQUEIO EXTERNO DO CATÁLOGO
+O primeiro check sugeria 13 patches publicados em 21/23 de outubro e maduros. Durante a tarefa o catálogo passou a recomendar cinco patches publicados hoje, incompatíveis com a espera de 24 horas. O gate permanece explicitamente NÃO aprovado:
+expo@58.0.20; publicado 2026-10-27T16:12:41.704Z; elegível após 2026-10-28T16:12:41.704Z (UTC, se não surgir outra restrição).
+expo-router@58.0.27; publicado 2026-10-27T15:59:05.655Z; elegível após 2026-10-28T15:59:05.655Z (UTC, se não surgir outra restrição).
+expo-web-browser@58.0.7; publicado 2026-10-27T12:14:44.758Z; elegível após 2026-10-28T12:14:44.758Z (UTC, se não surgir outra restrição).
+@expo/ui@58.0.24; publicado 2026-10-27T12:16:28.415Z; elegível após 2026-10-28T12:16:28.415Z (UTC, se não surgir outra restrição).
+expo-dev-client@58.0.16; publicado 2026-10-27T16:07:16.859Z; elegível após 2026-10-28T16:07:16.859Z (UTC, se não surgir outra restrição).
+O último entre esses cinco é expo@58.0.20: 28/10/2026 às 16:12:41.704 UTC / 13:12:41.704 em São Paulo. Essa data não autoriza atualização ou aprovação automática; catálogo e metadados devem ser reconsultados numa próxima rodada. Não houve espera ativa por 24 horas.
+
+PENDÊNCIA DE CONFIGURAÇÃO
+A CLI solicitou declarar expo-font, expo-image e expo-status-bar na lista plugins. Li as documentações versionadas SDK 58 correspondentes. O arquivo dinâmico mobile/config/app-config.ts já configura outros plugins, mas esses três não constam. Não alterei configuração nativa nesta tarefa; revisar a necessidade e fazer a inclusão mínima autorizada antes de nova validação de config/prebuild. Não executei prebuild nem criei android/ios.
+
+ESCOPO PRESERVADO
+Código mobile/src e testes não alterados nesta etapa. Nenhuma edição em Finance, fluxos comerciais, root/package.json, SQL, backend, identificadores, Expo owner/projectId, EAS, release-policy.json ou serviço de produção. Os bloqueios de release continuam falsos. O commit é para revisão/integração local; sem push/deploy.
+
+EVIDÊNCIAS
+Versionadas: este relatório e interface-mobile-sdk58-evidencias.json.
+Locais ignoradas: .data/interface-mobile-expo-fix.log (tentativa interrompida), .data/interface-mobile-expo-pinned.log (instalação final e aviso de plugins), .data/interface-mobile-frozen.log, .data/interface-mobile-imb-validation.log, .data/interface-mobile-imb-process.json, .data/interface-mobile-expo-catalog.json, .data/interface-mobile-expo-new-patches.json.
+mobile/release-evidence/validation.json contém o resultado final atual; evidências de bundles antigas não provam esta versão.
+
+FONTES OFICIAIS
+https://docs.expo.dev/versions/v58.0.0/
+https://docs.expo.dev/more/expo-cli/
+https://pnpm.io/supply-chain-security
+https://pnpm.io/blog/releases/11.0
+https://registry.npmjs.org/
+https://docs.expo.dev/versions/v58.0.0/sdk/font/
+https://docs.expo.dev/versions/v58.0.0/sdk/image/
+https://docs.expo.dev/versions/v58.0.0/sdk/status-bar/

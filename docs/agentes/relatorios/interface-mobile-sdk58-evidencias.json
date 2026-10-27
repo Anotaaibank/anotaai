@@ -1,0 +1,188 @@
+{
+  "task": "IM-B",
+  "at": "2026-10-27T16:34:37.243Z",
+  "base": "2a485c857c3cd44b696f643658ea8a3698f6be0b",
+  "runtime": "Node 24.19.0; pnpm 11.25.0",
+  "policy": {
+    "minimumReleaseAgeMinutes": 1440,
+    "minimumReleaseAgeStrict": true,
+    "minimumReleaseAgeExclude": [],
+    "unrsResolverBuildAllowed": false
+  },
+  "patches": [
+    {
+      "name": "@expo/ui",
+      "before": "58.0.21",
+      "after": "58.0.23",
+      "published": "2026-10-23T23:25:20.202Z"
+    },
+    {
+      "name": "expo",
+      "before": "58.0.16",
+      "after": "58.0.19",
+      "published": "2026-10-23T23:27:17.387Z"
+    },
+    {
+      "name": "expo-asset",
+      "before": "~58.0.17",
+      "after": "58.0.18",
+      "published": "2026-10-21T18:18:17.257Z"
+    },
+    {
+      "name": "expo-audio",
+      "before": "58.0.9",
+      "after": "58.0.10",
+      "published": "2026-10-21T18:16:03.288Z"
+    },
+    {
+      "name": "expo-constants",
+      "before": "58.0.12",
+      "after": "58.0.13",
+      "published": "2026-10-21T18:15:46.225Z"
+    },
+    {
+      "name": "expo-dev-client",
+      "before": "58.0.14",
+      "after": "58.0.15",
+      "published": "2026-10-23T23:25:18.799Z"
+    },
+    {
+      "name": "expo-font",
+      "before": "58.0.9",
+      "after": "58.0.10",
+      "published": "2026-10-23T23:23:44.232Z"
+    },
+    {
+      "name": "expo-glass-effect",
+      "before": "58.0.4",
+      "after": "58.0.5",
+      "published": "2026-10-23T23:23:40.402Z"
+    },
+    {
+      "name": "expo-image",
+      "before": "58.0.16",
+      "after": "58.0.17",
+      "published": "2026-10-23T23:24:56.934Z"
+    },
+    {
+      "name": "expo-linking",
+      "before": "58.0.13",
+      "after": "58.0.14",
+      "published": "2026-10-21T18:22:34.297Z"
+    },
+    {
+      "name": "expo-router",
+      "before": "58.0.24",
+      "after": "58.0.26",
+      "published": "2026-10-23T23:26:56.555Z"
+    },
+    {
+      "name": "expo-splash-screen",
+      "before": "58.0.10",
+      "after": "58.0.11",
+      "published": "2026-10-21T18:16:22.669Z"
+    },
+    {
+      "name": "expo-status-bar",
+      "before": "58.0.3",
+      "after": "58.0.4",
+      "published": "2026-10-21T18:14:26.934Z"
+    }
+  ],
+  "frozenInstall": {
+    "exit": 0,
+    "verifiedEntries": 794,
+    "supplyChainVerificationMs": 21500
+  },
+  "validation": [
+    {
+      "name": "typecheck",
+      "exit": 0,
+      "ms": 31489
+    },
+    {
+      "name": "lint",
+      "exit": 0,
+      "ms": 149778
+    },
+    {
+      "name": "tests",
+      "exit": 0,
+      "ms": 2769
+    },
+    {
+      "name": "expo-dependencies",
+      "exit": 1,
+      "ms": 8132
+    }
+  ],
+  "run": {
+    "at": "2026-10-27T16:34:37.267Z",
+    "exit": 1,
+    "duration_ms": 192379,
+    "api": "https://example.test",
+    "paid_calls": 0,
+    "cloud_builds": 0,
+    "real_devices": false
+  },
+  "blockedRecommendations": [
+    {
+      "name": "expo",
+      "version": "58.0.20",
+      "published": "2026-10-27T16:12:41.704Z",
+      "ageHours": 0.24,
+      "eligibleAfter": "2026-10-28T16:12:41.704Z"
+    },
+    {
+      "name": "expo-router",
+      "version": "58.0.27",
+      "published": "2026-10-27T15:59:05.655Z",
+      "ageHours": 0.46,
+      "eligibleAfter": "2026-10-28T15:59:05.655Z"
+    },
+    {
+      "name": "expo-web-browser",
+      "version": "58.0.7",
+      "published": "2026-10-27T12:14:44.758Z",
+      "ageHours": 4.2,
+      "eligibleAfter": "2026-10-28T12:14:44.758Z"
+    },
+    {
+      "name": "@expo/ui",
+      "version": "58.0.24",
+      "published": "2026-10-27T12:16:28.415Z",
+      "ageHours": 4.28,
+      "eligibleAfter": "2026-10-28T12:16:28.415Z"
+    },
+    {
+      "name": "expo-dev-client",
+      "version": "58.0.16",
+      "published": "2026-10-27T16:07:16.859Z",
+      "ageHours": 0.43,
+      "eligibleAfter": "2026-10-28T16:07:16.859Z"
+    }
+  ],
+  "notExecuted": [
+    "expo-config",
+    "bundle-android",
+    "bundle-ios",
+    "device tests",
+    "APK/IPA/EAS",
+    "deploy"
+  ],
+  "configurationPending": {
+    "pluginsSuggestedByCli": [
+      "expo-font",
+      "expo-image",
+      "expo-status-bar"
+    ],
+    "reason": "CLI cannot automatically modify dynamic app.config.ts; configuration intentionally not edited"
+  },
+  "sources": [
+    "https://docs.expo.dev/versions/v58.0.0/",
+    "https://docs.expo.dev/more/expo-cli/",
+    "https://pnpm.io/supply-chain-security",
+    "https://pnpm.io/blog/releases/11.0",
+    "https://registry.npmjs.org/"
+  ]
+}
