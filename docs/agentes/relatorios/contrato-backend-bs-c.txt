@@ -126,6 +126,81 @@ deve revisar se uma interpretação antiga pode escrever foco/pending antes do s
 Se houver, encaminhar dependência ao orquestrador em vez de editar módulos fora de
 escopo ou alegar que todo efeito do intérprete ficou transacional.
 
+ALINHAMENTO DE DESENHO COM IA — DEPENDÊNCIA CONFIRMADA, AINDA SEM RUNTIME
+A frente IA confirmou a ordem atual: assistantTurn altera conversa em memória
+antes do settle; o worker pode preparar/enviar reply antes do settle no finally.
+Portanto, somente fence da quota não fecha BS-01. Precisamos definir aceitação e
+publicação dos efeitos, sem abrir implementação parcial.
+Proposta Backend aceita no consenso de desenho abaixo: preparação produz resultado,
+context_delta e reply sem publicar; aceitação com fence vigente registra resultado
+e efeitos duráveis/outbox atomicamente; publicação usa somente efeitos aceitos.
+Verificar lease e escrever depois em outra operação tem janela TOCTOU. Contexto
+em memória, sozinho, não preserva a identidade da tentativa entre réplicas.
+Se contexto/pendência não puder ser aplicado com versão/epoch durável e aceitação
+transacional, essa dependência continua bloqueando o runtime global.
+Queda após aceitação e antes do envio deve recuperar a publicação já aceita, sem
+repetir modelo ou unidade. ACK incerto do provedor exige reconciliação, sem promessa
+de exactly-once. Este desenho não autoriza runtime: depende de escopo específico
+de implementação aprovado pelo orquestrador.
+
+CONSENSO IA + BACKEND PARA A PRÓXIMA RODADA (SEM APROVAÇÃO DE CÓDIGO)
+A IA concordou com pure-prepare → accept transacional → publication. Prepare deve
+usar snapshot/revisão de contexto e produzir result+context_delta+reply/patches
+privados, sem mutar conversa global, invalidar pendências ou enviar mensagem.
+Accept valida atomicamente REQUEST lease/version/deadline, revisão/epoch de
+contexto, lease da mensagem/versão da resposta e CAS de outras pending rows tocadas.
+Só o aceite durável registra resultado/recibo, contexto, efeitos/outbox e unidade.
+Publicação usa fence própria da entrega depois do aceite; não há check/write solto.
+
+REQUESTs distintos da mesma conversa também precisam serialização/CAS por contexto:
+titular+canal/scope+conversa; no WhatsApp, incluir instância/remetente e epoch/reset.
+Working copy antiga e finally/busy antigo não podem sobrescrever/liberar turno novo.
+Cache aceito precisa reconstruir reply/patch sem IA nem financeiro e sem ressuscitar
+assinatura expirada/usada. Confirmação mantém readFinance, ator, recibo e idempotência.
+
+A IA informou duas observações sintéticas locais, sem rede/SQL/financeiro: pending,
+requests cache e turns já existem antes de settle; o mesmo texto/request_id de
+dentista amanhã, sem conversa inicial, gera datas diferentes com today27/10 e28/10.
+São observações da IA, não execução feita por esta frente nem teste PG de BS-C.
+Persistir original_received_at/reference_day no primeiro acquire e preservá-los
+no takeover é, portanto, parte do consenso. Datas relativas usam essa âncora; relógio
+de assinatura/TTL e validação de negócio continuam reais, não retrodatados.
+Snapshot/revisão de source/target/pending/focus consumidos precisam ser duráveis;
+conversation_id sozinho não reproduz esse contexto (a memória perdida hoje pode
+causar410). Não recalcular dia de referência nem fingerprint com contexto mutável
+a cada retry. Não retargetar implicitamente uma confirmação em outro contexto.
+Saldo mutável fica fora do fingerprint como proposto. A separação entre identidade
+do envelope, snapshot inicial autoritativo e CAS de aceitação deve ser revisada
+antes de definir o schema final. Sem esses contratos, BS-01 continua aberto.
+
+GATES ADICIONAIS DA REVISÃO QA (DESENHO, NÃO APROVAÇÃO DE RUNTIME)
+1. Gate de publicação: resultado/proposta só escapa depois de settle TRUE ou replay
+   autoritativo do mesmo event+fingerprint+hash. Inbox lease e REQUEST lease são
+   fences distintas; ambas precisam valer para publicar no WhatsApp. Invalidações
+   de pending de outras linhas também são efeitos protegidos, não só o reply final.
+2. Gate de contexto: busy/source/reconcile/manual mudam antes do await, enquanto
+   turns/pending/requests/finally mudam depois. A tentativa antiga não pode liberar
+   busy ou substituir estado da nova. Definir staging/ownership e commit/replay por
+   conversa durável, incluindo eventos distintos e processos diferentes.
+3. Gate de falha incerta: distinguir erro de interpretação de erro no take/settle;
+   não liquidar FAILED/0 em catch genérico após tentativa de commit. Reconsulta
+   autoritativa e hash antes de liberar quota ou declarar sucesso são obrigatórios.
+4. Replay de proposta expirada: manter cache imutável e responder estado/erro próprio
+   PROPOSAL_EXPIRED (409 proposto), sem apresentá-la como confirmação válida nem
+   reassiná-la. Novo request_id e nova proposta precisam ser explícitos.
+5. Relógio: usar clock_timestamp() depois de adquirir as travas e imediatamente na
+   condição CAS; now() representa início da transação e pode ficar anterior à espera.
+   Incluir teste com trava atravessando a expiração. Fonte primária consultada:
+   https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT
+6. Auditoria: separar created_at original, attempt_started_at e período debitado;
+   preservar histórico na transição FAILED→RUNNING e testar virada de ciclo. Exigir
+   request_id válido/estável nos três canais e envelope original retido até resultado
+   definitivo. Hoje web troca UUID ausente/inválido por um novo e mobile exige UUID;
+   não manter esse fallback em retry do protocolo novo. Validar consumidores antes.
+7. Auditoria SQL documentada: .sql.txt fora de tests/sql e do manifesto verde; exit0
+   da reprodução de defeitos não é aceitação do release. Não foi executada por esta
+   frente e não permite alegar recuperação REQUEST validada.
+
 REPRODUÇÃO DETERMINÍSTICA ENTREGUE (AINDA NÃO EXECUTADA EM PG POR ESTA FRENTE)
 docs/agentes/relatorios/request-reservation-baseline.sql.txt: SQL documentado fora
 do inventário e manifesto de release; guard do runner, usuários sintéticos,
