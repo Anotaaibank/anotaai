@@ -1,0 +1,390 @@
+{
+  "started_on": "2026-10-27",
+  "authorization": "Bruno autorizou corrigir as prioridades e trabalhar com os cinco agentes em paralelo, sob supervisão do orquestrador",
+  "base_commit": "5ba5048da7703663431db273ba6f25bbb14e92cd",
+  "integration_branch": "codex/hardening-20261027",
+  "integration_workspace": "C:\\Users\\Bruno Lira\\OneDrive\\Documentos\\ChatGPT\\Anota aí",
+  "production_publication": "not authorized by this round; separate review required",
+  "tasks": [
+    {
+      "id": "QS-A",
+      "thread_id": "01a17dd5-562e-7bd2-a408-a951f02c6df2",
+      "scope": "Atualização de segurança Next; filtros CI; runner Postgres descartável e bootstrap",
+      "owned_paths": [
+        "package.json",
+        "pnpm-lock.yaml",
+        ".github/workflows/",
+        "scripts de testes Postgres novos",
+        "tests/sql/",
+        "manifesto de bootstrap"
+      ],
+      "workspace": "C:\\Users\\BRUNOL~1\\AppData\\Local\\Temp\\anotei-hardening-TWxG2B\\qa",
+      "status": "integrated; final combined regression pending",
+      "managed_workspace_pending": "C:\\Users\\Bruno Lira\\.codex\\worktrees\\anotei-qualidade-seguranca\\Anota aí",
+      "isolation": "temporary git worktree verified at base commit",
+      "integrated_commits": [
+        "9666ce0",
+        "396bbaf",
+        "996548a",
+        "209115b",
+        "6a00976"
+      ]
+    },
+    {
+      "id": "BS-A",
+      "thread_id": "01a17dd3-e7f9-72b1-9df1-b63b29b9c53b",
+      "scope": "Claim de resposta cloud com lease e CAS sem mutação stale; paridade local/cloud",
+      "owned_paths": [
+        "lib/whatsapp-store.ts",
+        "helpers novos do store",
+        "database/schema.sql trecho de claim",
+        "nova migração de claim",
+        "testes de lease/CAS novos"
+      ],
+      "workspace": "C:\\Users\\BRUNOL~1\\AppData\\Local\\Temp\\anotei-hardening-TWxG2B\\backend",
+      "status": "integrated; PostgreSQL CAS fixtures approved",
+      "managed_workspace_pending": "C:\\Users\\Bruno Lira\\.codex\\worktrees\\backend-reply-lease\\Anota aí",
+      "isolation": "temporary git worktree verified at base commit",
+      "integrated_commits": [
+        "625894b",
+        "3c9eae0"
+      ]
+    },
+    {
+      "id": "IW-A",
+      "thread_id": "01a17dd4-8f61-7a72-856b-34d369000c73",
+      "scope": "Atividade em entradas/saídas prefixadas; consulta de lançamento não intercepta correção",
+      "owned_paths": [
+        "lib/command-prefix.ts",
+        "lib/expense-context.ts",
+        "lib/finance-ai.ts",
+        "lib/whatsapp-worker.ts apenas interpretação",
+        "testes dessas regras"
+      ],
+      "workspace": "C:\\Users\\BRUNOL~1\\AppData\\Local\\Temp\\anotei-hardening-TWxG2B\\ia",
+      "status": "integrated; synthetic multi-account regressions approved",
+      "managed_workspace_pending": "C:\\Users\\Bruno Lira\\.codex\\worktrees\\ia-whatsapp-regras\\Anota aí",
+      "isolation": "temporary git worktree verified at base commit",
+      "accepted_commits": [
+        {
+          "source": "0f68358f4fc0c817fbd55268cca486302b78f71e",
+          "integrated": "1b17111",
+          "scope": "IW-01 explícita atividade e fallback seguro",
+          "verification": "agente: regressão 1/3→3/3; conjunto 13/13; typecheck0; revisão estática do orquestrador; regressão conjunta pendente"
+        }
+      ],
+      "integrated_commits": [
+        "1b17111",
+        "0b4717f"
+      ]
+    },
+    {
+      "id": "IM-A",
+      "thread_id": "01a17dd4-fedd-7c31-a6b4-5851d62b8ab4",
+      "scope": "Mobile 410/calendário/foreground/erros; foco e acessibilidade dos modais web",
+      "owned_paths": [
+        "mobile/src/",
+        "mobile/tests/",
+        "primitiva de diálogo nova",
+        "components/Finance.tsx",
+        "components/ExpenseForm.tsx se necessário",
+        "CSS específico novo"
+      ],
+      "workspace": "C:\\Users\\BRUNOL~1\\AppData\\Local\\Temp\\anotei-hardening-TWxG2B\\interface",
+      "status": "web/native fixes integrated; latest native bundles not approved",
+      "managed_workspace_pending": "C:\\Users\\Bruno Lira\\.codex\\worktrees\\anotei-interface-mobile\\Anota aí",
+      "isolation": "temporary git worktree verified at base commit",
+      "integrated_commits": [
+        "56d84d9",
+        "ddfc499",
+        "b020d52",
+        "4cef4a8"
+      ]
+    },
+    {
+      "id": "PA-A",
+      "thread_id": "01a17dd5-b266-7543-806c-2f3735111d0f",
+      "scope": "Preservação de plano e retorno seguro após autenticação até checkout",
+      "owned_paths": [
+        "components/SalesPage.tsx",
+        "components/Login.tsx",
+        "components/SubscriptionPayment.tsx",
+        "helper de navegação/seleção de plano novo",
+        "testes próprios"
+      ],
+      "workspace": "C:\\Users\\BRUNOL~1\\AppData\\Local\\Temp\\anotei-hardening-TWxG2B\\produto",
+      "status": "integrated; independent code review in progress",
+      "managed_workspace_pending": "C:\\Users\\Bruno Lira\\.codex\\worktrees\\produto-plan-flow\\Anota aí",
+      "isolation": "temporary git worktree verified at base commit",
+      "integrated_commits": [
+        "96b746f",
+        "df23e36",
+        "8e8346a",
+        "132b82b"
+      ]
+    }
+  ],
+  "integration_gate": [
+    "Revisão pelo orquestrador antes de cherry-pick",
+    "Testes de reprodução e regressão em dados sintéticos",
+    "Nenhum segredo ou dado real copiado aos worktrees",
+    "Tipos, suíte completa, build e smoke HTTP após integração",
+    "Validação SQL real e QA visual não substituídos por mocks",
+    "Revisão independente pela frente de Qualidade"
+  ],
+  "environment": {
+    "postgres_windows_path": "docker/psql/pg_ctl/initdb não encontrados no PATH",
+    "wsl": "comando de inventário não retornou distribuição utilizável",
+    "supabase_production": "acesso MCP negado na auditoria; não usar como ambiente de teste",
+    "managed_worktrees": "App registration did not complete; original pending checkouts preserved, no product files edited there",
+    "postgres_portable": "PG17.11 portable temporary runtime, no service installation. QA creates own marked clusters;9fixtures passed and cleanup verified. Auth schema stub, not live Supabase.",
+    "browser_review": "Two CUA state/tab calls timed out. Synthetic loopback server started/stopped; no visual claim."
+  },
+  "next_tasks_after_first_patches": [
+    "Recuperação de REQUEST e envios incertos com reconciliação",
+    "Validação integral de JSON/null nos RPCs financeiros",
+    "Recibo financeiro uniforme nos canais web",
+    "Onboarding pós-commit e vínculo seguro de telefone",
+    "Sessões/limitadores compartilhados, consultas e lembretes por vencimento",
+    "Regras comerciais de renovação e cartão somente após decisão correspondente"
+  ],
+  "updated_on": "2026-10-27",
+  "integration_commit": "2c2a3f0178fddb57c7334c0a9259eefe2113d291",
+  "followups": [
+    {
+      "id": "BS-B",
+      "owner": "Backend + QA",
+      "status": "integrated; real PG202/202,9fixtures; root full pending",
+      "commits": [
+        "00f9f4a",
+        "21e4f1d",
+        "e3373bf"
+      ]
+    },
+    {
+      "id": "IW-B",
+      "owner": "IA e WhatsApp",
+      "status": "integrated; selected voice locale preserved",
+      "commits": [
+        "ba2645c"
+      ]
+    },
+    {
+      "id": "IW-C",
+      "owner": "IA e WhatsApp",
+      "status": "pure policy integrated; NOT wired to runtime",
+      "commits": [
+        "9369b43"
+      ]
+    },
+    {
+      "id": "BS-C",
+      "owner": "Backend + IA + QA",
+      "status": "global REQUEST lease contract in review; NOT implemented"
+    },
+    {
+      "id": "IM-B",
+      "owner": "Interface e Mobile",
+      "status": "mature SDK58 patches and strict age gate under validation; new immature catalog patches may block bundles"
+    },
+    {
+      "id": "PA-B",
+      "owner": "Produto e Assinaturas",
+      "status": "forecast versus status and historical approvals integrated; not authoritative access",
+      "commits": [
+        "8e8346a",
+        "132b82b"
+      ]
+    },
+    {
+      "id": "IM-03",
+      "owner": "Orquestrador; independent QA/Produto review",
+      "status": "manual current-balance adjustment integrated,13targeted component/domain tests; browser unavailable",
+      "commits": [
+        "4cef4a8"
+      ]
+    },
+    {
+      "id": "I18N-followup",
+      "owner": "Produto",
+      "status": "new labels, balance guidance and en-US translation in progress"
+    },
+    {
+      "id": "IW-D",
+      "owner": "IA + independent QA/Produto",
+      "status": "local cancellation patch in review; worker context and model target evidence gates being tested; not yet integrated"
+    },
+    {
+      "id": "PA-C",
+      "owner": "Produto + IA",
+      "status": "pure message formatter integrated in 94406b2; runtime wrapper pending IW-D",
+      "source": "db9febf7199e3f56481065116050475d67a81dfa"
+    },
+    {
+      "id": "PRIV-B",
+      "owner": "Backend + QA",
+      "status": "connection projection integrated in205d432; fake-provider tests and independent read review; combined validation pending"
+    },
+    {
+      "id": "PRIV-B2",
+      "owner": "Backend + Interface + QA",
+      "status": "server-derived viewer identity envelope in progress, to prevent old drafts crossing an account change"
+    },
+    {
+      "id": "PRUI-A",
+      "owner": "Interface + QA",
+      "status": "revoked/suspended view protection integrated in b18d9aa; request ordering and identity incremental pending"
+    },
+    {
+      "id": "WhatsApp Cloud API",
+      "owner": "QA + Backend + Orquestrador",
+      "status": "architecture recommendation researched; no migration/account creation/disconnection; provider copies and costs require verification"
+    }
+  ],
+  "verified_evidence": {
+    "partial_root": {
+      "commit": "3c9eae0",
+      "types": 0,
+      "tests": "345/345",
+      "build": "not run",
+      "path": ".data/hardening-evidence/partial-3c9eae0"
+    },
+    "backend_receipt": {
+      "before": "6/24",
+      "after": "24/24 plus2transport cases"
+    },
+    "sql_validation": {
+      "before": "163/202,39invalidaccepted",
+      "after": "202/202,0divergences",
+      "engine": "PG17.11",
+      "fixtures": 9,
+      "network": "loopback disposable only"
+    },
+    "paid_calls": 0,
+    "production_writes": 0,
+    "core01": {
+      "date": "2026-10-27",
+      "source_commit": "610618366299c5264d79c11c3467c55190dc2ccd",
+      "integration_branch": "codex/hardening-20261027",
+      "production_modified": false,
+      "paid_api_calls": 0,
+      "web": {
+        "runner": "node scripts/validate-mobile-backend.mjs",
+        "offline_external_network_guard": true,
+        "synthetic_data": true,
+        "typecheck": {
+          "exit": 0,
+          "duration_ms": 79113
+        },
+        "tests": {
+          "exit": 0,
+          "passed": 423,
+          "failed": 0,
+          "skipped": 0,
+          "duration_ms": 57331
+        },
+        "build": {
+          "exit": 0,
+          "next": "16.4.3",
+          "duration_ms": 378544
+        },
+        "http_smoke": {
+          "passed": 5,
+          "failed": 0,
+          "scope": "isolated loopback gateway: login, prepare without mutation, signed confirmation/replay, income/expense/future payable/appointment, owner spoofing, logout"
+        },
+        "production_dependency_audit": {
+          "critical": 0,
+          "high": 0,
+          "moderate": 0,
+          "low": 0,
+          "info": 0
+        },
+        "local_evidence": ".data/hardening-evidence/web-6106183"
+      },
+      "postgres": {
+        "executor": "Anotei — Qualidade e Segurança",
+        "engine": "portable PostgreSQL 17.11",
+        "fresh_disposable_loopback_cluster": true,
+        "auth_schema": "synthetic bootstrap, not Supabase Auth or PostgREST",
+        "base_files": 9,
+        "migrations": 9,
+        "fixtures_passed": 9,
+        "runner_guards_passed": 8,
+        "fixture_finance_document_validation": {
+          "same_cases": 202,
+          "before_correct": 163,
+          "before_invalid_accepted": 39,
+          "after_correct": 202,
+          "after_divergences": 0,
+          "normalized_lf_sha256": "8311ac19e759ae82a8fcf6fdfad22810a43804e3e0ab692c3d79223c7e00956c",
+          "before_duration_ms": 57314,
+          "after_duration_ms": 38952,
+          "timing_is_not_end_user_latency": true
+        },
+        "startup_failures": "preserved separately; zero SQL checks executed; not validator failures",
+        "cleanup": "clusters stopped; fixture rollback and ownership/path checks; runtime binaries retained in temporary folder"
+      },
+      "mobile": {
+        "executor": "Anotei — Interface e Mobile",
+        "source_commit": "eb49630c2285df9170e5f85176b11d538c1f3eca",
+        "expo": "58.0.19",
+        "typecheck": {
+          "exit": 0,
+          "duration_ms": 31489
+        },
+        "lint": {
+          "exit": 0,
+          "duration_ms": 149778
+        },
+        "tests": {
+          "exit": 0,
+          "passed": 17,
+          "duration_ms": 2769
+        },
+        "expo_dependency_check": {
+          "exit": 1,
+          "duration_ms": 8132,
+          "reason": "five recommendations published on the evaluation date are not eligible under the preserved 24h supply-chain policy"
+        },
+        "config_and_bundles": "not reached; gate not bypassed",
+        "device_or_signed_cloud_build": "not executed"
+      },
+      "independent_review": {
+        "reviewers": [
+          "Anotei — Qualidade e Segurança",
+          "Anotei — Produto e Assinaturas"
+        ],
+        "scope": "code and contracts, not browser/device testing",
+        "findings_fixed": [
+          "outer Escape trap closing child confirmation",
+          "balance draft lost when returning from summary"
+        ]
+      },
+      "limits": [
+        "423 passing tests do not certify general language comprehension",
+        "text and simulated ASR/provider/model transport are distinct from real audio/model/WhatsApp",
+        "no new human audio evaluation, paid model evaluation, provider delivery test or customer messaging",
+        "CUA state/tab calls timed out twice, therefore browser focus/layout not verified",
+        "no production schema/RLS/grants inspection, migration, push or deploy",
+        "REQUEST recovery and uncertain delivery runtime remain open; pure delivery policy is not integrated runtime",
+        "CORE02 cancellation, response copy and privacy patches are not covered by this source commit"
+      ]
+    }
+  },
+  "not_completed": [
+    "REQUEST lease recovery",
+    "runtime abandoned/uncertain-send reconciliation",
+    "onboarding response-loss recovery",
+    "distributed sessions/rate limits and large-volume lookup/summary",
+    "real model/ASR/WhatsApp E2E",
+    "real device QA and signed native builds",
+    "production schema/grants/drift and backup-restore verification",
+    "card gateway and commercial/legal decisions"
+  ],
+  "public_reports": [
+    "docs/agentes/relatorios/01-correcoes-coordenadas.txt",
+    "docs/agentes/relatorios/rodada-01-validacao.json",
+    "docs/agentes/relatorios/seguranca-privacidade-whatsapp.txt"
+  ]
+}

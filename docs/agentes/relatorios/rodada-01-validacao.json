@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-27",
+  "source_commit": "610618366299c5264d79c11c3467c55190dc2ccd",
+  "integration_branch": "codex/hardening-20261027",
+  "production_modified": false,
+  "paid_api_calls": 0,
+  "web": {
+    "runner": "node scripts/validate-mobile-backend.mjs",
+    "offline_external_network_guard": true,
+    "synthetic_data": true,
+    "typecheck": {"exit": 0, "duration_ms": 79113},
+    "tests": {"exit": 0, "passed": 423, "failed": 0, "skipped": 0, "duration_ms": 57331},
+    "build": {"exit": 0, "next": "16.4.3", "duration_ms": 378544},
+    "http_smoke": {"passed": 5, "failed": 0, "scope": "isolated loopback gateway: login, prepare without mutation, signed confirmation/replay, income/expense/future payable/appointment, owner spoofing, logout"},
+    "production_dependency_audit": {"critical": 0, "high": 0, "moderate": 0, "low": 0, "info": 0},
+    "local_evidence": ".data/hardening-evidence/web-6106183"
+  },
+  "postgres": {
+    "executor": "Anotei — Qualidade e Segurança",
+    "engine": "portable PostgreSQL 17.11",
+    "fresh_disposable_loopback_cluster": true,
+    "auth_schema": "synthetic bootstrap, not Supabase Auth or PostgREST",
+    "base_files": 9,
+    "migrations": 9,
+    "fixtures_passed": 9,
+    "runner_guards_passed": 8,
+    "fixture_finance_document_validation": {
+      "same_cases": 202,
+      "before_correct": 163,
+      "before_invalid_accepted": 39,
+      "after_correct": 202,
+      "after_divergences": 0,
+      "normalized_lf_sha256": "8311ac19e759ae82a8fcf6fdfad22810a43804e3e0ab692c3d79223c7e00956c",
+      "before_duration_ms": 57314,
+      "after_duration_ms": 38952,
+      "timing_is_not_end_user_latency": true
+    },
+    "startup_failures": "preserved separately; zero SQL checks executed; not validator failures",
+    "cleanup": "clusters stopped; fixture rollback and ownership/path checks; runtime binaries retained in temporary folder"
+  },
+  "mobile": {
+    "executor": "Anotei — Interface e Mobile",
+    "source_commit": "eb49630c2285df9170e5f85176b11d538c1f3eca",
+    "expo": "58.0.19",
+    "typecheck": {"exit": 0, "duration_ms": 31489},
+    "lint": {"exit": 0, "duration_ms": 149778},
+    "tests": {"exit": 0, "passed": 17, "duration_ms": 2769},
+    "expo_dependency_check": {"exit": 1, "duration_ms": 8132, "reason": "five recommendations published on the evaluation date are not eligible under the preserved 24h supply-chain policy"},
+    "config_and_bundles": "not reached; gate not bypassed",
+    "device_or_signed_cloud_build": "not executed"
+  },
+  "independent_review": {
+    "reviewers": ["Anotei — Qualidade e Segurança", "Anotei — Produto e Assinaturas"],
+    "scope": "code and contracts, not browser/device testing",
+    "findings_fixed": ["outer Escape trap closing child confirmation", "balance draft lost when returning from summary"]
+  },
+  "limits": [
+    "423 passing tests do not certify general language comprehension",
+    "text and simulated ASR/provider/model transport are distinct from real audio/model/WhatsApp",
+    "no new human audio evaluation, paid model evaluation, provider delivery test or customer messaging",
+    "CUA state/tab calls timed out twice, therefore browser focus/layout not verified",
+    "no production schema/RLS/grants inspection, migration, push or deploy",
+    "REQUEST recovery and uncertain delivery runtime remain open; pure delivery policy is not integrated runtime",
+    "CORE02 cancellation, response copy and privacy patches are not covered by this source commit"
+  ]
+}

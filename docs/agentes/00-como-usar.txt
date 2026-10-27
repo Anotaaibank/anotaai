@@ -18,7 +18,7 @@ As cinco conversas já foram criadas, receberam os prompts completos e estão na
 PRIMEIRA RODADA
 As cinco frentes começam por estudo, rastreamento dos fluxos e diagnóstico, sem mudar o aplicativo. Podem escrever somente o próprio relatório em docs/agentes/relatorios/. Não rodar instalações, builds ou suítes concorrentes no checkout compartilhado.
 Após receber os diagnósticos, o orquestrador elimina duplicidades, define prioridades e atribui tarefas pequenas com arquivos, contratos e critérios de aceite. Correções paralelas precisam de branches e cópias de trabalho isoladas, com a mesma base combinada. Trocar uma branch em uma pasta compartilhada muda o código visto por todas as abas.
-Usar até três frentes em implementação simultânea inicialmente; as demais podem revisar ou preparar especificações. Nenhum agente faz merge em main ou deploy por iniciativa própria. Dependências de uma frente para outra devem passar pelo orquestrador.
+Em 27/10/2026, Bruno autorizou implementação paralela pelos cinco agentes. As tarefas e arquivos exclusivos da primeira rodada estão em rodada-01.json, com worktrees isolados. Builds completos e integração permanecem coordenados para evitar disputa de recursos. Nenhum agente faz merge em main ou deploy por iniciativa própria. Dependências de uma frente para outra devem passar pelo orquestrador.
 
 COMUNICAÇÃO
 Os prompts incluem autorização limitada para enviar resumos técnicos sanitizados ao orquestrador por ferramentas de chats, se disponíveis. Colar um prompt não conecta abas automaticamente. O orquestrador deve descobrir e conferir os IDs dos novos chats; não adivinhar destinatários. Se não houver ferramenta ou contexto suficiente, Bruno pode repassar o resumo.

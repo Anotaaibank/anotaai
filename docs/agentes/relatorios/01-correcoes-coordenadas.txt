@@ -1,0 +1,50 @@
+ANOTEI — CORREÇÕES COORDENADAS, PRIMEIRO CONJUNTO
+27/10/2026 · Orquestrador e cinco frentes existentes
+
+O primeiro conjunto foi integrado e validado localmente na branch codex/hardening-20261027. O código avaliado é 610618366299c5264d79c11c3467c55190dc2ccd. Commits posteriores de documentação não alteram esse resultado. Não houve push, deploy, migração remota, mensagem a clientes ou chamada paga de IA. Esta entrega não declara encerrados todos os achados da auditoria.
+
+O trabalho foi dividido entre Backend/Supabase, IA/WhatsApp, Interface/Mobile, Qualidade/Segurança e Produto/Assinaturas. Cada frente usou seu próprio checkout temporário e branch. O orquestrador revisou os diffs, integrou em sequência, resolveu dependências e reservou janelas para as validações mais pesadas. Os IDs, responsabilidades e estado das tarefas estão em ../rodada-01.json. As cópias gerenciadas cujo registro falhou no aplicativo não receberam código de produto; as cópias Git temporárias foram verificadas antes do uso.
+
+ALTERAÇÕES EFETIVAMENTE IMPLEMENTADAS
+
+1. Dependências web: Next passou de 16.3.4 para 16.4.3. A auditoria de dependências de produção passou de 11 avisos para zero no momento da avaliação. Aviso de versão não foi tratado como prova de exploração; não foi atestado o artefato publicado.
+
+2. Confirmação e persistência: os dois caminhos web de confirmação financeira passaram a exigir recibo com ok=true, saved=true e operation_id exato antes de anunciar sucesso ou criar contexto salvo. Erro de transporte ou recibo inválido não produz sucesso. A gravação continua usando assinatura, prazo e idempotência existentes.
+
+3. WhatsApp: claim de resposta vinculado a titular, remetente, lease e reply_version. Falha de CAS não atualiza a cópia em memória nem autoriza envio. A transição local foi alinhada à versão cloud. A nova migração CAS existe no repositório e NÃO foi aplicada remotamente. Sua implantação exige pausa/coordenação de banco e consumidores; o overload antigo falha de forma fechada. Não publicar só uma metade.
+
+4. Interpretação: entradas/saídas prefixadas preservam atividade explicitamente informada, incluindo custos de renda extra. Correção explícita de registro não é encerrada antecipadamente pelo detector de consulta de recibo. A resposta direta da voz respeita o idioma escolhido. Testes usam transportes simulados e texto já transcrito; não atestam novos áudios humanos ou compreensão irrestrita.
+
+5. Validação SQL: campos obrigatórios ausentes, JSON null e tipos incompatíveis são rejeitados antes dos casts. Os campos opcionais válidos e os documentos BILL_RULE/BALANCE_ADJUSTMENT foram preservados. A alteração é uma migração aditiva, sem reescrever migração antiga aplicada.
+
+6. Compra e gestão: escolha de plano preservada da oferta ao cadastro/login e checkout; retorno limitado a rotas internas; pagamento pendente tem precedência; proteção contra submissão simultânea. Métricas separam status cadastrado, mensalidade no prazo, previsão bruta e aprovação administrativa histórica de Pix. Não inventam acesso efetivo ou recebimento bancário e não alteram preços/benefícios.
+
+7. Saldo manual: o cartão Saldo na conta abre Ajustar saldo atual após a configuração inicial. A operação usa balance_adjust, pede resumo/assinatura/confirmar e preserva base, receitas e gastos. Zero e saldo negativo são permitidos pelo mesmo contrato do servidor. Editar renda e saldo inicial permanece separado. Manual e tradução en-US foram atualizados.
+
+8. Diálogos: uso de diálogo nativo, fechamento respeitando gravação e retorno ao acionador. O trap externo de Entradas e saídas delega Escape/Tab ao diálogo filho. Editores de renda e saldo são suspensos durante a confirmação sem perder o rascunho. Produto encontrou duas falhas de composição durante a revisão; ambas receberam correção e regressão. Browser/CUA indisponível: não há aprovação de foco real ou teclado de aparelho.
+
+9. Nativo: recuperação após conversa expirada sem repetir escrita, atualização no retorno ao aplicativo, descarte de respostas antigas, mês/dia do calendário alinhados e erro de consumo visível. Os patches maduros do SDK 58 foram fixados e a política de idade mínima reforçada. A validação atual parou no catálogo Expo, que recomendou cinco versões publicadas no próprio dia. Essa trava não foi contornada: bundles/configuração posteriores e aparelho/build assinado permanecem pendentes.
+
+EVIDÊNCIAS E LIMITES
+
+Registro estruturado em rodada-01-validacao.json. Tipos web, 423 testes e build Next 16.4.3 aprovados; cinco verificações HTTP com conta sintética passaram, incluindo preparo sem mutação, confirmação/replay, saldo, conta futura, compromisso, tentativa de trocar titular e logout. A API mobile foi ligada somente nesse processo descartável de loopback e continua desligada por padrão no produto.
+
+A frente de Qualidade executou PostgreSQL 17.11 real em clusters novos e descartáveis: nove arquivos de base, nove migrações, nove fixtures, rollback e limpeza. No mesmo fixture de 202 casos, a versão anterior acertou 163 e aceitou 39 combinações inválidas; a corrigida acertou 202 e teve zero divergências. O bootstrap de Auth é sintético: não equivale a testar Supabase Auth/PostgREST ou políticas efetivas de produção. Falhas de inicialização sob carga foram preservadas separadamente, sem apresentá-las como falha do validador ou teste SQL aprovado.
+
+Os 423 testes abrangem regras, cliente simulado, handlers reais com transporte substituído e persistência local. A quantidade aprovada não é uma taxa de compreensão da linguagem. Os tempos dos testes SQL e do build não são latência de resposta ao cliente. Como não houve chamada paga, não há nova medição de custo de modelo por comando concluído nesta rodada.
+
+PERMANECEM ABERTOS
+
+REQUEST interrompido: o consenso entre Backend, IA e QA demonstrou que lease apenas na quota seria insuficiente. Contexto em memória e publicação do WhatsApp hoje têm efeitos antes da liquidação. A próxima implementação exige preparação privada e aceite durável com contexto/revisões/Inbox/pending/outbox pertinentes antes da publicação; também precisa âncora de data original, para “amanhã” não mudar após retomada. BS-01 permanece aberto. A reprodução audit-only documentada não é um teste verde de release.
+
+Entrega incerta: lib/whatsapp-delivery-policy.ts contém política pura e testes, sem ligação ao runtime. Não foi habilitado reenvio automático, recuperação de ENVIANDO ou reconciliação com o provedor. Aceite do serviço, entrega e leitura permanecem conceitos diferentes. A correção CAS não resolve sozinha o abandono de envios.
+
+Cadastro com resposta perdida após commit, sessões/limites compartilhados, contexto durável, lookup de telefones e resumos consistentes/paginados continuam tarefas próprias. Não aumentar réplicas antes de tratar o armazenamento compartilhado. Não foi realizado teste de carga que certifique capacidade para 100 mil clientes.
+
+Supabase produção, backups/restauração, drift de migrações/grants, WhatsApp real, ASR humano, avaliação de modelo real e aparelho continuam sem comprovação nesta rodada. Cartão, regras comerciais pendentes, privacidade/retenção e configuração nativa ainda exigem seus controles próprios. Não houve criação de produto financeiro, conta comercial, cloud build ou publicação em lojas.
+
+NOVO PEDIDO DE BRUNO — SEGUNDO CONJUNTO EM ANDAMENTO
+
+Após validar este conjunto, foram atribuídos: cancelamento natural de entradas por data/última origem comprovada; respostas WhatsApp mais claras e curtas; limpeza de conteúdo sensível ao perder sessão; projeção segura do estado de conexão; análise de API oficial sem celular e de retenção/permissões. Essas alterações não estão incluídas no commit nem nas contagens acima. Mudar o provedor, desconectar o número ou apagar históricos não foi executado.
+
+Relatórios específicos e SHAs das frentes documentam reproduções, contratos, fontes e limitações. Nenhuma exceção para um telefone foi usada como solução geral.
