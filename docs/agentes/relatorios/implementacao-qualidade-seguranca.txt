@@ -198,3 +198,95 @@ Nenhum SQL de produto foi editado pela frente QA. Commits Backend foram
 somente integrados para teste. Nenhum acesso remoto/SQL Supabase, WhatsApp real,
 chamada paga, push ou deploy. Revisao integrada independente aguarda alvo
 final do coordenador; esta validacao nao a substitui.
+
+6. REVISAO INDEPENDENTE POR LEITURA - UI E CONTRATO BS-C
+
+Alvo integrado lido: 9369b43acdbbd1e946236f9497bd6927594ead5f.
+Incremental UI adicional: 61d535d19fc0fb578b12383d313baf59b76bf81d.
+Metodo: git show dos objetos exatos, sem editar checkout original, executar
+app, testes, build, SQL ou consultar dados reais. Nao e QA visual de navegador.
+
+UI IM03 / saldo e dialogos: nenhum bloqueador novo encontrado nesse recorte.
+- components/BalanceAdjustment.tsx:12-19 prepara balance_adjust com centavos,
+  zero e negativos; nao altera profile nem cria receita. Validacao autoritativa
+  e regras de saldo/concorrencia continuam no servidor. Linhas25-29 desabilitam
+  formulario durante busy e mostram erro. Campo em inputMode decimal depende
+  de validacao real de teclado no aparelho para a digitacao do sinal negativo.
+- components/Finance.tsx:23-26 mantem a proposta assinada em falha e so fecha
+  apos HTTP bem-sucedido do endpoint com recibo BS-B verificado. Mesmo token
+  pode ser repetido sem criar operacao financeira nova pelo replay do servidor.
+- components/Finance.tsx:37 no incremental61d535d conserva BalanceAdjustment
+  montado, escondido/suspenso durante pending, em vez de perder o valor alvo.
+  BalanceAdjustment:21 repassa active ao dialogo. ManualIncomeForm:48 conserva
+  o mesmo padrao para renda. Cancelar resumo reabre o mesmo rascunho.
+- components/ManualTransactions.tsx:13-22 deixa dialog[open] nativo tratar
+  Escape/Tab, evitando trap concorrente do seletor pai. FinancialDialog:11-16
+  fecha/reabre lifecycle quando active muda. lifecycle:2-13 possui cleanup
+  idempotente; cancel:16-18 impede fechamento por Escape durante busy.
+- app/api/finance/route.ts:7 confirma com usuario autenticado e recibo da
+  operacao exata antes de HTTP200. Front-end nao passa titular livremente.
+Limites: nao se comprovou foco real, efeitos React/UA, viewport/teclado mobile,
+inert/pointer ou retorno de foco em aparelho. Os14 testes dirigidos relatados
+pelo coordenador sao simulados e nao foram repetidos por esta frente.
+Perda do alvo ao cancelar resumo foi corrigida por61d535d; nao e pendencia nova.
+
+Contrato BS-C lido separadamente:1494a6d, ainda NAO implementado/integrado.
+Concordancia de direcao: take transacional por titular/linha, tentativa com
+lease+versao+deadline, COMPLETED imutavel, takeover sem segunda unidade,
+fingerprint contextual canonico, hash/recibo e nenhum financeiro automatico.
+Gates comunicados a IA, Backend e coordenador antes de implementar:
+
+1. Publicar somente apos settle===true ou replay autoritativo equivalente.
+   lib/whatsapp-worker.ts:70 reserva REQUEST;71-99 possuem early returns com
+   patch/propose/reply;100 liquida no finally apos a resposta. So trocar retorno
+   do finally nao resolve. Proteger tambem invalidacao de pending de outras rows
+   e exigir inbox lease para envio, alem do fence REQUEST. Confirmacao financeira
+   continua em sua etapa assinada/idempotente, sem replay executar applyFinance.
+2. Contexto nao e protegido automaticamente pela quota. assistant-turn.ts:25-32
+   muta busy/source/reconcile/manual antes do await e38-49 muda turns/pending/
+   requests e libera busy. Staging e ownership de efeitos devem ser explicitos;
+   checagem tardia nao desfaz efeitos previos nem impede finally antigo liberar
+   tentativa nova. Declarar limite entre REQUEST global e conversa em memoria
+   por processo, inclusive REQUESTs distintos na mesma conversa.
+3. Erro de interpretacao difere de commit incerto. Nao enviar FAILED/0 em catch
+   generico apos settle/take incerto. Reconsultar event+fingerprint e comprovar
+   hash. Os tres consumidores devem migrar juntos; RPC legado sem fence nao
+   pode continuar liquidando REQUEST novo. WHATSAPP/VOICE ficam preservados.
+4. Definir replay de proposta assinada expirada: cache imutavel, sem reassinar
+   silenciosamente e sem mostrar proposta expirada como confirmacao valida.
+   Definir erro/estado para nova proposta com novo request_id explicito.
+5. Deadline deve usar relogio do banco depois do lock; now() e o instante inicial
+   da transacao e pode ficar antigo durante espera. clock_timestamp() reflete
+   tempo atual. Exigir teste futuro com lock atravessando expiracao.
+   Fonte primaria: https://www.postgresql.org/docs/17/functions-datetime.html#FUNCTIONS-DATETIME-CURRENT
+6. Separar criacao original, tentativa e periodo debitado em FAILED->RUNNING
+   na virada do ciclo. Manter identidade/auditoria e apenas uma unidade por event.
+   Retry precisa do mesmo request_id/contexto. subscription-usage.ts:20 hoje
+   substitui ID invalido por UUID novo; definir rejeicao/contrato do cliente para
+   evitar que retries virem novas unidades. Mobile ja exige UUID valido.
+7. Repro audit-only em tests/sql/request-reservation-baseline.sql faz o inventario
+   estrito falhar se integrado sem revisao. Preferir .sql.txt em docs ate a rodada
+   especifica, sem enfraquecer manifesto. Exit0 desse repro demonstra dois bugs,
+   nao que REQUEST esta corrigido; nunca incluir como release verde.
+
+Nao houve execucao do repro BS-C nem prova de concorrencia com duas conexoes.
+Gates sao requisitos de projeto/teste; nao representam novos defeitos observados
+em producao. Nao liberam implementacao, migracao ou publicacao por esta revisao.
+
+Consenso posterior com IA e Backend, ainda somente desenho:
+Preparacao pura calcula result/context_delta/patches privados sobre snapshot.
+Aceite duravel deve validar REQUEST, revisao/epoch da conversa, inbox/reply e
+CAS de outras pending rows no mesmo conjunto atomico, registrando resultado,
+recibo e efeitos/outbox antes de publicar. Uma checagem de posse seguida de
+write separado tem TOCTOU; Map/busy nao comprova seguranca entre replicas.
+Se isso nao for possivel no desenho aprovado, runtime global permanece bloqueado;
+nao anunciar fence end-to-end com apenas a reserva de quota corrigida.
+Ancorar original_received_at/reference_day no primeiro acquire e conservar
+no takeover: 'amanha' nao pode mudar de data ao repetir no dia seguinte. A hora
+real ainda governa assinatura, TTL e deadline. Contexto consumido precisa de
+snapshot/revisao; ID de conversa isolado nao conserva source/target/pending/focus.
+IA relatou duas observacoes sinteticas dessas lacunas; nao foram executadas por QA.
+Backend informou mover repro sem mudar bytes para
+docs/agentes/relatorios/request-reservation-baseline.sql.txt no SHA
+557a6e77c81d268bf4e90c36efdb26dbdcd6cab9. Gate de inventario atendido no desenho;
+nenhuma execucao SQL, implementacao REQUEST ou migracao foi autorizada aqui.
