@@ -213,3 +213,29 @@ Resultado: 20/20 aprovados, 0 falhas, em 4.565,5884 ms. Log ignorado: .data/prod
 Conferência adicional por AST/JSON, via stdin local: 37 textos novos de componentes identificados nos commits fonte, nenhum sem entrada de catálogo; títulos/textos de todos os passos de Meu dinheiro com tradução; 18 outras seções e campos fora de steps inalterados. A primeira versão dessa conferência tratou o símbolo × como letra por usar intervalo Unicode amplo; corrigi o filtro para excluí-lo, sem adicionar tradução artificial para pontuação. Conferência final passou. git diff --check também passou.
 
 Não executei types, build, suite pesada, browser, mobile, SQL, chamadas de IA/WhatsApp, push ou deploy nesta etapa; a janela de validação final pertence ao root. Não alterei componentes financeiros. Commit funcional foi comunicado imediatamente para integração antes deste relatório. Este relatório segue em commit documental separado.
+
+11. PA-C — HELPER ISOLADO DE CÓPIA DE PLANOS (27/10/2026)
+
+Autorização do orquestrador: implementar somente helper novo lib/whatsapp-plan-copy.ts e testes semânticos mínimos. whatsapp-finance.ts pertence à IA; delegação ao wrapper depende de revisão do root. Não alterar relatórios/query, catálogo, worker ou outro fluxo de gravação.
+
+Funcional entregue antes deste relatório: db9febf7199e3f56481065116050475d67a81dfa — feat(whatsapp): add conservative plan copy helper. Apenas lib/whatsapp-plan-copy.ts e tests/whatsapp-plan-copy.test.ts. Exportação: whatsappPlanCopy(plan:FinancePlan, code?:string):string.
+
+Contrato preservado:
+- Helper de apresentação, sem IO, chamadas de IA, consulta ao banco, verificação de token, autorização ou mutação. FinancePlan é importado como tipo; currency mantém centavos e BRL.
+- Código presente: proposta aguardando confirmação, sem prefixo de registro concluído; mantém 1 Confirmar / 2 Editar, comandos CONFIRMAR/EDITAR/CANCELAR com o código exato, prazo informado de dez minutos e instrução para múltiplas propostas. Código fornecido precisa ter dez caracteres hexadecimais maiúsculos; vazio/malformado gera erro, nunca resultado de sucesso por coerção falsy.
+- Código ausente: preserva o contrato preexistente do chamador, que DEVE já ter verificado o recibo de escrita daquele plano. O prefixo “✅ Registrado” não é prova produzida pelo helper. A pré-condição está documentada na função; não foi criado parâmetro, receipt fake ou caminho alternativo de autorização.
+- Mantidos prefixos/rodapé compatíveis com testes existentes do wrapper; data ISO exibida em DD/MM/AAAA, sem alterar valores armazenados. Data e hora do compromisso continuam juntas para preservar a leitura existente.
+
+Formatação conservadora:
+- Uma única INCOME arquivada, com versão esperada e título do plano correspondente: mostra valor com centavos, descrição e data original, informa saída dos registros ativos e preservação do histórico, e conserva as demais linhas/efeitos do plano. Não chama isso de nova despesa, exclusão permanente ou transferência bancária.
+- Criação simples e inequívoca de entrada recebida/prevista, despesa paga/prevista ou compromisso: campos separados em linhas, sem duplicar a informação que já está rotulada. Detalhes que não foram reapresentados, inclusive condições desconhecidas, permanecem no texto.
+- Update ambíguo, checks adicionais, lote/múltiplos objetos, conta recorrente, reserva, ajuste de saldo e resultado misto de atividade: fallback conserva título e TODAS as linhas não vazias de plan.lines, sem limite de quantidade ou tamanho. Não transforma uma reserva/ajuste em receita nem omite a despesa de uma atividade.
+- Não calcula saldo final, total de contas filtradas ou estatística nova. Não recategoriza nem reinterpreta o pedido original. Não toca em financeReport.answer.
+
+Testes executados, todos locais e sintéticos:
+node --experimental-strip-types --test --test-isolation=none tests/whatsapp-plan-copy.test.ts
+Resultado: 8/8 aprovados, 0 falhas/ignorados, 512,5092 ms. Log ignorado: .data/whatsapp-plan-copy-tests.log. git diff --cached --check passou.
+
+Evidências sem snapshot de mensagem inteira: identificação da entrada arquivada e imutabilidade do plano; distinção proposta/concluído e rejeição de códigos inválidos; centavos e datas de entrada realizada/prevista; efeitos diferentes de saída paga/conta futura e contexto da viagem; compromisso com/sem horário/local e condição dos lembretes; parcelas de R$ 100,01 divididas em três preservando o centavo restante e todos os vencimentos; fallback de Uber com custo, recorrência, reserva e ajuste; condição adicional não descartada; 24 linhas de lote preservadas mesmo acima da meta editorial de 700 caracteres; alteração existente não apresentada como nova receita.
+
+Limitações: esta execução não testa a delegação do wrapper, fila completa, transcrição/modelo real, provedor WhatsApp, recebimento de mensagem ou persistência/recibo em produção. Nenhuma mensagem foi enviada. O arquivo whatsapp-finance.ts não foi editado por esta frente. Não executei types/build ou outra suite pesada, conforme janela compartilhada de CPU; root validará o conjunto. O tempo acima é duração da suite de unidade, não latência/custo por comando real. Texto final deve passar pela revisão do root antes de a IA conectar o helper.
