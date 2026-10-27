@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "purpose": "disposable-anotei-sql-tests-only",
+  "postgres_major": 17,
+  "docker_image": "postgres:17.11-bookworm",
+  "auth_bootstrap": "scripts/postgres/bootstrap-auth.sql",
+  "base": [
+    "database/schema.sql",
+    "database/finance.sql",
+    "database/commerce.sql",
+    "database/security.sql",
+    "database/rpc-identifiers.sql",
+    "database/personal-access.sql",
+    "database/legacy-auth.sql",
+    "database/household-billing.sql",
+    "database/household-routing-fix.sql"
+  ],
+  "migrations": [
+    "supabase/migrations/20261014210626_recurring_bills.sql",
+    "supabase/migrations/20261015141044_plans_usage_customer_details.sql",
+    "supabase/migrations/20261015153237_subscriber_resend_deactivation.sql",
+    "supabase/migrations/20261015171752_subscriber_communications.sql",
+    "supabase/migrations/20261015200609_existing_account_link.sql",
+    "supabase/migrations/20261017134237_current_balance_adjustment.sql",
+    "supabase/migrations/20261020165114_whatsapp_context_reset.sql"
+  ],
+  "fixtures": [
+    "tests/sql/rls-basics.sql",
+    "tests/sql/subscription-plans.sql",
+    "tests/sql/subscriber-controls.sql",
+    "tests/sql/communications.sql",
+    "tests/sql/onboarding-link.sql",
+    "tests/sql/subscriber-context-reset.sql",
+    "tests/sql/whatsapp-calendar-persistence.sql"
+  ]
+}

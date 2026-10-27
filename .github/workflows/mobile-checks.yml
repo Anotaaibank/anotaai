@@ -1,7 +1,8 @@
-name: Mobile checks
+name: Application checks
 on:
   pull_request:
-    paths: ['mobile/**', 'lib/**', 'tests/**', 'app/api/**', 'scripts/**', 'package.json', 'pnpm-lock.yaml', 'tsconfig.json', '.github/workflows/mobile-checks.yml']
+  push:
+    branches: ['main']
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,6 +23,7 @@ jobs:
       - run: pnpm --dir mobile install --frozen-lockfile
       - run: pnpm install --frozen-lockfile
       - run: node scripts/validate-mobile-backend.mjs
+      - run: node --test --test-isolation=none tests/sql/*.test.mjs
       - run: node scripts/smoke-mobile-api.mjs
       - run: pnpm --dir mobile run validate --bundles
         env:

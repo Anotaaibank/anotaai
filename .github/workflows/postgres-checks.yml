@@ -1,0 +1,27 @@
+name: PostgreSQL isolated checks
+on:
+  pull_request:
+  push:
+    branches: ['main']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: postgres-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.19.0'
+      - run: node --test --test-isolation=none tests/sql/*.test.mjs
+      # Runner owns a fresh postgres:17.11-bookworm container with --network none.
+      # It accepts no DSN, mounts no host folder and rolls every fixture back.
+      - run: node --experimental-strip-types scripts/test-postgres.mjs --docker
+      # No production secrets, Supabase, deployment, migrations remote or EAS.
