@@ -22,7 +22,8 @@
     "supabase/migrations/20261015171752_subscriber_communications.sql",
     "supabase/migrations/20261015200609_existing_account_link.sql",
     "supabase/migrations/20261017134237_current_balance_adjustment.sql",
-    "supabase/migrations/20261020165114_whatsapp_context_reset.sql"
+    "supabase/migrations/20261020165114_whatsapp_context_reset.sql",
+    "supabase/migrations/20261027153708_whatsapp_reply_cas.sql"
   ],
   "fixtures": [
     "tests/sql/rls-basics.sql",
@@ -31,6 +32,7 @@
     "tests/sql/communications.sql",
     "tests/sql/onboarding-link.sql",
     "tests/sql/subscriber-context-reset.sql",
-    "tests/sql/whatsapp-calendar-persistence.sql"
+    "tests/sql/whatsapp-calendar-persistence.sql",
+    "tests/sql/whatsapp-reply-cas.sql"
   ]
 }

@@ -97,3 +97,40 @@ destes resultados. Aprovar testes isolados nao prova compreensao da linguagem.
 Backend entregou CAS/outbox em commits separados; a integracao do novo SQL e
 fixture exige atualizar o manifesto e repetir o PG real, em commit posterior.
 Nao foi modificado SQL de produto para mascarar falhas.
+
+4. VALIDACAO CONJUNTA DO PATCH BACKEND
+
+Integracao autorizada no checkout QA dos commits Backend originais:
+  56c9f230850e052b4db07338a7978065cf3d25f4
+  e9b9df383e2fb910b467959b6322ced98c26abb0
+Cherry-picks locais de teste: 59f429a e bf2a21e. Nao integrar estes duplicados
+no coordenador: usar os SHAs Backend originais e apenas os commits proprios QA.
+Commit de harness anterior: 3f6b2d22818553b2f4fbefb4298403d31200cbd3.
+
+Manifesto passou a incluir a migracao de produto ja existente no patch Backend
+20261027153708_whatsapp_reply_cas.sql e fixture whatsapp-reply-cas.sql.
+Nao houve edicao do conteudo da migracao, fixture ou codigo de produto Backend.
+
+Repeticao completa SQL: PostgreSQL REAL 17.11, base9 + migracoes8, fixtures8/8,
+exit0; todas rollback; 31.383 ms. Inicio UTC: 2026-10-27T15:57:46.413Z.
+Hash bootstrap SHA256:
+cbd3e9962e6e46b27826eede7a710155d6988ae1ada6bb318928cf1baca1924e
+Oitava fixture verifica bloqueio de lease/versao antigos, outro titular ou
+remetente, claim duplo, RPC antigo por ID, alteracao de confirmacao, tentativa
+de forjar revisao, lease nulo, resposta vazia/em processamento e grants.
+O estado de entrega isolado nao altera a revisao do payload.
+
+Repeticao offline integrada:
+  node scripts/validate-mobile-backend.mjs --checks-only
+  typecheck exit0 (20.543 ms); testes 321/321, exit0 (62.368 ms no runner;
+  61.956 ms reportados pelo Node test). Guards SQL continuam 6/6.
+As 17 definicoes novas exercitam SQLite e cliente remoto com HTTP stub; nao
+equivalem a 17 chamadas de PostgREST real. A fixture SQL foi executada em PG
+real separado e sustenta a parte banco/RPC dessa validacao conjunta.
+
+Revisao independente limitada: contrato RPC versionado, trigger e negativos
+foram lidos e exercitados. Nenhuma falha bloqueadora encontrada nesse recorte.
+Isto nao prova exactly-once no provedor WhatsApp, recuperacao de ENVIANDO,
+entrega real, carga, RLS remoto ou SupabaseAuth. A migracao e o worker devem
+seguir o rollout coordenado descrito pelo Backend; nenhum rollout foi feito.
+Build completo permanece com o orquestrador. Nao foi habilitada API mobile.
