@@ -1,0 +1,229 @@
+PA-C — PROPOSTAS CURTAS DE MENSAGENS DO WHATSAPP
+Anotei na Hora · Produto e Assinaturas · 27/10/2026
+
+STATUS: proposta de texto para revisão conjunta. Nenhuma mensagem deste documento foi implementada ou enviada. Exemplos inteiramente sintéticos; não são dados nem códigos válidos de clientes.
+Fonte de código fixada: 610618366299c5264d79c11c3467c55190dc2ccd, lida por git show no worktree próprio. O desenvolvimento IW-D de cancelamento está em paralelo e pode exigir ajuste dos casos de seleção de alvo antes da implementação.
+
+1. REGRAS DE TEXTO E DE ESTADO
+
+Uma mensagem deve mostrar primeiro o que interessa: tipo, valor quando houver, descrição e data exata. Horário e local só aparecem quando existem. Use uma linha por informação e uma linha vazia entre resumo e ação. Não repita a pergunta nem diga “vou verificar”.
+Entrada realizada significa dinheiro recebido informado pelo usuário; saída realizada significa gasto informado pelo usuário. Conta prevista não é conta paga. Compromisso não é movimentação financeira. Ajuste de saldo não é receita. Não diga que o aplicativo pagou, recebeu do banco, transferiu ou verificou extrato.
+Proposta: o usuário ainda precisa confirmar; não usar “salvo”, “registrado”, “lançado” ou selo de sucesso. Sucesso: somente depois do recibo verificado da gravação. Falha com resultado incerto: não afirmar sucesso, falha definitiva ou ausência de registro; orientar a conferência antes de repetir.
+Descrição, data e valor vêm do plano validado, não de uma nova interpretação do modelo. Use o mesmo texto para origem escrita e áudio depois da transcrição. Não ocultar alterações do plano para encurtar o resumo.
+
+2. CAMPOS E CONTRATOS REAIS
+
+- FinancePlan: id, title, lines, documents, expenses, checks (lib/finance.ts:11). Não existe um campo universal operation_type ou balance_after no plano.
+- Entrada: documents[].document com kind INCOME, description, amount_cents, date, status, active e details.salary/activity quando presentes. REALIZADO e PREVISTO precisam de textos distintos.
+- Saída/conta: expenses[].payload.description, amount_cents, entry_date, category, status e details; active no ExpenseChange identifica arquivamento/restauração. Não renomear entry_date no payload.
+- Conta recorrente: documento BILL_RULE com details.day e data inicial; os vencimentos também estão em expenses. Parcela única/última parcela não deve ganhar recorrência por associação com “carro” ou “moto”.
+- Compromisso: documento APPOINTMENT com description, date e details.time/location/done. Não inventar valor monetário ou horário.
+- Retirar entrada existente: document_archive gera documento INCOME active=false com expected de versão; mantém histórico, não é exclusão permanente. O objeto do plano traz descrição, data e valor, embora plan.lines no arquivamento genérico hoje não exiba todos esses campos (lib/finance.ts:59).
+- Consultas: financeReport retorna ok, saved=false, topic, period, from, to, today, configured, answer, totals, items, count, truncated. items tem no máximo dez linhas em agenda/pagamentos/atrasos. count é o total da consulta, não items.length.
+- Total de contas filtradas: não há um campo overdue_total_cents/filtered_pending_cents no retorno atual. O total correto já é calculado em answer dentro de financeReport. Não usar totals.pending_month_cents para uma consulta de atrasos ou somar apenas os dez itens. Na implementação, conservar answer ou formatar no ponto que já possui a coleção completa; não inventar um campo neste documento.
+- Saldo registrado: totals.balance_cents. “Saldo no banco agora” só pode ser chamado de saldo registrado no Anotei; o sistema não lê o banco.
+- Recibo: verifiedFinanceReceipt exige ok=true, saved=true e operation_id igual a plan.id (lib/finance-server.ts:29-30). Só depois disso o worker produz resposta de registro concluído (lib/whatsapp-worker.ts:83-84).
+
+3. RODAPÉ F — USAR EM TODA PROPOSTA FINANCEIRA VÁLIDA
+
+Anexar este rodapé aos exemplos que indicam “+ F”. Trocar o código sintético pelo confirmation_code real de dez caracteres hexadecimais. Nunca mostrar o token assinado, chave ou identificador privado do usuário.
+
+[F-INICIO]
+1 — Confirmar
+2 — Editar
+
+Ainda não salvo. Vale por 10 minutos.
+Desistir: CANCELAR A1B2C3D4E5.
+Mais de um pedido? Use os botões ou CONFIRMAR A1B2C3D4E5 / EDITAR A1B2C3D4E5.
+[F-FIM]
+
+O prazo é o da proposta, não um prazo de pagamento. Vencido o token, um novo pedido deve gerar nova proposta e código; não renovar o prazo apenas mudando o texto. A implementação precisa manter o contexto de edição, não mandar o usuário repetir dados que já existem.
+
+4. CASOS DE USO — CORPOS PRONTOS PARA DISCUSSÃO
+
+UC01 · Entrada realizada, antes de gravar · + F
+[UC01-INICIO]
+*Conferir entrada*
+
+Valor: R$ 250,00
+Descrição: Venda de uma cadeira
+Data: 27/10/2026
+
+Após confirmar, o aplicativo recalcula o saldo.
+[UC01-FIM]
+Fonte: INCOME REALIZADO. Se o plano for PREVISTO, usar “Conferir entrada prevista”, “Receber em” e “Só entra no saldo quando registrar o recebimento”. Não informar recebimento já realizado. Se expected indicar alteração de registro existente, usar “Conferir alteração da entrada”, sem apresentar como uma segunda receita. Não prometer aumento específico do saldo quando a data for anterior à base inicial cadastrada.
+Quando o plano reunir renda e custo de atividade, mostrar também Recebido, Custo da atividade e Resultado líquido já calculados em plan.lines (lib/finance.ts:41). Não aplicar o modelo de uma entrada simples ocultando a saída do mesmo plano.
+
+UC02 · Saída realizada, antes de gravar · + F
+[UC02-INICIO]
+*Conferir saída*
+
+Valor: R$ 25,00
+Descrição: Almoço no shopping
+Data: 27/10/2026
+
+Após confirmar, entra como gasto no aplicativo.
+[UC02-FIM]
+Fonte: expense REALIZADO. Data é a já resolvida pelo intérprete; não perguntar de novo. Não declarar saldo final sem consulta correspondente. Se for custo de Uber/bico, manter a atividade e a separação de despesa pessoal que constarem no plano.
+
+UC03 · Conta futura sem recorrência · + F
+[UC03-INICIO]
+*Conferir conta a pagar*
+
+Valor: R$ 800,00
+Descrição: Última parcela da moto
+Vencimento: 25/11/2026
+Repetição: não se repete
+
+Fica a pagar. Não reduz o saldo agora.
+[UC03-FIM]
+Usar a linha Repetição somente quando a ausência de regra/série tiver sido determinada pelo plano; “última parcela” no exemplo vem da descrição sintética, não de um novo campo last_installment. Se houver várias parcelas, mostrar todos os valores/vencimentos do plano, incluindo eventual diferença de centavos, antes da confirmação.
+
+UC04 · Conta mensal contínua · + F
+[UC04-INICIO]
+*Conferir conta mensal*
+
+Valor por mês: R$ 1.500,00
+Descrição: Parcela do carro
+Primeiro vencimento: 05/11/2026
+Repete todo mês, dia 5, até cancelar.
+
+Fica a pagar. Não reduz o saldo agora.
+[UC04-FIM]
+Fonte: BILL_RULE e vencimentos validados. Se o dia não existir em um mês, vence no último dia, conforme regra atual. Quando relevante, acrescentar essa frase; não alterar recorrência com base no nome do produto.
+
+UC05 · Compromisso · + F
+[UC05-INICIO]
+*Conferir compromisso*
+
+Descrição: Dentista
+Data: 03/11/2026
+Horário: 15h
+Local: Clínica Exemplo
+[UC05-FIM]
+Horário/local são omitidos se ausentes. Sem horário, não prometer lembretes. Se a pessoa pedir lembrete e faltar horário, perguntar só “Que horas será?”. Com horário, pode acrescentar “Lembretes 24h e 5h antes dependem do WhatsApp ativo”, preservando a condição da regra atual; não garantir entrega.
+
+UC06 · Retirar uma entrada já registrada · + F
+[UC06-INICIO]
+*Conferir cancelamento da entrada*
+
+Valor: R$ 250,00
+Descrição: Venda de uma cadeira
+Data: 27/10/2026
+
+Ela sai dos registros ativos. O saldo e a previsão do aplicativo serão recalculados. O histórico será mantido.
+[UC06-FIM]
+Somente depois de selecionar inequivocamente o INCOME correto da conta autenticada, com versão conferida. Não transformar “cancelar entrada” em uma nova saída. Para compromisso usar “cancelamento do compromisso”; para conta prevista explicar que retirar vencimento não significa pagamento. Recorrência exige identificar se retira só um vencimento ou a série; preservar a explicação do plano sobre contas antigas e pagamentos realizados.
+
+UC07 · Pessoa apenas diz “confirma”/há pedido aguardando · sem F
+[UC07-INICIO]
+Seu pedido está no resumo acima.
+Responda 1 para confirmar ou 2 para editar.
+
+Ainda não salvo. Para desistir: CANCELAR A1B2C3D4E5.
+[UC07-FIM]
+Usar só quando existir exatamente uma proposta válida do mesmo usuário/remetente. Com mais de uma, usar UC10. Se a proposta venceu, pedir o pedido novamente sem prometer que a gravação anterior não aconteceu; consultar o estado correspondente.
+
+UC08 · Edição de proposta, após 2 · sem F
+[UC08-INICIO]
+*O que quer corrigir?*
+
+Escreva ou fale só a mudança.
+Ex.: “O valor é 30 reais” ou “dia 28”.
+
+Depois você confere o novo resumo e confirma com 1.
+[UC08-FIM]
+Manter a proposta em edição e conservar descrição/valor/data que não mudaram. Não exibir botão Confirmar enquanto não houver um novo plano válido. Se a implementação ainda exigir repetir a lista inteira, aplicar a mensagem específica abaixo, em vez de prometer edição parcial de lista.
+
+UC08B · Lista que precisa ser reenviada · sem F
+[UC08B-INICIO]
+*Editar lista*
+
+Envie a lista inteira com as correções.
+Vou mostrar o novo resumo antes de você confirmar com 1.
+[UC08B-FIM]
+Compatível com o ramo atual plan.title começando por “Conferir ”. Isso não autoriza salvar itens não apresentados nem repetir os que já receberam recibo de gravação.
+
+UC09 · Cancelar somente uma proposta ainda não aplicada · sem F
+[UC09-INICIO]
+*Pedido cancelado*
+
+Esta proposta foi descartada. Os registros já existentes foram mantidos.
+[UC09-FIM]
+Exige confirmação de que foi a proposta identificada, ainda não aplicada. Não reutilizar este texto para falha/ACK incerto ou para arquivamento de um registro já salvo. Se cancelou só a edição, dizer “Edição cancelada”, sem afirmar cancelamento de outros registros.
+
+UC10 · Duas propostas ou dois registros possíveis · sem F
+[UC10-INICIO]
+Encontrei mais de um pedido. Qual você quer confirmar?
+
+Toque em Confirmar no resumo certo ou envie CONFIRMAR com o código daquele resumo.
+[UC10-FIM]
+Esse texto é para PROPOSTAS já assinadas. Para dois registros candidatos ao cancelamento, ainda sem proposta, mostrar descrição/data/valor disponíveis e pedir que repita o comando identificando um deles: “Envie, por exemplo: cancela a entrada da cadeira de 27/10, de 250 reais”. Não numerar candidatos como “1 escolher / 2 escolher”: 1/2 já significam confirmar/editar. Depois da seleção, preparar UC06 + F; só então aceitar 1/2. Não arquivar ambos por suposição.
+
+UC11 · Consulta com dois assuntos: “qual meu saldo e tenho vencidas?” · sem F
+[UC11-INICIO]
+*Saldo registrado*
+R$ 1.500,00 no aplicativo.
+
+*Contas em atraso*
+R$ 200,00 em 1 conta.
+• Energia — R$ 200,00 — venceu em 20/10/2026.
+[UC11-FIM]
+Compor consultas saldo + atrasos, preservando o período de cada uma e os totais completos do servidor. Não usar o saldo menos atrasos como se fosse novo saldo. Os itens de atrasos vêm de date/description/amount_cents/overdue; total filtrado deve respeitar a ressalva da seção 2. Responder aos dois assuntos; consulta não prepara nem confirma pagamento. Se uma leitura falhar, sinalizar essa parte como indisponível e não preencher com zero.
+
+UC12 · Gravação concluída com recibo verificado · sem F
+[UC12-INICIO]
+*Entrada registrada*
+
+R$ 250,00 — Venda de uma cadeira
+Data: 27/10/2026
+
+Já aparece no aplicativo.
+[UC12-FIM]
+Variantes após recibo válido: “Saída registrada”, “Conta agendada”, “Compromisso agendado”, “Entrada retirada dos registros ativos”. Manter valor/descrição/data do mesmo plano confirmado. Conta prevista acrescenta “Continua a pagar; o saldo atual não muda”. Compromisso não leva valor. Na retirada, não dizer exclusão permanente nem sugerir que houve pagamento. Não repetir a confirmação ou criar outro lançamento por causa do envio da resposta.
+
+UC13 · Resultado da gravação não confirmado/ACK incerto · sem F
+[UC13-INICIO]
+*Não consegui confirmar se foi salvo*
+
+Confira o histórico no aplicativo antes de repetir o pedido.
+Se o registro já estiver lá, não envie de novo.
+[UC13-FIM]
+Usar quando a aplicação pode ter ocorrido, mas faltou recibo confiável. Não escrever “nenhum registro”, “não foi salvo”, “cancelado”, “pago” ou “tente novamente” sem reconciliação. Não habilitar confirmação nova ou retry de escrita por este texto. A implementação de reconciliação é do Backend/IA; esta proposta não cria mecanismo automático.
+
+5. BOTÕES, TAMANHO E FALLBACK
+
+Contrato atual lib/whatsapp.ts:4-11:
+- Título do botão: Confirmar (9 caracteres); callback literal CONFIRMAR + espaço + código (20 caracteres com código de dez).
+- Segundo botão financeiro: Editar (6); callback EDITAR + espaço + código (17).
+- CANCELAR + espaço + código (19) continua como texto digitado para desistir. Não trocar Editar por Cancelar no financeiro.
+- A exceção já existente de feedback usa segundo botão Cancelar, não Editar; fica fora destes modelos financeiros.
+- type=button, choices e footerText atuais são preservados. Não criar terceiro botão, URL, nova enumeração nem payload de seleção sem contrato.
+- Se o menu for recusado com 400/404/422, o sendText atual usa texto simples. Portanto o corpo tem de ser suficiente com 1/2 e comandos com código; não depender de “clique aqui”. INCERTO não recebe reenvio automático nesse helper.
+
+Meta editorial, NÃO limite oficial do WhatsApp/provedor: corpo individual + F até 700 caracteres, consulta de dois assuntos até 1.000. Textos de exemplo são medidos antes do commit; código ilustrativo tem o comprimento real. Descrições longas, lotes e regras críticas podem exceder a meta; não truncar valores/datas/itens silenciosamente. Preservar os limites e a política de transporte existentes até validação específica da IA; não alegar conformidade oficial com limite não pesquisado.
+
+Se o retorno da consulta tiver truncated=true, mostrar o total real e dizer “Mostrei 10 de N itens. Veja os outros no aplicativo.” Isso vale para LEITURA. Em proposta de ESCRITA, não confirmar itens escondidos sob “outros no painel”; apresentar as alterações ou dividir com confirmação explícita por grupo, sem implementar mudança de protocolo nesta proposta.
+
+6. DOIS ACKS DIFERENTES — NÃO MISTURAR
+
+Recibo de escrita verificado: comprova gravação do plano no aplicativo. Status ACEITO do sendText: provedor aceitou a resposta; não comprova leitura/entrega no telefone. FALHOU/INCERTO do envio não desfaçam a gravação já verificada e não justificam repetir o comando financeiro. Se a escrita foi verificada mas o envio ficou incerto, a gestão pode mostrar “Registro salvo; entrega da resposta não confirmada”. Não mandar ao usuário “não foi salvo” apenas por falha de envio.
+
+7. ACEITE DA IMPLEMENTAÇÃO FUTURA
+
+- Mesmo pedido por texto/transcrição produz o mesmo resumo do plano; data resolvida aparece uma vez e não é perguntada de novo.
+- Antes de recibo: UC01–06 com F; depois de recibo: UC12. Consulta UC11 não traz botões de mutação.
+- 1 confirma e 2 edita só a proposta única e válida do mesmo remetente. Duas propostas pedem botão/código. Duas candidatas não viram uma ação sobre ambas.
+- Editar preserva dados não alterados; reabre resumo antes de gravar. Desistir de proposta não apaga registro anterior.
+- Arquivamento de entrada altera active e reavalia saldo/projeção; não cria despesa ou transferência bancária. Retirar vencimento não é pagar e não cancela série inteira por inferência.
+- Resposta de sucesso depende de operation_id correto no recibo; recibo ausente/malformado ou erro pós-commit mantém resultado incerto, sem negar existência de registro.
+- Exemplos sintéticos de retorno com mais de dez itens provam que o total não é a soma da amostra. Falha de uma consulta não vira saldo/dívida zero.
+
+8. EXECUÇÃO E PENDÊNCIAS DESTA ENTREGA
+
+Entregue somente este documento; nenhum runtime, catálogo, financeiro ou fonte do checkout compartilhado foi alterado. Sem suites, types/build, SQL, modelo real, áudio real, chamada paga, dados reais ou envio WhatsApp. Leitura por git show e validação editorial local do documento não equivalem a teste funcional do provedor.
+Alinhamento recebido da frente IA e WhatsApp para IW-D: manter CLARIFY com descrição, data e valor quando houver mais de uma INCOME; pedir repetir “cancela a entrada” com detalhes suficientes; não reutilizar 1/2 como índice; reusar document_archive seguido de proposta assinada e confirmação. “Última que enviei” exige origem assinada comprovável daquele remetente; updated_at global da conta compartilhada não prova autoria. Arquivar entrada realizada retira sua contribuição ao cálculo, mantém registro inativo/histórico e não cria despesa. Cancelar proposta pendente não altera caixa.
+Esse alinhamento de contrato não equivale a aprovação ou implementação de todos os textos. Eles continuam propostas para revisão conjunta, não funcionalidade disponível. Root receberá o SHA próprio deste documento.
+
+Validação editorial local concluída: 14 corpos de mensagem e um rodapé extraídos pelos marcadores. Rodapé F: 172 caracteres; UC01–06 completos com F: 308, 303, 338, 363, 270 e 387 caracteres. UC07–13, incluindo UC08B, variam entre 92 e 147; a consulta de dois assuntos tem 133. Todos dentro da meta editorial ilustrativa. Os tamanhos incluem marcação e quebras de linha e não comprovam aceitação do provedor.
+Callbacks medidos literalmente: CONFIRMAR+código=20, EDITAR+código=17, CANCELAR+código=19, incluindo espaço e código de dez caracteres. A conferência também verificou o rodapé 1/2, ausência de declaração negativa de gravação no UC13 e ausência de confirmação de escrita na consulta UC11. Essas são verificações do documento, não testes da fila, banco, modelo ou WhatsApp. git diff --check passou antes do commit.
