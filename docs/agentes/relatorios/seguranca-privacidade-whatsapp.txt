@@ -1,0 +1,377 @@
+ANOTEI - SEGURANCA E PRIVACIDADE DO WHATSAPP
+Pesquisa e leitura de codigo: 27/10/2026, America/Sao_Paulo.
+Frente: Qualidade e Seguranca. Documento de decisao, sem implementacao.
+Alvo de codigo: 9369b43acdbbd1e946236f9497bd6927594ead5f.
+Revisao adicional de PRIV-B: 292d41e0fe0cc5d781c5527a35a37c808ceb9ab8, secao9.
+Os arquivos de integracao/retencao lidos nao mudaram entre9369b43 e CORE01/6106183;
+PRIV-B e uma projecao adicional de dados de conexao, sem mudar o armazenamento.
+
+PARECER
+
+Para evitar que as conversas dos clientes continuem sendo atendidas pelo numero
+da IA dentro do WhatsApp de um celular, a direcao recomendada e um numero de
+negocio exclusivo registrado na WhatsApp Cloud API, com integracao servidor a
+servidor e atendimento apenas no painel privado do Anotei. A plataforma oficial
+e hospedada pela Meta e oferece acesso programatico direto ou via parceiro [M1,M2].
+O registro de numero por API, propriedade por SMS/voz e autenticacao de sistema
+estao descritos na colecao oficial da Meta [M3]. Esse desenho substitui a sessao
+pareada por QR que foi encontrada no codigo; nao e apenas esconder conversas.
+
+Separar a capacidade arquitetural da migracao do numero atual: elegibilidade,
+procedimento de desregistro, coexistencia, historico e janela de indisponibilidade
+precisam ser confirmados antes de qualquer mudanca. Os documentos tecnicos novos
+da Meta sobre esses pontos retornaram 429 ou bloqueio nesta pesquisa. Nao foi
+validado um fluxo de migracao deste numero especifico nem permissao dessa conta.
+
+Cloud API nao implica 'historico somente no nosso banco'. Continuam existindo o
+WhatsApp do destinatario, infraestrutura de transporte/hospedagem, processamento
+da IA e backups conforme cada politica. Usuarios podem manter copias locais.
+As paginas oficiais de privacidade distinguem o destinatario empresarial e sua
+hospedagem por Meta/parceiro; criptografia de transporte nao elimina essas copias
+nem torna o servidor da empresa incapaz de processar o conteudo [M4].
+
+Nao houve constatacao de vazamento, leitura de conversas reais ou verificacao de
+acessos indevidos. Foram analisados codigo versionado e documentos publicos.
+Nao desconectei, apaguei, migrei, registrei numero, criei produto, contratei servico,
+enviei mensagem, acessei banco, painel, .env, chaves ou logs reais de clientes.
+
+1. INTEGRACAO ATUAL: FATOS DO CODIGO
+
+F1 - Conexao pareada, administrada pela gestao.
+lib/whatsapp-server.ts:15 exige requireManager para salvar configuracao;21 exige
+gestor para connectBot. Cria/reutiliza instancia, configura /webhook e chama
+POST /instance/connect com body '{}'. Nao e um adaptador Graph/Cloud API Meta.
+Documentacao Uazapi confirma que sem phone ha QR para leitura no celular; seu
+systemName identifica a sessao em aparelhos conectados [U1].
+
+O contrato publico Uazapi 2.6.9 tambem informa que history_days ausente pede 90 dias
+no pareamento; 0 pede o maximo de 365 dias, NAO desabilita historico [U1]. Nosso body {}
+nao solicita minimizacao explicita. Isso nao prova que a instancia em producao
+usa a mesma versao nem que todo historico efetivamente foi importado. O app assina
+somente events:['messages'], nao history; filtro do app nao elimina o que pode
+estar no aparelho ou na infraestrutura do provedor.
+
+F2 - Recepcao tem barreiras por conta e remetente.
+app/api/whatsapp/webhook/route.ts:8 valida UUID, chave, bot ativo e conexao propria;
+rejeita shared_owner como dono do webhook, filtra allowed_phones e resolve
+personalRecipient antes de enqueue. lib/whatsapp-expenses.ts:15-37 exige evento
+messages, fromMe=false e isGroup=false, entre outros controles. Ha deduplicacao
+por unique(user_id,provider_id), e o processamento financeiro usa titular/lease.
+Esses controles preservam separacao do aplicativo, mas nao separam chats no
+celular do numero comercial: o celular e um endpoint autorizado daquele numero.
+
+F3 - Chave do webhook aparece na URL configurada.
+whatsapp-server.ts:21 adiciona account e key na query do webhook. O receptor
+tambem aceita x-anota-account e x-anota-hook-key, mas o conector atual usa URL.
+Risco potencial: proxy, APM, suporte ou provedor registrar URL integral. Nao foram
+consultados esses logs e nao se comprovou exposicao. Redacao de query deve ser
+prevista em todos os pontos, e mudanca para header/assinatura so apos confirmar
+o contrato do provedor, sem quebrar recebimento.
+
+F4 - Conteudo guardado no Anotei.
+database/schema.sql:43-51 cria anota_whatsapp_inbox com text, transcript, reply,
+sender, provider_id e metadados. lib/whatsapp-store.ts:26 guarda texto/transcript;
+o worker grava transcricao e respostas. Sao campos de texto, sem criptografia
+aplicativa do conteudo demonstrada nesse modelo. Isso nao afirma ausencia de
+criptografia de disco/backup do servico hospedado, cuja configuracao nao foi lida.
+Finance_confirmation pode carregar proposta assinada com dados financeiros:
+assinatura assegura integridade/ator/prazo, nao confidencialidade do payload.
+
+F5 - Audio passa por outros processadores.
+lib/whatsapp-worker.ts:42 baixa base64 do provedor, valida formato/limite de 5 MB e
+mantem buffers de processamento. Nao foi achada gravacao de audio em arquivo nessa
+funcao; isso nao prova apagamento fisico de RAM, ausencia de dumps ou retencao
+no provedor. lib/whatsapp-ai.ts:6-12 envia audio a /v1/audio/transcriptions da
+OpenAI. Texto/contexto podem ir a /v1/responses quando exigem interpretacao.
+Logo, 'so no banco Anotei' e uma descricao incorreta do processamento atual.
+
+F6 - Limite de tela nao e prazo de retencao.
+lib/whatsapp-store.ts:19-24 consulta ate 50 itens, por user_id, com filtro de sender
+quando fornecido. Exclui reply_status LIMPO da leitura, mas nao remove fisicamente
+o restante. A busca no codigo de lib/app/scripts/database/migrations nao encontrou
+TTL/expurgo periodico do conteudo de inbox. Isso descreve o alvo versionado;
+jobs externos e politicas de producao nao foram inspecionados.
+
+F7 - Reset de conversa nao apaga historico.
+lib/subscriber-reset.ts:10-14 e migracao20261020165114_whatsapp_context_reset.sql:
+19-24 invalidam propostas/contexto/lease e cancelam respostas pendentes. Preservam
+text/transcript e a resposta historica na maioria dos estados. Trata-se de
+reiniciar interpretacao, sem apagar financeiro, deduplicacao ou conteudo antigo.
+Nao anunciar esse botao como exclusao de dados. Criar futuramente operacoes
+separadas para reiniciar contexto, remover conteudo conversacional e excluir
+conta, com escopos e consequencias claros.
+
+2. QUEM CONSEGUE LER, SEGREDOS, LOGS E BACKUPS
+
+Usuario do aplicativo:
+app/api/whatsapp/route.ts:12-17 monta history(auth.user.id); retorna sender,
+transcript, reply e status da conta autenticada. Nao foi encontrada nesse endpoint
+uma visao global de transcricoes de todos os assinantes para o gestor. Dados do
+mesmo titular familiar podem ser compartilhados pelos numeros autorizados, segundo
+o modelo de conta. O limite de 50 e de consulta, nao de autorizacao nem expurgo.
+
+Gestor de assinaturas:
+Convites, acessos, reset e conexao exigem requireManager. Isso nao equivale a um
+papel separado de suporte com permissao granular de ler conversas. Nao inferir que
+todo gestor consegue ler todo transcript no app apenas por ter acesso a gestao;
+tambem nao inferir que os operadores da infraestrutura nao possuem esse acesso.
+
+Servidor e administradores da infraestrutura:
+database/schema.sql:53-56 habilita RLS e revoga acesso direto anon/authenticated a
+bots/inbox; service_role recebe acesso amplo. lib/server.ts:13 usa service_role no
+backend. Um operador com segredo de servico ou privilegio de banco tem alcance
+maior que o usuario comum. Esses acessos precisam de controle operacional e
+auditoria propria; RLS nao protege contra um administrador autorizado a ignora-la.
+As politicas realmente implantadas, integrantes dos paineis e sessoes ativas nao
+foram consultados. O fato de SQL sintetico ter passado nao prova RBAC de producao.
+
+Provedor:
+Documentacao Uazapi distingue token de instancia e admintoken do servidor inteiro;
+recomenda nenhum token no navegador em SaaS multi-tenant [U3]. O codigo mantem
+credenciais no servidor. secret-box.ts:1-4 usa AES-256-GCM, IV aleatorio e AAD de
+contexto; whatsapp-server.ts:11-14 deriva/abre credenciais. Isso nao cifra transcript
+nem protege contra comprometimento do servidor que detem a chave principal.
+Nao foram lidos tokens, contas do fornecedor ou permissoes de seus operadores.
+
+Logs:
+lib/assistant-timing.ts registra request_id, etapa, milissegundos e sucesso, sem
+conteudo. scripts/whatsapp-worker.mjs usa mensagens tecnicas de indisponibilidade.
+Nao foi achado dump integral de transcript no logger principal desses arquivos.
+Isso nao certifica logs de proxy, provedor, plataforma, debug, erros ou backups.
+Nao ligar captura de payload real para provar privacidade. Preferir hashes/IDs
+opacos, redacao de tokens/numeros e eventos de acesso, sem texto conversacional.
+
+Backups:
+Nao foi identificado job versionado de retencao de backup do inbox. Configuracao
+externa Easypanel/Supabase nao foi acessada. Local-db.ts:11-20 permite SQLite em
+arquivo com WAL; copias de volume/WAL tambem exigem politica de acesso/expurgo.
+Supabase documenta backups diarios para planos pagos e janelas de 7/14/30 dias por
+plano; isso nao prova plano, PITR ou backups habilitados neste projeto [S1].
+Backups de banco nao incluem o binario do Storage. Restaurar snapshot pode
+ressuscitar conteudo apagado: aplicar um registro de exclusoes antes de reabrir
+o atendimento. Nao prometer exclusao instantanea de todas as copias externas.
+
+3. COPIAS E RETENCAO: O QUE ESTA CONFIRMADO E O QUE FALTA
+
+Aparelho empresarial e dispositivos vinculados:
+Fato: a integracao lida e pareada por QR. Ha um endpoint do numero empresarial no
+telefone, conforme o modelo documentado. Nao foram verificados dispositivos,
+backups, historico ou pessoas com acesso real. Remover um dispositivo por conta
+propria pode interromper a IA; nao fazer isso como tentativa de privacidade.
+
+Uazapi:
+Guia publico atual declara banco local de mensagens por ate 7 dias, possivelmente
+menos em alto volume, e recuperacao de historico a partir do aparelho principal
+[U2]. Esse prazo descreve a janela de consulta do produto; nao e prova de
+apagamento de backups/logs, acordo contratual da instancia nem prazo do celular.
+Versao/configuracao efetiva e condicoes de tratamento de dados continuam pendentes.
+
+Meta/Cloud API:
+Hospedagem oficial confirmada [M1]. Prazo efetivo de conteudo/metadados, excecoes e
+residencia NAO verificados: paginas tecnicas retornaram 429/robots. Nao adotar
+'30dias' de espelho de documentacao como fato confirmado. Politica de privacidade
+publica nao estabelece sozinha todas as retencoes tecnicas [M4].
+
+OpenAI:
+A documentacao atual distingue retencao por endpoint: /audio/transcriptions tem
+None nas colunas de abuso/estado; /responses lista logs de abuso por 30 dias e regras
+especificas de estado. store:false nao comprova aprovacao ZDR do projeto. Controles
+ZDR/MAM dependem de elegibilidade/aprovacao e configuracao, nao inspecionadas [O1].
+Nao atribuir esse prazo da OpenAI a Meta ou Uazapi.
+
+Anotei e destinatario:
+Nao foi achado prazo aplicativo de expurgo do inbox. Exclusao na nossa copia nao
+apaga mensagens/capturas/exportacoes no telefone do cliente ou outras copias que
+nao controlamos. Cadastros e lancamentos financeiros sao outra categoria: apagar
+audio/transcript nao deve apagar recibos, impedir idempotencia ou perder despesas.
+
+4. ARQUITETURA PROPOSTA PARA REDUZIR EXPOSICAO
+
+Fluxo alvo, ainda nao implementado:
+Cliente WhatsApp -> Meta Cloud API -> webhook HTTPS verificado -> fila duravel
+por titular/remetente -> transcricao/interpretacao minima -> proposta assinada
+-> confirmacao -> gravacao com recibo/idempotencia -> outbox -> Cloud API.
+Tela de gestao comercial exibe assinaturas/status, sem conteudo por padrao.
+Tela de suporte separada exige permissao, motivo e auditoria para abrir conversa.
+
+Numero empresarial exclusivo na Cloud API: caminho preferido para operar sem
+manter a sessao QR do negocio em um celular. Preservar propriedade/recuperacao do
+numero e verificacao SMS/voz; isso e diferente de manter todos os chats no app.
+Confirmar requisitos e modo do numero com a Meta antes de migrar. Nao recomendar
+coexistencia como prova de que nao existira historico no telefone: a documentacao
+especifica atual nao ficou acessivel, e sua finalidade/eligibilidade devem ser
+confirmadas. Nao selecionar/desconectar nenhum modo neste trabalho.
+
+Adaptacao de codigo para futura tarefa autorizada:
+- Introduzir adaptador de transporte: verificar webhook, normalizar evento,
+  baixar midia, enviar texto/template, consultar status. Nao reescrever regras
+  financeiras, confirmacao, quota ou isolamento para cada provedor.
+- Mapear business/phone_number_id ao dono no servidor; sender autorizado resolve
+  titular antes de ler caixa. Nao confiar no user_id fornecido pelo evento/cliente.
+- Validar assinatura do webhook Meta sobre corpo original e controlar replay.
+  Segredos/credenciais de sistema ficam no servidor, com rotacao e escopo minimo.
+- Conservar inbox/outbox, estados de aceite/entrega e idempotencia. Nao publicar
+  proposta/resultado de tentativa que perdeu fence. BS-C de REQUEST ainda e
+  desenho e nao deve ser anunciado como resolvido por esta pesquisa.
+- Para lembretes fora da janela permitida, implementar templates aprovados,
+  consentimento, opt-out e categorias corretas; broadcasts administrativos nao
+  podem reutilizar livremente o envio de resposta de atendimento [M5].
+- Piloto em numero/ambiente isolado com dados sinteticos antes de trocar o atual.
+  Validar audio, 1/2, botao, template, entrega, conta do casal, reenvio e replay.
+  Troca/rollback do numero atual exige plano e autorizacao; nao apagar historico
+  do telefone para experimentar. Nao pressupor portabilidade automatica do passado.
+
+Privacidade no aplicativo, independente da troca de provedor:
+- Separar direitos billing.manage, bot.manage, conversation.read, support.read
+  e retention.manage. Gestao comercial nao concede leitura de conteudo por padrao.
+- Suporte usa acesso temporario justificado e auditado; listas mascaram numeros.
+  Auditar leitura/exportacao, nao apenas alteracao. Exigir contas individuais/MFA
+  em paineis e evitar credencial administrativa compartilhada.
+- Minimizar payload guardado e enviado ao modelo; separar dados operacionais de
+  transcript. Criptografia aplicativa de conversa com chave separada/KMS limita
+  leitura por backup/DB isolado, mas nao torna o processador autorizado cego.
+- Saneamento de logs: URL sem query sensivel, sem body/token/Authorization/audio,
+  sem numeros completos por padrao. Confirmar comportamento do proxy e provedor
+  em tarefa especifica autorizada, usando eventos sinteticos.
+
+5. POLITICA DE RETENCAO PROPOSTA, NAO ATIVADA
+
+Proposta tecnica inicial para aprovacao do responsavel, nao prazo legal afirmado:
+- Audio bruto: nao persistir no Anotei apos transcricao; se futura funcionalidade
+  exigir arquivo, storage privado com TTL curto explicitamente aprovado.
+- Conteudo conversacional: janela operacional sugerida de 7 dias, configuravel somente
+  pelo responsavel, com excecao justificada de suporte. Esse prazo e uma proposta,
+  nao uma inferencia de obrigacao nem copia automatica do prazo Uazapi.
+- Fora da janela, redigir text/transcript/reply e propostas expiradas/usadas,
+  preservando recibo financeiro, hash/evento de deduplicacao e metadados minimos.
+  Nao apagar cegamente inbox: poderia permitir processamento repetido do evento.
+  Nunca purgar lease/fila/confirmacao ainda em uso sem politica de encerramento.
+- Registrar redacted_at, tombstone e resultado do job; testes provam que replay
+  nao volta a lancar nem reexibe conteudo redigido. Acesso/exportacao tambem e
+  auditavel. Reset de contexto e exclusao de dados continuam operacoes distintas.
+- Definir janela real de backups, cifragem, acesso, rotacao, restore e reaplicacao
+  de tombstones. SQLite/WAL e snapshots precisam de manutencao especifica;
+  DELETE/UPDATE de campo nao comprovam apagamento fisico instantaneo.
+- Politicas Meta/Uazapi/OpenAI e copias do usuario devem ser descritas separadas
+  no aviso de privacidade. Sem promessa absoluta de 'unica copia no nosso banco'.
+
+Implementacao futura precisa de testes sinteticos de titular/cruzamento de acesso,
+retencao sem perder dedupe, recuperacao de backup e bloqueio de leitura por suporte
+sem permissao. Nada disso foi executado ou ativado nesta pesquisa.
+
+6. CUSTOS: FATOS VERIFICADOS E DIVERGENCIA ABERTA
+
+Pagina oficial de precos [M6] descreve cobranca por mensagem ENTREGUE e categoria/
+mercado; declara service gratuito e utility em resposta gratuito. Entretanto FAQ
+oficial [M7] informa mudanca efetiva em 01/10/2026: service cobrado apos as primeiras
+1.000 mensagens por numero/mes. A FAQ tambem conserva trecho antigo de cobranca por
+conversa em outra resposta. Sao fontes oficiais contraditorias nesta data.
+Nao certificar custo zero ou tabela regional usando apenas uma delas.
+
+Taxa exata do Brasil, moeda, tiers, regras da conta e fatura vigente PENDENTES.
+Links das tabelas tecnicas retornaram 429. Nao foi extraido preco fixo por template.
+A FAQ [M7] diz que acesso direto nao adiciona taxa da plataforma, mas parceiros
+podem cobrar servicos extras; isso nao equivale a operacao gratuita.
+Nao foi localizada tabela comercial Uazapi acessivel/verificada; nao afirmar
+mensalidade, quantidade de instancias, desconto ou multa da conta atual.
+
+Modelo de estimativa para preencher com tabela/contrato confirmado:
+Custo = mensagens service cobraveis x tarifa service
+      + templates utility entregues x tarifa utility
+      + mensagens marketing/auth entregues x respectivas tarifas
+      + provedor/BSP (se contratado) + hospedagem/fila/banco/logs/backups
+      + transcricao/interpretacao IA + numero/tributos/egress aplicaveis.
+Lembretes automaticos podem ser a maior diferenca para o custo atual de QR;
+quantificar volume e janelas antes de escolher plano. Os processadores IA nao
+desaparecem ao trocar transporte. Nenhuma assinatura, contrato ou produto foi criado.
+
+7. PROXIMAS DECISOES E PENDENCIAS
+
+Pode ser preparado localmente sem mudar producao: especificacao do adaptador,
+matriz RBAC, redacao de logs, desenho do job de retencao, casos sinteticos e plano
+de migracao/rollback. Isso exige tarefa de implementacao propria, fora desta leitura.
+
+Antes de migrar de fato: confirmar conta empresarial/WABA/numero/modo elegivel,
+requisitos atuais de verificacao/permissoes, politica contratual de cada operador,
+regiao/retencao/backups, cotacao/rate card vigente, templates e consentimentos;
+depois autorizar piloto e troca. Nao abrir/desconectar recursos para tentar descobrir.
+Precisamos de evidencias de acesso e configuracao, sem coletar conversas de clientes.
+Nenhuma afirmacao de capacidade para 100 mil assinantes foi validada: limites do
+provedor, qualidade, concorrencia e custos de carga precisam de medicao separada.
+
+8. FONTES PRIMARIAS E LIMITES DA PESQUISA
+
+[M1] Colecao OFICIAL Meta/Postman, Cloud API: hospedagem Meta, portfolio empresarial,
+WABA, numero, tokens e integracao programatica. Lida em 27/10/2026.
+https://www.postman.com/meta/whatsapp-business-platform/collection/wlk6lh4/whatsapp-cloud-api
+[M2] Site oficial, integracao direta e por parceiro.
+https://whatsappbusiness.com/products/business-platform/
+[M3] Colecao oficial de registro: propriedade SMS/voz, registro e credencial de sistema.
+Conteudo indexado atual; pagina interativa limita texto em acesso anonimo. Nao
+usar exemplos antigos de versao como versao de Graph aprovada para implantacao.
+https://www.postman.com/meta/whatsapp-business-platform/folder/zuoeksl/registration
+https://www.postman.com/meta/whatsapp-business-platform/documentation/wlk6lh4/whatsapp-cloud-api
+[M4] Hospedagem/privacidade e protecao do transporte; nao define sozinha TTL total.
+https://whatsappbusiness.com/privacy-protections/
+[M5] Politica de mensagens: modelos, janela, consentimento e protecao de conteudo.
+Trechos de preco antigos nao usados como tabela vigente.
+https://business.whatsapp.com/policy/preview?lang=pt_BR
+[M6] Pricing oficial: fonte de cobranca por entrega; divergencia service descrita acima.
+https://whatsappbusiness.com/products/platform-pricing/
+[M7] FAQ oficial com effective 01/10/2026 e trecho legado; contradicao preservada.
+https://whatsappbusiness.com/resources/faq/
+
+[U1] Uazapi publico: QR, pareamento, aparelhos conectados e history_days.
+https://docs.uazapi.com/reference/connectInstance.md
+[U2] Uazapi publico: historico local ate 7 dias e recuperacao pelo aparelho principal.
+https://docs.uazapi.com/docs/collections/message-history-retention.md
+[U3] Escopo dos tokens, SaaS/backend, administracao e riscos de URLs/logs.
+https://docs.uazapi.com/docs/authentication
+[U4] Catalogo oficial consultado, identifica API publica 2.6.9; nao prova versao instalada.
+https://docs.uazapi.com/llms.txt
+https://docs.uazapi.com/docs/instances
+U1/U2 lidos via HTTPS sem credenciais porque webtool nao aceita text/markdown.
+Copias publicas locais em .data/whatsapp-privacy-sources/ e manifest.json:
+U1 SHA256 0bffd16e4692d9a17886812560f396af7d950d84104f9b5b84b56b13d36e63f0.
+U2 SHA256 c029e6777575ec1645bb0d23015cd95f61ebe1e346bfd3e394e77288289e47a06.
+
+[S1] Supabase oficial: backups, janelas por plano e limites de Storage.
+https://supabase.com/docs/guides/platform/backups
+[O1] OpenAI Docs oficial: retencao por endpoint, store e controles ZDR/MAM.
+https://developers.openai.com/api/docs/guides/your-data
+
+Paginas Meta tentadas e NAO validadas em conteudo: overview antigo/novo e
+registration retornaram 429; onboarding-business-app-users 429; data-privacy-and-
+security bloqueado por robots. Sufixo.md de overview nao acessivel. Nao contornei
+bloqueios nem autentiquei painel; nao usei espelhos GitHub, SDK arquivado ou
+blogs terceiros para certificar regras atuais. Nenhum prazo de 30 dias da Meta foi
+confirmado por esta pesquisa. Nenhum dado de cliente foi usado como evidencia.
+
+9. REVISAO INDEPENDENTE PRIV-B - DADOS DE PAREAMENTO
+
+Commit lido:292d41e0fe0cc5d781c5527a35a37c808ceb9ab8. Sem execucao de suite.
+Nenhum bloqueador encontrado nesse recorte de autorizacao/projecao por codigo.
+
+lib/whatsapp-public-connection.ts:9-13 exige manager===true no servidor e igualdade
+do viewer com raw settings.user_id e effective.user_id. shared_owner_id em qualquer
+objeto e connection_user_id de outro dono negam leitura de QR/paircode, inclusive
+para quem e gestor mas usa conexao compartilhada. effectivePersonalBot preserva
+o vinculo/master; nao depende de flags de permissao enviadas pelo navegador.
+
+Linhas16-29 montam DTO por allowlist, sem spread do retorno de transporte. Para
+quem nao e gestor dono real: apenas configured, connected e mensagem neutra. Para
+o dono autorizado, QR precisa ser data:image png/jpeg com base64 e tamanho limitado,
+paircode tem formato restrito; sessao conectada e wrongNumber impedem material de
+pareamento antigo. Extras como token, owner e instance_id nao sao projetados.
+
+app/api/whatsapp/route.ts:14 aplica helper no result comum de GET/POST e no retorno
+live de connect. connectBot continua validando gestor e proibindo compartilhado.
+Headers/flags do cliente nao definem viewer/manager. Os testes lidos exercitam
+esses casos com transportes sinteticos; suas contagens sao da frente autora/
+coordenador, nao nova execucao QA. Nao houve conexao ou envio real nesta revisao.
+
+O patch diminui uma superficie de exposicao de material de pareamento; nao prova
+que um QR real tenha sido exposto antes, nao remove chats do celular e nao altera
+o history proprio do titular. Retencao, minimizacao de texto e roles de suporte
+descritos acima permanecem propostas separadas. Nao chamar isso de vazamento
+comprovado ou de garantia de que o conteudo existe somente no banco Anotei.
