@@ -1,0 +1,39 @@
+FRENTES DE RESPONSABILIDADE — ANOTEI
+Preparadas em 27/10/2026 para Bruno.
+
+ORQUESTRADOR
+Conversa existente: Agente Orquestrador Anotai
+ID: 01a118a2-73d8-7872-96f2-022acbb49ba9
+Responsável por arquitetura, operação, prioridades, contratos entre módulos, divisão de arquivos, integração e coordenação das publicações autorizadas.
+
+CINCO ABAS CRIADAS AUTOMATICAMENTE COM AUTORIZAÇÃO DO BRUNO
+1. Anotei — Backend e Supabase: 01-backend-supabase.txt
+2. Anotei — IA e WhatsApp: 02-ia-whatsapp.txt
+3. Anotei — Interface e Mobile: 03-interface-mobile.txt
+4. Anotei — Qualidade e Segurança: 04-qualidade-seguranca.txt
+5. Anotei — Produto e Assinaturas: 05-produto-assinaturas.txt
+
+As cinco conversas já foram criadas, receberam os prompts completos e estão na seção lateral “Anotei — Equipe de agentes”, junto do orquestrador. Os IDs e arquivos de relatório estão em equipe.json. Não é necessário recriá-las. Cada arquivo continua contendo um prompt completo, independente, para consulta e reutilização.
+
+PRIMEIRA RODADA
+As cinco frentes começam por estudo, rastreamento dos fluxos e diagnóstico, sem mudar o aplicativo. Podem escrever somente o próprio relatório em docs/agentes/relatorios/. Não rodar instalações, builds ou suítes concorrentes no checkout compartilhado.
+Após receber os diagnósticos, o orquestrador elimina duplicidades, define prioridades e atribui tarefas pequenas com arquivos, contratos e critérios de aceite. Correções paralelas precisam de branches e cópias de trabalho isoladas, com a mesma base combinada. Trocar uma branch em uma pasta compartilhada muda o código visto por todas as abas.
+Usar até três frentes em implementação simultânea inicialmente; as demais podem revisar ou preparar especificações. Nenhum agente faz merge em main ou deploy por iniciativa própria. Dependências de uma frente para outra devem passar pelo orquestrador.
+
+COMUNICAÇÃO
+Os prompts incluem autorização limitada para enviar resumos técnicos sanitizados ao orquestrador por ferramentas de chats, se disponíveis. Colar um prompt não conecta abas automaticamente. O orquestrador deve descobrir e conferir os IDs dos novos chats; não adivinhar destinatários. Se não houver ferramenta ou contexto suficiente, Bruno pode repassar o resumo.
+Esta autorização não inclui WhatsApp, e-mail, clientes, outros projetos, compartilhamento de segredos ou acesso novo a serviços. Autorizações de produção e custos continuam específicas.
+
+COMO AVALIAR O PRIMEIRO RELATÓRIO
+Exigir versão/commit; arquivos estudados; fatos e hipóteses separados; evidência e reprodução; impacto; proposta; testes executados ou pendentes; dependências e próximas três tarefas. Não aceitar apenas “sou especialista”, “todos os testes passam” ou “está pronto para 100 mil usuários”.
+
+BASE CONHECIDA, NÃO GARANTIA DE ESTADO FUTURO
+Em 27/10/2026, checkout local d3a4953 e main pública 014f81c. Tipos, 304 testes e build local passaram. A revisão estrutural registrou SQLite para sessões, contexto de assistente em memória, consultas e lembretes a otimizar, integração de cartão e partes nativas pendentes. O MCP disponível negou acesso ao Supabase solicitado. Avisos de dependências precisam de triagem atual. Cada frente deve confirmar o estado encontrado, sem repetir estes fatos como se os tivesse verificado.
+
+FONTES PARA O MÉTODO
+https://learn.chatgpt.com/docs/agent-configuration/subagents
+https://learn.chatgpt.com/docs/environments/git-worktrees
+https://developers.openai.com/api/docs/guides/prompt-engineering
+https://developers.openai.com/api/docs/guides/evaluation-best-practices
+
+Os agentes devem consultar documentação oficial relevante à tarefa e à versão, ler o código e validar resultados. Estes prompts orientam o trabalho; não treinam novos modelos nem garantem especialização ou ausência de falhas.

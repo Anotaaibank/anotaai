@@ -1,0 +1,88 @@
+ANOTEI — CONSOLIDAÇÃO INICIAL DO ORQUESTRADOR
+Data: 27/10/2026 — America/Sao_Paulo
+Coordenação: Agente Orquestrador Anotai
+Revisão local analisada pelas cinco frentes: d3a4953d4a80a187b0addb5f3394cbe9f384e0a6
+
+1. ESTADO DA EQUIPE E DO TRABALHO
+
+Cinco conversas especializadas criadas, nomeadas e organizadas na seção “Anotei — Equipe de agentes”. Registro dos IDs em ../equipe.json. Os cinco relatórios iniciais foram recebidos; há achados sobrepostos que não devem ser somados como bugs independentes.
+
+Relatórios de origem, no mesmo diretório:
+- backend-supabase.txt: BS-01 a BS-07.
+- ia-whatsapp.txt: IW-01 a IW-07, além dos contratos e fontes mapeados.
+- interface-mobile.txt: IM-01 a IM-09.
+- qualidade-seguranca.txt: QS-01 a QS-10.
+- produto-assinaturas.txt: PA-01 a PA-12.
+
+As frentes fizeram diagnóstico por inspeção; Interface também observou a página pública em desktop. Não executaram correções, suítes, chamadas pagas, transcrições novas, WhatsApp real, SQL remoto ou deploy. Arquivos escritos são relatórios e captura pública sanitizada. Nenhuma reprodução de falha em produção foi demonstrada.
+
+O orquestrador executou antes desta rodada tipos, 304 testes e build local isolado com sucesso. Isso é baseline, não valida os novos cenários levantados pelas frentes. A primeira tentativa de build sofreu spawn EPERM no sandbox; a repetição isolada autorizada passou. Evidência em .data/architecture-review-2026-10-27.json.
+
+O MCP disponível recusou acesso ao Supabase yqbbbqkouedhrunazpqd. Configuração aplicada, grants, políticas, índices, migrações e plano de backup de produção não foram atestados. A main pública observada pelo orquestrador permanece em 014f81c; a base mobile d3a4953 é local. Endpoint health 200 é evidência de liveness, não de saúde completa das dependências.
+
+2. DECISÕES DE COORDENAÇÃO
+
+- Preservar o núcleo existente, com identidade derivada da sessão, confirmação assinada, prazo, revisão concorrente, transação e recibo idempotente.
+- Manter o desenho documentado de uma instância/volume persistente até validar uma mudança explícita de estado compartilhado. Não aumentar réplicas como correção improvisada.
+- Corrigir comportamentos comuns a todas as contas, sem exceções para números de teste ou privilégios administrativos.
+- Não trocar modelo, provedor, framework ou arquitetura inteira apenas por um achado. Cada alteração precisa de hipótese, reprodução e regressão.
+- Preparar ambiente sintético reproduzível antes de testar SQL destrutivo, falhas injetadas, carga ou concorrência. Fixtures não serão executadas no banco real.
+- Usar branches e checkouts isolados para futuras implementações; o checkout compartilhado desta rodada permanece sem edições de produto. Definir base e dono de arquivos antes de cada tarefa.
+- Separar a correção web/WhatsApp, que atende o produto atual, da conclusão da base nativa. Falhas do nativo não comprovam falhas da versão web publicada.
+- Não iniciar cartão, cobrança real, cloud build, publicação ou migração remota com esta consolidação. Essas operações mantêm suas autorizações específicas.
+
+3. BACKLOG CONSOLIDADO, EM ORDEM PROPOSTA
+
+ORQ-01 — Segurança de dependências e identificação do artefato
+Fontes: QS-01; revisão de dependências do orquestrador.
+Responsável: Arquitetura/operação com Backend; revisão independente de QA.
+Escopo inicial: conferir advisories e alcance, versão de Next efetiva, lockfile e artefato publicado; preparar atualização corrigida em branch, ler documentação da versão e executar regressão. O lockfile já contém sharp 0.35.5, que satisfaz a mitigação documentada de um dos avisos; não contar avisos de versão como explorações comprovadas.
+Aceite: quadro de advisories aplicáveis/mitigados/não demonstrados, versão corrigida validada, tipos/testes/build e teste de inicialização. Deploy permanece uma etapa distinta.
+
+ORQ-02 — Homologação reproduzível, banco e esteira de testes
+Fontes: BS-05/07, QS-05/06/09.
+Responsável: Orquestrador/operação + Backend + QA.
+Escopo: manifestar a ordem completa de database/ e migrações, montar bootstrap de banco descartável compatível e testes por papéis anon/A/B/serviço. Cobrir ausência de campos, JSON null, autorização, concorrência e rollback. Ampliar os filtros de CI para UI/SQL/configuração e estabelecer revisão antes da integração.
+Aceite: banco vazio sobe com a ordem versionada; testes de titular e contrato passam sem chaves reais; alterações isoladas de UI ou SQL acionam os checks esperados. Testes SQLite e Postgres continuam identificados separadamente. Operação registra a estratégia de backup e um ensaio de restauração em ambiente descartável.
+Dependência: aprovação e disponibilidade do ambiente adequado. A especificação e os testes locais independentes podem avançar sem acesso ao banco de produção.
+
+ORQ-03 — Recuperação e confirmação verdadeira no percurso WhatsApp/IA
+Fontes: BS-01, QS-02/03/07, IW-03/04.
+Responsável: Backend + IA/WhatsApp; QA define a matriz de falhas.
+Escopo: desenhar lease e reconciliação de REQUEST, validar o lease/identidade no claim de resposta cloud, tratar patch condicional sem sucesso e estados ENVIANDO/FALHOU/INCERTO, respeitar limitação temporária do provedor e preservar recibos. Uniformizar a validação do recibo nos fluxos web onde ela não é explícita.
+Aceite: falha antes/depois do commit ou envio não cria lançamento duplicado, não apresenta sucesso falso e não deixa pedido sem caminho de resolução. Envio incerto não será reenviado cegamente. Aceite do provedor, entrega e leitura devem permanecer distintos.
+Dependências: contrato de estados entre worker, banco e provedor e testes Postgres/fake de transporte de ORQ-02. Começar pelo cenário mínimo reproduzível, sem reescrever toda a fila.
+
+ORQ-04 — Semântica dos comandos e paridade entre clientes
+Fontes: IW-01/02/05/06/07; BS-04; IM-03.
+Responsável: IA/WhatsApp, com Backend nas regras financeiras e Frontend na operação manual.
+Escopo: preservar vínculo de atividade nas entradas/saídas prefixadas; impedir que detector de consulta capture correção explícita; separar nova intenção de edição anterior; respeitar idioma da sessão; expor ajuste do saldo atual sem confundi-lo com saldo inicial. Instrumentar resultado e tempo por etapa, com minimização de dados.
+Aceite: mesmos pedidos em matriz de contas e contextos produzem planos equivalentes para dados equivalentes; nenhuma conta acessa dados de outra; valores/categorias/contexto/datas corretos e nenhuma pergunta sobre dado já informado. Antes/depois com casos inéditos. Regras locais, modelo simulado, modelo real e áudio humano são relatados separadamente.
+
+ORQ-05 — Jornada comercial do plano até a ativação do WhatsApp
+Fontes: PA-01/02/03/04/05/06/07/08/10/11; BS-06; IM-07/08.
+Responsável: Produto especifica; Backend e Interface implementam; QA revisa a jornada.
+Escopo: preservar escolha do plano no cadastro/checkout; retorno de login por destinos internos permitidos; recuperação de cadastro após resposta perdida; vínculo seguro do telefone e estados claros de licença/cadastro/envio. Definir política de troca antecipada, renovação e cancelamento com Bruno antes de mudar benefícios. Revisar documentação de suporte/privacidade e linguagem de contagem de pedidos.
+Aceite: conta nova, conta existente e casal chegam ao primeiro comando confirmado e visível no app com o plano certo. Resposta perdida não cria perfil/assinatura/saldo duplicado. Cartão continua identificado como pendente até existir integração aprovada e validada em sandbox. Não mudar preço ou Ilimitado silenciosamente.
+
+ORQ-06 — Recuperação de interface e acessibilidade
+Fontes: IM-01/02/04/05/06/08/09.
+Responsável: Interface/Mobile; QA valida; Backend/IA confirmam contratos de erro.
+Escopo: contexto de conversa após 410 no nativo; mês/dia selecionado do calendário; loading/erro/retry; atualização ao voltar do WhatsApp; foco dos modais e recuperação de rede. Preservar texto digitado e não repetir escritas de resultado incerto automaticamente.
+Aceite: jornadas testadas em homologação e, para o nativo, em aparelho compatível; teclado, fonte ampliada, navegação, perda de rede e troca de conta têm resultados claros. Bundle não será usado como prova de teste em aparelho.
+
+4. EVOLUÇÃO PARA VOLUME, APÓS CONFIABILIDADE BÁSICA
+
+Fontes BS-02/03/04 e QS-04: decidir sessões/limitadores/contexto compartilhados, lookup relacional de telefones, resumos consistentes/paginados e lembretes por vencimento indexado. Medir primeiro os cenários com massa sintética e recursos conhecidos; não adotar microserviços, Redis ou outro produto por ritual. Clientes cadastrados, simultaneidade, taxa de mensagens e histórico por conta são dimensões diferentes.
+
+Fontes PA-09 e IW-07: medir economia do Ilimitado e custo por comando concluído, incluindo falhas e retentativas. Cenários de custo de Produto são hipóteses, não faturas nem permissão para reduzir a oferta aprovada.
+
+Fonte PA-12: planejar avaliação da transcrição antes do desligamento anunciado de gpt-4o-mini-transcribe em 26/02/2027. O orquestrador conferiu a fonte oficial em 27/10/2026: https://developers.openai.com/api/docs/guides/transcription . Não há falha atual comprovada por essa data futura e nenhum modelo foi trocado. A migração requer comparar saída, qualidade, custo e integração com áudios representativos antes de mover produção.
+
+5. COMO ATRIBUIR AS PRÓXIMAS TAREFAS
+
+Cada ordem deve conter: ID ORQ, base/commit, arquivos permitidos, contrato de entrada/saída, reprodução, critérios de aceite, comandos seguros de validação e dependências. Evitar atribuir a duas frentes a mesma função ou arquivo ao mesmo tempo. QA revisa evidência e regressão; a frente implementadora não aprova sozinha a própria entrega.
+
+Primeira rodada recomendada: ORQ-01 com diagnóstico/patch isolado; especificação de bootstrap e regressão de ORQ-02; critérios de ativação de ORQ-05. Não iniciar tarefas de banco ou fila dependentes do contrato antes da revisão do orquestrador. Limitar implementações simultâneas inicialmente a três frentes e integrar em sequência.
+
+Esta consolidação define prioridades propostas. Ainda não atribui nem executa correções de produto. As cinco frentes encerram a primeira missão no diagnóstico; instruções posteriores devem declarar o escopo de implementação. A próxima fase não deve ser anunciada como concluída antes da reprodução e dos testes correspondentes.

@@ -1,0 +1,247 @@
+ANOTEI — DIAGNÓSTICO DE PRODUTO E ASSINATURAS
+Data: 27/10/2026 — America/Sao_Paulo
+Frente: Produto e Assinaturas
+Destinatário: Agente Orquestrador Anotai
+Escopo: primeira auditoria de leitura, sem implementação.
+
+1. VERSÃO, MÉTODO E LIMITES
+
+Diretório: C:\Users\Bruno Lira\OneDrive\Documentos\ChatGPT\Anota aí
+Branch observada: codex/mobile-foundation
+Commit: d3a4953d4a80a187b0addb5f3394cbe9f384e0a6
+No início havia docs/agentes/ e cinco arquivos de evidências de 20/10 não rastreados. Não foram modificados por esta frente. Nenhuma branch foi trocada.
+
+Foram lidos código, SQL, componentes comerciais, instruções e documentação do projeto; foram consultadas fontes oficiais públicas. Não foram acessados banco de produção, credenciais, faturas, conversas, contatos ou valores de clientes. Nenhum teste, build, instalação, chamada paga, envio de WhatsApp, operação financeira ou alteração de acesso foi executado. O único arquivo criado por esta frente é este relatório.
+
+Classificação das evidências:
+- Verificado estaticamente: comportamento explicitamente presente nos arquivos da revisão acima.
+- Risco ou lacuna: consequência provável ou requisito ausente que precisa de teste/decisão.
+- Histórico: resultado registrado anteriormente por outra execução; não foi reexecutado nesta missão.
+- Não verificado: interface em aparelho, infraestrutura ativa, configuração real do banco, aceitação/entrega de mensagem e pagamento real.
+
+O parecer não certifica a produção nem identifica exaustivamente todos os defeitos. A capacidade e a margem precisam de medição; nenhuma conclusão de preço ou contrato foi aplicada.
+
+2. PARECER DE PRODUTO
+
+O núcleo comercial é coerente: organização financeira e agenda de pessoa física pelo WhatsApp, com consulta e registro manual no navegador. O aplicativo registra informações; não movimenta a conta bancária. Um casal compartilha a mesma conta financeira, não duas contas independentes.
+
+Há estrutura para operação assistida: convite pela gestão, cadastro pessoal, seleção dos dois planos, Pix informado pelo usuário, aprovação administrativa, licença e franquia. Cartão recorrente e distribuição nativa permanecem em preparação. A prioridade comercial é fechar a continuidade entre escolha do plano, cadastro, assinatura e número do WhatsApp; depois automatizar a cobrança aprovada. A promessa de uso rápido pelo WhatsApp depende desses vínculos estarem completos.
+
+3. REGRAS EXISTENTES CONFERIDAS
+
+Referência principal: lib/subscription-plans.ts:1-12.
+- Básico: R$49,90; 150 pedidos; 600 segundos de áudios no WhatsApp; 600 segundos de voz no app.
+- Ilimitado: R$99,90; os três limites mensais são null, representando ausência de franquia mensal.
+- Até dois telefones por conta, compartilhando dados e franquia. Gestão altera os telefones; assinante não cria novos contatos. Fontes: lib/subscription-access.ts:21; docs/subscriber-access.md; componentes de gestão.
+- Período de uso: ciclos de 30 dias a partir de usage_anchor, calculados no SQL em America/Sao_Paulo. Não é necessariamente o mês do calendário: supabase/migrations/20261015141044_plans_usage_customer_details.sql:110-119.
+- Pix: usuário informa identificador/observação, criando PENDENTE. Somente a revisão administrativa ativa o acesso; repetir a revisão não estende o período novamente. A autorização não é prova automática de liquidação. Fontes: lib/subscription-access.ts; database/household-billing.sql:112-131; migração de planos:78-102.
+- Prazo do Pix: access_days configurável. O valor é obtido do catálogo do plano; a interface administrativa informa isso. Não encontrei erro de preço decorrente do campo legado monthly_cents das configurações.
+- Isenção de gestão e testes explicitamente registrados têm tratamento próprio; não são demonstração de que um assinante normal recebeu o plano correto. Ambiente local retorna uso isento e não testa a franquia real de produção: lib/subscription-usage.ts:8-20.
+- Voz web: sessão de até 300 segundos; limitador de início de 8 sessões por hora, intervalo mínimo de 15 segundos e uma conversa em andamento. São proteções operacionais distintas da franquia mensal: lib/assistant-session.ts:5,10.
+- Contagem de voz corresponde à conexão até o encerramento, inclusive pausas, conforme a UI. A cobrança do fornecedor tem outra base e não deve ser inferida desse contador.
+- Registrar receita aumenta o caixa; pagamento previsto não o reduz até ser registrado como realizado. Salário cadastrado é previsão, não crédito automático. Fontes: docs/personal-finance.md e fluxos financeiros referenciados pelo produto.
+
+4. MAPA DAS JORNADAS
+
+4.1 Descoberta pública e escolha
+Página /conheca apresenta Básico e Ilimitado, exemplos, confirmação, WhatsApp, contas e agenda. Os dois botões de plano levam para /?cadastro=1. O plano vai ao evento de analytics, mas não à URL ou ao cadastro. O cadastro genérico é Login, não o formulário completo do convite. Se o portal estiver com o header publicPortal ativo, o cadastro genérico fica indisponível e o usuário é orientado a usar convite; isso precisa entrar no teste real do ambiente.
+
+4.2 Cadastro genérico
+Login coleta nome, e-mail, senha e nome opcional da IA; não coleta telefone, CPF/endereço, salário ou saldo. /api/session usa signup quando não há convite. Pode exigir confirmação por e-mail e depois conduz ao painel. O painel e a assinatura precisam ser verificados como experiência completa de uma conta sem licença. Não há nesse caminho a criação automática de vínculo de telefone observável no código analisado.
+
+4.3 Convite pela gestão
+Gestão informa nome, telefone e plano; cria convite e coloca o envio na fila. /cadastro/[token] valida o convite e abre o formulário pessoal com CPF/endereço, e-mail, duas senhas, nome da IA, salário, dia e saldo. O backend registra perfil, vínculo e conta e retorna sessão. Cadastro não significa licença paga; a liberação depende das regras de assinatura. O fluxo de conta existente tem caminho administrativo específico para vincular e-mail confirmado à assinatura.
+
+4.4 Pagamento e liberação
+/assinatura permite escolher um plano, informar Pix e aguardar a administração. A página mantém a solicitação pendente e consulta atualização; a aprovação registra acesso até a data calculada. A gestão verifica o dinheiro no banco por fora. Cartão aparece como em preparação e não realiza cobrança. A licença pode estar ativa enquanto o WhatsApp ainda não está pronto; essas condições são separadas na gestão.
+
+4.5 Primeiro uso e rotina
+Assinante precisa de conta, licença válida, telefone autorizado e instância/worker disponíveis. Receita/despesa/agenda geram proposta e confirmação, depois aparecem nos dados. Consulta não é lançamento. Uso manual não gasta pedidos; a UI mostra contadores compartilhados. Algumas mensagens de conversa/esclarecimento entram na contagem de pedidos, conforme o caminho de execução.
+
+4.6 Renovação, alteração de plano e término
+Pix antecipado estende a validade existente, porém a aprovação aplica imediatamente o plano escolhido. A política comercial de troca durante o período já pago precisa ser definida. Expiração ou desativação bloqueia acesso preservando os registros. Reativação, correção de pagamento pendente, vínculo de conta existente e troca do segundo telefone passam pela gestão. Não há cartão automático para cancelar/restaurar nesta revisão.
+
+5. MATRIZ DE CAPACIDADES E PROMESSAS
+
+Capacidade | Estado de implementação | Evidência e limite
+Preços e franquias | Entregues e conferidos estaticamente | Catálogo TS e SQL concordam; não validei concessão em produção.
+Convite, formulário pessoal e vínculo | Implementados; validação atual pendente | Componentes e RPCs existem; não criei conta nem enviei convite.
+Dois números na mesma conta | Implementado; validação atual pendente | Servidor/SQL impõem limite; cada número compartilha o mesmo financeiro.
+Pix com revisão e acesso | Implementado; validação atual pendente | Solicitação e revisão idempotente nos arquivos; não conferi banco real.
+Cartão recorrente | Planejado, não integrado | subscription-billing-policy.ts tem PENDENTE_INTEGRACAO; UI informa preparação.
+WhatsApp: consultas e comandos | Implementado; validação histórica documentada | docs/whatsapp-capabilities.md e auditorias anteriores; não houve teste real nesta frente.
+Calendário, finanças, recorrências e lançamentos manuais | Implementados; validação funcional atual pendente | Código e manual descrevem; não houve sessão de UI.
+Contadores somente no app | Implementados; detalhe de contagem precisa de aceite | UsagePanel e limites SQL; não há telemetria financeira real auditada.
+Cancelamento/reativação comercial manual | Parcial | Gestão possui status e controles; não equivale a cancelamento automático de renovação de cartão.
+Política de troca de plano | Parcial/sem contrato claro | Atualização de plano e extensão de validade existem; benefícios pagos e proporcionalidade não estão especificados.
+Nativo Android/iOS | Parcial | Base Expo existe; onboarding, voz nativa, recovery/deletion e billing pendentes nos documentos/policy.
+Privacidade, termos, suporte e exclusão | Rascunho/parcial | Documento com campos abertos; não localizei rotas públicas dedicadas correspondentes.
+Funil comercial e MRR | Parcial | Eventos e painel existem; clique não comprova cadastro, ativação nem recebimento.
+
+Não foi atribuída a nenhuma linha a condição “validada de ponta a ponta em produção” nesta auditoria. Os 304 testes relatados na revisão estrutural são evidência histórica de outra execução, não um teste novo desta frente.
+
+6. ACHADOS PRIORIZADOS E CRITÉRIOS DE ACEITE
+
+PA-01 — P1 — Escolha do plano perdida entre venda e cadastro
+Tipo: divergência de fluxo verificada no código; impacto no navegador ainda não testado.
+Fontes: components/SalesPage.tsx:14,69; components/Login.tsx:8; components/SubscriptionPayment.tsx:14,22.
+O CTA registra plan nos eventos, mas usa o mesmo href /?cadastro=1 para ambos. O cadastro não persiste plan_code, e o checkout inicia em BASICO quando não há assinatura/solicitação. A escolha pode ser refeita depois, mas o visitante que pediu Ilimitado perde a continuidade.
+Reprodução proposta: perfil sintético novo, escolher Ilimitado, completar cadastro/e-mail, chegar ao checkout sem seleção anterior.
+Aceite: escolha persiste entre páginas e após login; checkout e resumo mostram o mesmo plano/preço; backend continua validando o catálogo, sem confiar no preço da URL. Cobrir também usuário já cadastrado e troca explícita de plano.
+Responsáveis: Interface + Backend; especificação Produto; verificação QA.
+
+PA-02 — P1 — Cadastro público/pagamento não conclui sozinho o vínculo do WhatsApp
+Tipo: lacuna de ativação identificada estaticamente.
+Fontes: components/Login.tsx:8; app/api/session/route.ts:21-34; lib/invitation-registration-cloud.ts; lib/whatsapp-members.ts:17-24; lib/subscription-access.ts:25-27.
+O cadastro genérico não coleta telefone nem passa pelo registro do convite. A aprovação de Pix ativa assinatura, mas não fornece o vínculo de telefone que o roteamento do WhatsApp exige. Existe solução manual de convidar e vincular conta existente na gestão; não existe nessa jornada a mesma continuidade do convite pessoal.
+Impacto: uma pessoa pode pagar e abrir o painel sem estar pronta para o principal canal prometido. Não afirmei que isso ocorre em toda produção; configuração publicPortal/convite muda o caminho.
+Aceite: escolher uma jornada oficial de aquisição (assistida ou autônoma), deixar o pré-requisito explícito, completar vínculo de telefone de maneira autorizada e exibir Conta/Cadastro, Pagamento/Acesso e WhatsApp como estados separados. Nunca vincular número à primeira conta encontrada sem comprovação/validação. QA deve cobrir cadastro direto, convite, e-mail existente, telefone já vinculado e segundo número.
+Responsáveis: Orquestrador + Produto definem jornada; Backend/Interface implementam; QA valida.
+
+PA-03 — P1 — Cartão recorrente continua pendência de lançamento comercial
+Tipo: capacidade ausente, não defeito de cobrança existente.
+Fontes: lib/subscription-billing-policy.ts:1-12; components/SubscriptionPaymentMethods.tsx:8-12; mobile/src/core/billing.ts; docs/MONETIZACAO.md.
+A comunicação atual informa “em preparação”, o que é correto. O método efetivo é Pix administrativo. Isso não cumpre ainda a intenção de recorrência de cartão para a operação escalável.
+Aceite: Bruno aprova provedor e política por canal; checkout de sandbox, pagamento aprovado/negado, renovação, falha, cancelamento, expiração, reembolso e eventos duplicados/fora de ordem são testados; acesso depende do backend e evento/recibo verificado. Não liberar a função por flag do cliente. Não prometer data antes dessas evidências.
+Responsáveis: Bruno decide; Backend + Operação integram; Produto especifica; QA valida.
+
+PA-04 — P1 — Troca antecipada pode mudar benefícios do período já pago imediatamente
+Tipo: comportamento derivado do SQL, sem execução nesta missão.
+Fontes: database/household-billing.sql:112-128; supabase/migrations/20261015141044_plans_usage_customer_details.sql:94-102 e trigger de normalização:5-12.
+A revisão estende o prazo a partir da validade atual e aplica o plano do pagamento já na aprovação. Assim, uma renovação antecipada de Ilimitado para Básico pode restringir a conta antes do fim do período Ilimitado previamente pago; o caminho inverso pode dar dias adicionais de benefício superior. Não identifiquei regra explícita de plano agendado/proporcionalidade.
+Aceite: Bruno define upgrade/downgrade, vigência, preço proporcional ou próxima renovação e tratamento de franquia usada. O resumo deve explicar a mudança antes do pagamento. Preservar benefícios pagos segundo a política aprovada; testar as duas direções e nova aprovação repetida. Não aplicar política nova nesta auditoria.
+Responsáveis: Produto + Bruno; Backend; QA.
+
+PA-05 — P1 para campanha pública/lojas — Privacidade, suporte e termos não concluídos
+Tipo: lacuna documental e de jornada.
+Fontes: docs/PRIVACIDADE_E_TERMOS_RASCUNHO.md:18-24; components/SalesPage.tsx:75; components/Login.tsx:8; components/PersonalRegistration.tsx:18-22; app/ e checklist de lançamento.
+Há coleta obrigatória de CPF e endereço no convite, mas o rascunho ainda tem controlador, contato, retenção e direitos em aberto. Não localizei páginas públicas específicas de termos/privacidade/exclusão nem links desses textos nos fluxos citados. Não foi emitida conclusão jurídica de conformidade.
+Aceite: responsável revisa finalidades, minimização, operadores, retenção, direitos e canal de suporte; publicar documentos aprovados, acessíveis antes do cadastro, e definir procedimentos de exclusão/recuperação. Distinguir conta compartilhada do casal e acesso do segundo número. Validar obrigações aplicáveis com revisão responsável.
+Responsáveis: Bruno/revisão responsável + Produto; Backend/Interface implementam fluxos aprovados.
+
+PA-06 — P2 — Falta definição mais precisa de “um pedido” em esclarecimentos e áudio
+Tipo: ambiguidade comercial derivada dos contadores.
+Fontes: lib/whatsapp-worker.ts:66-74,100; app/api/finance/interpret/route.ts:17-20; components/UsagePanel.tsx:12; components/SalesPage.tsx:70.
+No WhatsApp, um áudio é contado por duração antes de interpretar; depois, mensagens que não são comandos de confirmação/edição/cancelamento reservam REQUEST. Uma transcrição bem-sucedida continua consumindo segundos mesmo se a interpretação não concluir a operação. Esclarecimentos/ajuda podem consumir pedidos; erro segue regras próprias de devolução. Os fluxos app/WhatsApp não têm necessariamente a mesma unidade de consumo que um usuário chamaria de “lançamento concluído”.
+Aceite: documentar em linguagem simples mensagens, esclarecimentos, repetição, áudio falho e cancelamento; exemplos devem bater com o contador em conta sintética Básico e casal. Testar último pedido/últimos segundos e continuação de proposta. Não mudar regras de débito/franquia sem decisão de produto. Confirmações e lembretes continuam sem pedidos conforme prometido.
+Responsáveis: Produto + IA/WhatsApp + Backend + QA.
+
+PA-07 — P2 — Prazo comercial fixo de 30 dias versus access_days configurável
+Tipo: risco de divergência de configuração, não ocorrência comprovada em produção.
+Fontes: components/SalesPage.tsx:62,69-70; components/SubscriberAccessManagement.tsx:36; components/SubscriptionPayment.tsx:55; lib/subscription-access.ts:20; SQL de uso:110-119.
+Venda anuncia preço por 30 dias; administração pode configurar dias de acesso entre 1 e 366, e a franquia mantém seu próprio ciclo de 30 dias. Checkout informa o prazo configurado, mas uma configuração diferente muda a oferta/renovação em relação à página pública.
+Aceite: definir se o prazo é fixo no catálogo ou configurável por oferta e assegurar que venda, pedido, acesso e franquia sejam coerentes. Testar renovação antecipada, retomada após expiração e passagem do ciclo. Não substituir 30 dias por mês-calendário sem decisão explícita.
+Responsáveis: Produto + Backend + Interface.
+
+PA-08 — P2 — Cancelamento, correção de Pix pendente e reembolso dependem de atendimento
+Tipo: operação comercial parcial.
+Fontes: components/SubscriptionPayment.tsx:54; componentes de gestão; docs/MONETIZACAO.md.
+Uma solicitação pendente bloqueia nova escolha até a administração corrigir/recusar. Há orientação genérica “fale com a administração”, mas não identifiquei canal de suporte dedicado nessa etapa. Estados administrativos não são cancelamento automático de uma cobrança recorrente real. Não há prova de processo operacional/SLAs de reembolso.
+Aceite: definir canal, responsável e expectativa de resposta; expor “aguardando conferência” sem afirmar pagamento recebido; registrar motivo e resultado de correção. Separar cancelar renovação, bloquear acesso, encerrar assinatura e excluir dados. Preservar prazo já pago na política aprovada.
+Responsáveis: Produto + Bruno; Interface/Backend; QA.
+
+PA-09 — P2 — “Ilimitado” precisa de economia medida e explicação dos limites operacionais
+Tipo: risco de sustentabilidade e comunicação.
+Fontes: lib/subscription-plans.ts:3; lib/assistant-session.ts:5,10; lib/assistant-server.ts; cenário de custos na seção 8.
+Há ausência de franquia mensal no plano, mas limites de sessão/início/conexão para proteger o serviço. Não devem virar franquia comercial oculta. Custo de IA e atendimento aumenta com uso, enquanto o preço não aumenta. Sem dados por conta/p95 não há margem comprovada.
+Aceite: explicar limites operacionais relevantes; medir custos de cauda e falhas; Bruno decide qualquer futura alteração de oferta. Não impor teto novo, “uso justo” indefinido ou restrição silenciosa ao produto já aprovado.
+Responsáveis: Produto + Operação + IA; decisão Bruno.
+
+PA-10 — P2 — MRR e clientes ativos não equivalem a acesso válido ou dinheiro recebido
+Tipo: risco de interpretação da gestão; condição derivada do código.
+Fontes: lib/commerce.ts:51-52,76-86; components/Management.tsx.
+commerceMetrics soma status ATIVA e valor positivo sem filtrar renewal_date vencida. O painel também tem lista de atenção de vencidos, portanto a informação existe, mas a métrica pode incluir uma conta sem acesso válido. O valor representa receita contratada/prevista, não caixa liquidado.
+Aceite: nomear e separar assinantes cadastrados, cadastrados/conectados, acesso válido, receita prevista e recebida, pendências e cancelamentos. Cobrir ATIVA com data vencida, TESTE, isento e pagamento pendente. Não alterar o número silenciosamente sem alinhar a definição da métrica.
+Responsáveis: Produto + Backend/Interface; QA.
+
+PA-11 — P2 — Funil mede intenções de clique sem comprovar ativação
+Tipo: lacuna de medição.
+Fontes: components/SalesPage.tsx:14; lib/landing-events.ts; lib/commerce-referral.ts; lib/commerce-server.ts.
+registration_start é emitido ao clicar no botão do plano, antes de abrir/cadastrar. Não deve ser interpretado como cadastro iniciado com sucesso nem como conversão paga. Há atribuição comercial de origem, mas não foram auditados dados reais nem conexão ponta a ponta desses eventos.
+Aceite: definir eventos distintos de clique, formulário iniciado, conta criada, telefone vinculado, pagamento informado, pagamento validado e primeiro comando concluído. Vincular com identificadores mínimos necessários, consentimentos/bases revisados e sem conteúdo financeiro/áudio nos eventos.
+Responsáveis: Produto + Interface/Backend; revisão de privacidade e QA.
+
+PA-12 — P1 antes de novas ativações por voz em escala — Dependência de transcrição com descontinuação anunciada
+Tipo: risco de ciclo de vida do fornecedor, verificado em fonte oficial em 27/10/2026.
+Fontes: lib/whatsapp-ai.ts:8 e lib/assistant-session.ts:8 usam gpt-4o-mini-transcribe. A documentação oficial consultada informa desligamento dessa família em 26/02/2027; ver fonte F4. Isso não prova falha atual.
+Aceite: IA/WhatsApp confirma cronograma e alternativas oficiais, avalia áudios representativos, mede custo/qualidade e apresenta migração controlada. Não substituí modelos nesta missão.
+Responsáveis: IA/WhatsApp + Operação; Produto informa impacto na oferta.
+
+7. CRITÉRIOS DA VERSÃO COMERCIAL
+
+A. Jornada oficial: uma pessoa escolhe o plano, cria/usa conta, confirma telefone, obtém licença e conclui o primeiro comando sem estado contraditório ou intervenção não informada.
+B. Oferta: preço, duração, franquia, dois números, confirmação e método disponível coincidem em venda, cadastro, checkout e servidor. Capacidade planejada é identificada como tal.
+C. Dinheiro e acesso: confirmação de Pix/recibo é idempotente; pendência não libera acesso; cancelamento e troca de plano respeitam política aprovada; finanças são preservadas quando acesso vence.
+D. Experiência WhatsApp: casos de entrada, saída e agenda funcionam em várias contas com contextos distintos, sem diferenças por números privilegiados. Nenhum sucesso é anunciado sem gravação comprovada.
+E. Contagem: casos de erro, esclarecimento, áudio e casal têm exemplos e contadores consistentes; uso manual e confirmações mantêm a isenção prometida.
+F. Operação: responsável por liberação manual, suporte e incidentes está definido; aceitação de envio é separada de entrega, e cadastro é separado de acesso.
+G. Dados e distribuição: documentos e direitos aprovados, recuperação/exclusão planejadas e testadas; requisitos de lojas e canal aprovados antes de builds/publicação. Não remover release-policy.json para acelerar.
+H. Economia: obter custo real por conta e percentis de uso/custo antes de afirmar sustentabilidade do Ilimitado ou capacidade de grande escala.
+
+8. CENÁRIOS DE CUSTO — HIPÓTESES, NÃO MEDIÇÃO NEM LIMITE DE CUSTO
+
+Modelos encontrados no código:
+- Interpretação/ajuda: gpt-4.1-mini. Modelo legado de despesa em whatsapp-ai também contém gpt-4o-mini; sua frequência não foi medida.
+- Transcrição de áudio: gpt-4o-mini-transcribe.
+- Voz web: default gpt-realtime-2.1-mini; OPENAI_REALTIME_MODEL pode alterá-lo no servidor. Não li essa variável privada, portanto o modelo real de produção é desconhecido.
+
+Preços oficiais consultados em USD: texto GPT-4.1-mini, US$0,40 entrada e US$1,60 saída por milhão; transcrição mini, estimativa US$0,003/min; Realtime 2.1-mini, áudio US$10 entrada/US$20 saída e texto US$0,60 entrada/US$2,40 saída por milhão. Fontes F1/F2. Não houve contratação ou chamada aos modelos.
+
+Premissas reproduzíveis, escolhidas para ilustrar sensibilidade:
+N = total de chamadas ao modelo textual por conta/ciclo, incluindo chamadas de ferramentas quando aplicável; N não é necessariamente o contador de pedidos do plano.
+Cada chamada textual: 8.000 tokens de entrada e 500 de saída, sem desconto de cache => US$0,004/chamada. Atalhos locais podem reduzir N; múltiplas chamadas, retries e contexto maior podem aumentá-lo.
+W = minutos de áudio recebidos pelo WhatsApp; custo parcial de transcrição = US$0,003 × W.
+V = minutos de conexão de voz. Hipótese: metade do tempo com fala do usuário e metade com resposta; áudio novo a 600 tokens/min de entrada e 1.200 de saída, conforme F3; multiplicador hipotético 3 para entrada/reuso de contexto; 6.000 tokens de texto de entrada e 500 de saída por minuto; transcrição da metade falada pelo usuário. Sem descontos => aproximadamente US$0,0273 × V.
+O multiplicador não foi medido; cache, silêncio, número de turnos e respostas longas mudam o total. O contador de minutos conectados inclui pausas; a API tem outra forma de cobrança. Chamadas de ferramentas devem entrar em N; se ficarem de fora, o cenário subestima custo.
+
+Fórmula parcial: C_IA_USD = 0,004N + 0,003W + 0,0273V.
+
+Cenário | N | W | V | IA USD/ciclo | BRL somente IA com dólar HIPOTÉTICO a R$6
+Básico ilustrativo | 150 | 10 | 10 | 0,903 | 5,42
+Ilimitado uso intermediário hipotético | 1.000 | 120 | 120 | 7,636 | 45,82
+Ilimitado uso alto hipotético | 5.000 | 600 | 600 | 38,180 | 229,08
+
+R$6/US$ é premissa de sensibilidade, não cotação do dia. O cenário Básico não é teto de custo e não garante que 150 pedidos produzam só 150 chamadas. Também não limita custos de ferramentas de voz dentro dos minutos disponíveis.
+
+Para custo completo por conta, somar:
+C_total = câmbio efetivo × C_IA_USD + WhatsApp/provedor rateado + servidor/banco/armazenamento/backup/monitoramento rateados + suporte por conta + processamento de pagamento + tributos + reembolsos/chargebacks. Para margem após aquisição, considerar ainda CAC e retenção. Nenhuma dessas faturas, tarifas contratadas ou médias foi auditada; não inventei valores para preencher o total.
+
+A R$99,90, o cenário de uso alto ultrapassa o preço só com a parcela hipotética de IA. Isso demonstra necessidade de medição e decisão comercial; não autoriza mudar o Ilimitado. Os cenários não são previsão de comportamento de clientes nem prova de que a oferta dá prejuízo em média.
+
+Instrumentação recomendada a especificar com as frentes: por conta/execução, modelo e versão, tokens por modalidade/cache, segundos transcritos/conectados, quantidade de chamadas, sucesso após confirmação, repetição/erro, latência, estimativa de custo e plano vigente. Correlacionar com fatura do fornecedor e receita efetivamente recebida. Não armazenar conteúdo financeiro ou áudio em analytics de aquisição.
+
+9. CANAIS DE COBRANÇA E POLÍTICAS
+
+Web e aplicativos distribuídos por lojas exigem decisões distintas. Google Play exige seu billing para bens/serviços digitais, salvo programas/exceções; Apple possui condições brasileiras para alternativas e entitlements. Um Pix web ou link externo não é automaticamente um fluxo permitido dentro de qualquer aplicativo de loja. Fontes F5/F6/F7. Elegibilidade, contrato, comissões e obrigações devem ser conferidos antes da integração, sem aplicar taxas globais por suposição.
+O aplicativo nativo desta revisão não tem compra/restauração ativas. A preparação de contratos não equivale a produto comercial de loja. Não foi escolhido provedor nem criada assinatura nesta missão.
+
+10. DECISÕES REALMENTE NECESSÁRIAS DE BRUNO — REGISTRAR, NÃO COBRAR RESPOSTA PARA CONTINUAR A AUDITORIA
+
+1. Qual é a primeira jornada comercial oficial: entrada por convite assistida ou contratação autônoma com vínculo seguro do telefone? Ambas podem coexistir, mas precisam de regras e estados claros.
+2. Como funcionam upgrade/downgrade durante prazo pago e o período de acesso por oferta? Manter a decisão de preço/franquias existente até aprovação de qualquer mudança.
+3. Qual provedor/canal de cartão será aprovado para a web e qual estratégia de compras será adotada nas lojas? Não é necessário decidir os dois para corrigir o fluxo assistido atual.
+4. Quem é o controlador/responsável comercial, canal de suporte e revisor dos documentos e procedimentos de privacidade/reembolso?
+
+Faturas e métricas de uso, se disponibilizadas depois, melhoram a previsão de custo, mas não bloquearam este diagnóstico. Não é necessário enviar segredos ou dados de assinantes na conversa.
+
+11. PRÓXIMAS TRÊS TAREFAS PARA O ORQUESTRADOR
+
+1. P1 — Especificar e fechar a jornada de aquisição/ativação, mantendo plano e identidade até o WhatsApp. Produto escreve critérios PA-01/02; Backend e Interface implementam em escopo isolado; QA valida conta nova, existente e casal. Entrega: primeiro comando confirmado e visível no app, plano correto e estados sem ambiguidade.
+2. P1 — Definir contrato de assinatura e troca de plano; preparar cartão em sandbox após decisão de Bruno. Produto fecha vigência/renovação/cancelamento; Backend e Operação desenham eventos verificados/idempotentes; QA cobre PA-03/04/07/08. Entrega: regras comerciais aprovadas e matriz de testes antes de cobrar.
+3. P1/P2 — Criar pacote de prontidão comercial: documentos/suporte aprovados, regras de contagem explicadas e custos medidos em piloto autorizado. Produto coordena PA-05/06/09/10/11; QA valida jornadas; IA/Operação avaliam PA-12 e coletam métricas sem conteúdo privado. Entrega: lista objetiva de liberado versus pendente, sem promessa de lojas/escala ainda não demonstrada.
+
+12. FONTES OFICIAIS CONSULTADAS EM 27/10/2026
+
+F1 https://developers.openai.com/api/docs/models/gpt-4.1-mini
+F2 https://developers.openai.com/api/docs/pricing
+F3 https://developers.openai.com/api/docs/guides/voice-latency-cost?voice-api=realtime
+F4 https://developers.openai.com/api/docs/guides/transcription
+F5 https://support.google.com/googleplay/android-developer/answer/9858738?hl=pt-BR
+F6 https://developer.apple.com/app-store/review/guidelines/
+F7 https://developer.apple.com/br/support/payment-options-on-the-app-store-in-brazil/
+F8 https://www.gov.br/anpd/pt-br/assuntos/titular-de-dados
+Também consultada a explicação geral de taxas do Google Play: https://support.google.com/googleplay/android-developer/answer/11131145?hl=pt-BR . Nenhuma taxa foi presumida como contrato efetivo do Anotei.
+Tentativa de leitura do índice https://supabase.com/changelog.md pelo navegador de pesquisa retornou tipo de conteúdo não suportado. Nenhuma API Supabase foi alterada, nem houve consulta remota ao banco nesta frente.
+
+ENCERRAMENTO
+Diagnóstico concluído nesta aba e neste relatório. Nenhuma implementação atribuída foi iniciada. Aguardando priorização e tarefa específica do orquestrador.

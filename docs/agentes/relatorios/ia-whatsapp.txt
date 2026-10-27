@@ -1,0 +1,190 @@
+ANOTEI — DIAGNÓSTICO DA FRENTE IA, VOZ E WHATSAPP
+Data: 27/10/2026 | Fase: leitura e auditoria inicial, sem implementação
+Destinatário: Agente Orquestrador Anotai
+Orquestrador: 01a118a2-73d8-7872-96f2-022acbb49ba9
+
+1. ESCOPO, VERSÃO E LIMITES DA EVIDÊNCIA
+
+Raiz: C:\Users\Bruno Lira\OneDrive\Documentos\ChatGPT\Anota aí
+Branch observada: codex/mobile-foundation
+Commit local observado: d3a4953d4a80a187b0addb5f3394cbe9f384e0a6
+O registro da revisão anterior aponta main 014f81c; não consultei novamente o remoto nesta frente. Código lido não comprova versão implantada, configuração de produção ou permissões efetivamente aplicadas.
+
+Executado nesta missão: leitura de instruções, código, testes e evidências históricas; navegação em documentação oficial; rastreamento estático de caminhos e condições. Única escrita desta frente: este relatório.
+Não executado: testes, builds, instalações, chamadas OpenAI, transcrição nova, envio de WhatsApp, leitura de contas/conversas reais, SQL remoto, reset de assinantes, deploy ou mudança de configuração. Chamadas pagas de IA e alterações de produção: zero nesta missão.
+
+Classificação usada:
+- Defeito estático: o caminho do código demonstra o desvio para o cenário descrito; ainda falta um teste executado para registrar a reprodução completa.
+- Risco: condição relevante, com efeito dependente de concorrência/configuração ou resposta de modelo/provedor.
+- Lacuna: não há evidência suficiente ou instrumentação/cobertura demonstrada.
+Não apresento uma nova taxa de acerto nem uma lista exaustiva de bugs.
+
+2. PARECER
+
+A inteligência não é um único prompt e não há, no caminho lido, um prompt financeiro especial para um telefone. Há regras locais, extração estruturada, validação de evidências, planos, assinaturas, confirmação e persistência. Nome da IA, histórico, vínculo da conta, permissão e franquia variam por titular/remetente.
+O núcleo financeiro é compartilhado, mas WhatsApp e voz do aplicativo têm adaptadores e regras anteriores/posteriores diferentes. Uniformidade exige verificar essas camadas, além do modelo. A segurança de gravação é significativamente mais forte que uma automação guiada somente por texto de prompt.
+Prioridades desta frente: preservar semântica dos prefixos e correções; fechar recuperação de respostas do WhatsApp; ampliar avaliações de paridade sem confundir testes simulados com transcrição/entrega reais.
+
+3. MAPA REAL DO FLUXO
+
+WhatsApp:
+Uazapi → app/api/whatsapp/webhook/route.ts → validar chave da conexão/dono, mensagem individual, número autorizado e vínculo → enqueue com deduplicação por usuário + provider_id → claimMessage com lease → processMessage.
+Áudio: download limitado → medição de duração/reserva de franquia → transcribeExpense → texto. Texto e áudio então passam por normalizeAssistantText, escolhas 1/2, guardas, ajuda, consultas rápidas e contexto do próprio remetente.
+Comandos seguem localFinanceInterpretation/quickFinanceDraft ou extractFinance → prepareFinanceProposal/prepareFinanceDraft → validação literal de quantia/data/alvo → resumo assinado de dez minutos. Confirmar chama applyFinanceForBot, que exige recibo ok/saved/operation_id compatível. Depois o worker muda status para LANCADO e envia a resposta pelo provedor.
+Edição usa envelope edit.v1. separado, nova proposta e nova confirmação. Cancelamento não deve gravar o plano. Lista parcial explicita itens não incluídos. Lembretes usam a mesma outbox, com IDs estáveis e revalidação antes de enviar.
+
+Aplicativo:
+Texto → /api/finance/interpret → assinatura e quota → assistantTurn → mesmo extrator/validador/plano → confirmação em /api/finance.
+Voz web → WebRTC Realtime → ferramentas consultar/preparar/ajuda/navegação → VoiceUtterance confere a transcrição do turno atual → /api/assistant/finance → assistantTurn → botão de confirmação. Respostas de consulta vêm dos leitores/cálculos do servidor; o modelo não deve refazer os totais.
+Realtime, conversas, leitura de ferramentas e limitadores têm estado em memória; falha/reinício e múltiplas réplicas precisam de desenho operacional. A base nativa não equivale à voz WebRTC do site e ainda tem pendências registradas.
+
+4. PROMPTS, SCHEMAS E MODELOS ENCONTRADOS
+
+- lib/whatsapp-ai.ts:6-13: prompt de transcrição fiel, language pt, gpt-4o-mini-transcribe, até 4.000 caracteres e timeout de 30 s. Não há uma medição nova de sensibilidade/ASR nesta missão.
+- lib/finance-ai.ts:26-27: commandSchema/schema fechado, evidências monetárias/calendário e intents COMMAND/QUERY/CLARIFY/OUTSIDE/HELP. Consulta é JSON dentro de string; commands são objetos estruturados e listas de até cinco itens são validadas.
+- lib/finance-ai.ts:38-46: prompt composto por contrato pessoal, renda extra, continuidade, consultas, recorrência, listas, instruções de WhatsApp e anoteiInterpretationRules. Modelo de interpretação: gpt-4.1-mini; Responses, store:false, timeout 40 s. Regras locais podem evitar a chamada.
+- lib/assistant-interpretation-rules.ts e command-prefix.ts: contrato semântico e protocolo entrada/saída/agenda, usados também no intérprete compartilhado.
+- lib/assistant.ts:7-11: instruções e ferramentas consultar_despesas, preparar_despesa, consultar_financas e preparar_alteracao.
+- lib/assistant-guide.ts:43 em diante: persona, telas e instruções de resposta; lib/assistant-help-ai.ts: explicação separada, sem ferramentas de gravação, gpt-4.1-mini, store:false.
+- lib/assistant-session.ts:8: sessão Realtime com modelo configurável OPENAI_REALTIME_MODEL, padrão gpt-realtime-2.1-mini; voz marin; transcrição mini-transcribe, pt ou en conforme locale; VAD threshold 0.75, silêncio 450 ms; duração máxima definida em 300 s. São valores do código, não prova de adequação acústica ou disponibilidade atual do modelo na conta.
+- lib/whatsapp-ai.ts:14 em diante contém extractExpense antigo (gpt-4o-mini). A busca por chamadas em lib/app/scripts/tests não encontrou uso além da declaração. O worker atual importa somente transcribeExpense desse módulo e interpreta via extractFinance. Não tratar esse prompt legado como a inteligência financeira em uso.
+
+Não foram alterados modelos nem prompts. Os aliases dos modelos, a versão do código e os hashes dos prompts devem fazer parte da trilha das futuras avaliações, sem trocar modelo automaticamente.
+
+5. ACHADOS PRIORITÁRIOS
+
+IW-01 — Prefixos perdem o vínculo de renda/custo com uma atividade
+Prioridade: alta | Tipo: defeito estático | Camada: interpretação local/validação, antes da IA
+Fontes: lib/command-prefix.ts:23-60; lib/finance-ai.ts:59-60; lib/expense-context.ts:14; lib/finance.ts:34-41,60,90,98-102; tests/command-prefix.test.ts:13-18.
+Cenário sintético proposto: “Entrada 80 reais trabalhei de Uber”, confirmar; depois “Saída 25 reais de gasolina fazendo Uber”, confirmar.
+Esperado: recebimento de 80 ligado ao Uber, custo de 25 ligado à mesma atividade, líquido 55; custo fora das despesas pessoais. Caixa aumenta 55 uma única vez.
+Caminho observado no código: prefixedCommand cria income_upsert sem activity e expense_create sem income_activity. expenseContext retorna audiência/natureza, não vínculo de trabalho. draftCommand retorna diretamente o comando prefixado; o modelo não corrige essa perda. Os cálculos de custos/líquido usam esses campos de vínculo.
+Impacto: o caixa pode continuar correto em 55, mas a classificação e o relatório de renda extra/atividade ficam incorretos; a gasolina aparece como despesa pessoal. O teste atual de “Entrada ... Uber” verifica dinheiro/data/status, não activity nem líquido.
+Proposta: reutilizar extração/validação de atividade explícita também no protocolo prefixado, mantendo a mesma operação financeira e a confirmação. Não adivinhar atividade só pelo valor nem transformar Uber passageiro em custo de trabalho.
+Aceite: comparar frases equivalentes com e sem prefixo, isoladas e em lista, nos dois canais após transcrição; validar vínculo, líquido 55, despesa pessoal zero, caixa 55 e repetição da confirmação sem duplicar. Reproduzir antes de corrigir. Não executado nesta missão.
+
+IW-02 — Detector de “já lançou?” intercepta pedidos explícitos de correção
+Prioridade: alta | Tipo: defeito estático | Camada: regra anterior ao intérprete no WhatsApp
+Fontes: lib/expense-context.ts:16; lib/whatsapp-worker.ts:71-84, especialmente 80.
+Cenário sintético proposto: existir um almoço de 25; enviar “Corrige o almoço que você lançou ontem para 30 reais”. Também testar “Altera o vencimento da conta que ficou registrada para amanhã”.
+Esperado: localizar alvo ou perguntar apenas qual registro, preparar alteração de 30/data solicitada e pedir confirmação.
+Caminho observado: expenseStatusQuestion testa palavras como lançou/registrou/salvou e “ficou registrada” em qualquer posição. O worker retorna a mensagem sobre o último lançamento e encerra antes de extractFinance. Não verifica se a intenção principal é consulta nem se há pedido explícito de alteração.
+Impacto: um pedido claro pode receber uma confirmação descritiva antiga e não produzir a correção, independente de quão bom seja o modelo/ASR. Esse é um ponto específico de divergência do adaptador WhatsApp.
+Proposta: restringir a regra ao ato de consultar status; comandos explícitos devem continuar para interpretação com alvo validado. Não resolver apenas com exemplos adicionais no prompt.
+Aceite: testar consulta verdadeira, correção com oração relativa “que você lançou”, nova anotação citando um registro antigo, negação e pedido ambíguo. Comprovar que não há gravação antecipada. Não executado nesta missão.
+
+IW-03 — Respostas com 429 ou interrupção no envio não têm recuperação completa
+Prioridade: alta | Tipo: lacuna funcional demonstrada no código; incidente real não reproduzido | Camada: entrega/outbox
+Fontes: lib/whatsapp.ts:4-11; whatsapp-store.ts:28-29; whatsapp-worker.ts:52,102; database/schema.sql:126-127.
+Cenários sintéticos propostos: Uazapi responder 429; ou interromper o processo após replyClaim e antes de persistir o resultado do envio.
+Esperado: falha transitória identificada, tentativa programada respeitando Retry-After, limite de tentativas e visibilidade operacional; envio incerto conciliado antes de repetir.
+Caminho observado: 429 vira FALHOU; pendingReplies só seleciona NAO_ENVIADO. replyClaim muda para ENVIANDO, sem prazo/recuperação de envio no código lido. Falhas, incertezas e ENVIANDO abandonado não voltam à seleção comum. Não há ID de mensagem de saída persistido por sendText: ele devolve apenas ACEITO/FALHOU/INCERTO.
+Impacto: a conta pode estar corretamente registrada ou a proposta preparada e a pessoa não receber retorno. Investigar o áudio/modelo nesse cenário atacaria a camada errada.
+Proposta: máquina de estados de envio com attempts/next_attempt_at, classificação transitória versus definitiva, observabilidade e conciliação pelo provedor. Guardar ID de saída/rastreamento sem presumir que track_id é chave de idempotência. Não reenviar INCERTO/ENVIANDO cegamente: o primeiro envio pode ter ocorrido.
+Aceite: 429 com Retry-After; timeout com envio realizado; falha antes do envio; falha após aceite; reinício; revogação durante espera; reprocessamento não grava novamente a operação financeira. Depende de backend e arquitetura. Não executado nesta missão.
+
+IW-04 — Não há conciliação de entrega/leitura das respostas conversacionais
+Prioridade: média | Tipo: lacuna operacional | Camada: integração do provedor
+Fontes: lib/whatsapp-server.ts:21 assina apenas messages; lib/whatsapp-expenses.ts:17 ignora outros eventos; lib/whatsapp.ts:10 descarta ID após checar aceite.
+O estado ACEITO é corretamente distinto de entregue. Entretanto, não encontrei no fluxo lido assinatura/tratamento de messages_update para essas respostas nem correlação persistida do ID de saída. Não comprova que o celular recebeu e dificulta resolver envios incertos.
+Proposta: definir contrato de estados com backend e implementar recibos/reconciliação por conta/conversa/ID, tolerando evento repetido e fora de ordem. Nunca tratar recibo como novo comando. Conferir contrato da versão realmente instalada do Uazapi antes de mudar a assinatura do webhook.
+Aceite: aceite sem entrega, entrega atrasada, leitura, recibo duplicado/fora de ordem e ID de outra instância não mudam dados financeiros nem estado de outra conta. Não executado nesta missão.
+
+IW-05 — Resposta curta de ferramenta força português em sessão inglesa
+Prioridade: média | Tipo: defeito estático | Camada: resposta de voz web/localização
+Fontes: lib/assistant-session.ts:8; lib/assistant-client.ts:41-55; tests/localization.test.ts.
+Cenário proposto: selecionar en-US, abrir voz e fazer consulta cujo resultado contenha answer.
+Esperado: inglês americano, sem alterar BRL, datas armazenadas ou regras de confirmação.
+Caminho observado: voiceSession acrescenta a preferência inglesa, mas answerVoiceTools emite nova response.create com instrução explícita “Fale português brasileiro” e leitura literal do answer. O teste de idioma verifica a sessão inicial, não essa resposta subsequente.
+Proposta: transportar locale até o adaptador de resposta e definir localização confiável do texto calculado, sem autorizar o modelo a recalcular valores. Coordenar com interface/mobile.
+Aceite: pt-BR/en-US em consulta, ajuda e erro; quantias e datas preservadas; sem apresentação repetida ou nova chamada desnecessária. Não executado nesta missão.
+
+IW-06 — Limite entre nova intenção e edição depende da cobertura local
+Prioridade: média | Tipo: risco residual a reproduzir | Camada: contexto/roteamento
+Fontes: lib/finance-ai.ts:147-152; lib/whatsapp-worker.ts:78-87.
+independentFinanceRequest reconhece prefixo ou quickFinanceDraft COMMAND. Uma nova intenção completa entendida somente pelo modelo pode não cancelar a edição antiga; nesse caso o worker monta texto original + “Correção do usuário” e passa pending_edit ao modelo. Não afirmo que o modelo necessariamente errará, mas a preservação de contexto depende dessa classificação parcial.
+Proposta: avaliar pedidos inéditos fora do fast path durante edição/pendência, com uma decisão explícita de fronteira de intenção quando as regras não forem suficientes. Separar complementos legítimos e cancelamento; nunca simplesmente apagar todos os históricos.
+Aceite: mesmos pedidos em histórico vazio, incompleto, editando e recém-salvo, conexões própria/compartilhada e dois remetentes. Não criar exceção por telefone. Não executado nesta missão.
+
+IW-07 — Medição atual não fecha custo e latência por comando concluído
+Prioridade: média | Tipo: lacuna de observabilidade/avaliação
+Fontes: lib/assistant-timing.ts:1-2; lib/finance-ai.ts:46-51; lib/whatsapp-ai.ts:6-13; scripts/audit-commands.mjs e audit-whatsapp-flow.mjs.
+Há tempos por etapa com correlation ID e auditorias sintéticas históricas. O runtime lido não conserva usage/model/request-id da resposta OpenAI, custo estimado por tentativa e jornada completa proposta → confirmação → recibo → entrega. Tempo de preparar resumo não é tempo de comando concluído; inclui espera humana como componente separado, não como latência de IA.
+Proposta: esquema mínimo de eventos sanitizados, versão/hash do intérprete, filas, resultado e consumo por modalidade. Não registrar prompts completos, tokens secretos ou dados pessoais em logs gerais. Verificar políticas de retenção e acesso com qualidade/produto.
+
+IW-08 — Transcrição atual tem desligamento anunciado
+Prioridade: alta para planejamento, antes do prazo do fornecedor | Tipo: risco de ciclo de vida, fonte oficial verificada | Camada: transcrição WhatsApp e voz web
+Fontes: lib/whatsapp-ai.ts:8; lib/assistant-session.ts:8; documentação oficial https://developers.openai.com/api/docs/guides/transcription, seção Existing integrations with deprecated models, consultada em 27/10/2026.
+A documentação inclui gpt-4o-mini-transcribe entre os modelos com desligamento anunciado para 26/02/2027. Isso não comprova falha atual nem autoriza trocar modelo. O plano precisa cobrir o upload de áudios WhatsApp e a configuração da transcrição da voz Realtime separadamente.
+Proposta/aceite: inventariar contratos e formatos usados; selecionar candidatos oficiais compatíveis; avaliar áudios representativos e entidades críticas, latência, custo, idiomas e eventos; preparar comparação, rollout e rollback. Não basta substituir o ID: conferir diferenças de parâmetros e capacidades. Avaliação paga, mudança de configuração e publicação exigem escopo e autorização próprios. Nenhum modelo ou chamada foi alterado/executado nesta missão. Este achado corresponde a PA-12 da frente Produto.
+
+6. PONTOS POSITIVOS E HIPÓTESE DESCARTADA
+
+- ASR de WhatsApp converge para o mesmo texto normalizado; os valores, datas e alvos passam por validação literal e construção de plano no servidor.
+- Contexto é filtrado por titular/remetente antes de LIMIT 50. Proposta não é registro; assinaturas usam ator usuário+WhatsApp+remetente, com prazo e decisão explícita. Repetir a confirmação usa operação idempotente.
+- O worker exige recibo financeiro válido e revalida conexão/remetente antes de enviar. O áudio tem limites de formato/tamanho e é transcrito no servidor. Grupos, mensagens próprias e loops de API são filtrados.
+- O projeto não usa um preço estimado do modelo como se fosse receita/despesa real nem executa pagamentos bancários.
+- Hipótese de cobrança fixa dos 300 segundos de voz ao fechar cedo foi examinada e NÃO foi confirmada: closeVoice envia a reserva ao settle, mas o SQL anota_usage_settle recalcula a duração efetiva no servidor (migração 20261015141044, linha 154). Não abrir bug de franquia a partir de leitura isolada do JavaScript. Falta verificar a função realmente aplicada na produção, fora do escopo desta missão.
+
+7. BASELINE HISTÓRICA, SEM RETESTE NESTA MISSÃO
+
+Fonte principal: docs/audit-2026-10-17/README.md e JSONs correspondentes.
+- Regras locais da matriz de 36: baseline-local 18/36; final-local 28/36.
+- Modelo real disponível na mesma matriz: baseline-real 28/36; release-real 36/36; chamadas de interpretação 17 → 8. Não significa 100% de linguagem livre.
+- Oito WAVs com transcrição real: baseline-audio-real 5/8; release-audio-real 8/8. Amostra pequena, retestada; não substitui áudio humano diverso, ruído e sotaques.
+- release-real: p95 até proposta 2.976 ms; custo estimado da execução US$0,0241948. release-audio-real: p95 3.356 ms; custo estimado total US$0,00828. São medições e preços históricos, não previsão de hoje nem custo operacional total.
+- whatsapp-flow-real-ai.json: 10/10, IA real e SQLite, envio/recebimento do provedor simulado. Não é teste completo com celular e Supabase.
+- verification-whatsapp-parity-2026-10-20.json: matriz de histórico 8/16 → 16/16, áudio com transcrição simulada, conexão própria/compartilhada; filtro entre dois números testado com 55 mensagens do outro remetente. Esse arquivo estava não rastreado no git status; sua incorporação/versionamento deve ser conferida pelo orquestrador.
+- Os testes de contrato lidos mostram casos de autorização, assinatura, edição, datas, centavos, recibo e idempotência. Eles não cobrem automaticamente as condições dos achados novos. Não executei nem certifiquei a suíte atual.
+
+8. AVALIAÇÃO A EXECUTAR APÓS ATRIBUIÇÃO
+
+Primeiro: registrar falha dos casos IW-01/IW-02 e comportamento IW-03 no commit-base, em checkout isolado e com transportes simulados. Acrescentar expectativas sobre atividade/líquido, efeito no saldo e operação salva, não apenas intent ou texto da resposta.
+Depois: matriz inédita de frases coloquiais, datas relativas, autocorreção, últimas parcelas, recibos e consultas compostas, em quatro históricos e dois tipos de vínculo. Manter casos fora do conjunto usado para melhorar regras/prompt.
+Separar cinco relatórios: regras locais; modelo simulado; modelo real; ASR com WAV sintético versus voz humana; ponta a ponta WhatsApp + banco de homologação + aparelho. Chamadas pagas e contatos de teste exigem autorização e orçamento antes da execução.
+Medir acerto de intenção/entidades, registro financeiro final, ausência de duplicação, perguntas redundantes, fila, p50/p95/p99 por etapa, custo por proposta e custo por comando concluído. Custos de WhatsApp/servidor não são tokens. Não fixar meta de 100 mil usuários sem cenário de concorrência e medição.
+Qualidade deve revisar a matriz independentemente. Backend valida recibos, SQL/RLS e contratos; interface valida apresentação/locale; produto confirma termos de franquia e modalidades prometidas.
+
+9. PRÓXIMAS TRÊS TAREFAS PROPOSTAS AO ORQUESTRADOR
+
+1. Corrigir semântica dos fast paths: vínculo de atividade com prefixos e detector de status de lançamento. Responsável: IA/WhatsApp; revisão backend/produto; regressões independentes em qualidade. Aceite pelos resultados financeiros, preservando confirmação.
+2. Projetar recuperação e rastreamento da outbox com 429, estados incertos e recibos. Responsável conjunto: arquitetura/operação + backend + IA/WhatsApp. Especificar contrato e migração antes de implementação; nenhum reenvio em massa como atalho.
+3. Preparar nova baseline e matriz de paridade em homologação, incluindo resposta de voz en-US, caminhos fora das regras locais e avaliação de migração da transcrição antes de 26/02/2027. Responsáveis: IA/WhatsApp + qualidade + interface, com Produto/Operação no cronograma de descontinuação. Começar sem custo; propor separadamente lote real, contatos de teste e teto de gasto. Não trocar ASR/VAD ou modelo antes de medir a causa e aprovar a migração.
+
+10. FONTES OFICIAIS CONSULTADAS E APLICAÇÃO
+
+https://developers.openai.com/api/docs/guides/speech-to-text
+https://developers.openai.com/api/docs/guides/structured-outputs
+https://developers.openai.com/api/docs/guides/realtime-transcription
+https://developers.openai.com/api/docs/guides/transcription
+As saídas estruturadas restringem formato; a própria documentação ressalta que ainda podem conter erros semânticos. Por isso esta revisão preserva validação de evidências, plano e confirmação. As páginas de áudio dão a referência de contrato; não foi feita chamada real para certificar disponibilidade/comportamento.
+
+https://docs.uazapi.com/docs/errors-and-retries
+https://docs.uazapi.com/webhook/messages_update
+https://docs.uazapi.com/docs/integrations-webhooks
+O provedor documenta Retry-After para limitação temporária e orienta conciliar mutações após envio incerto. Documenta também evento de entrega/leitura e correlação por IDs, distintos de nova mensagem. As versões e limites reais do servidor contratado ainda precisam de verificação; não fiz consultas autenticadas ao provedor.
+
+11. IMPRESSÕES DIGITAIS DOS ARQUIVOS-CHAVE LIDOS (SHA-256)
+
+lib/finance-ai.ts 5f9816eee28ceb2d9c4a6cf99e374c4182d766314496e5e17caec38c27d23fc3
+lib/command-prefix.ts 2201b0f06463701d515b64ebec6f7ddfaa201c44cda516f3ad568cd1b60b67af
+lib/assistant-interpretation-rules.ts 76384376ecd02f86de41f8c2dd47f367ceae85392986bae5eabd8137dd2df6a7
+lib/assistant.ts 8fbc1b4b4f2cf7cea8107c65aaa55d124a32607c026b3d2b2bf624d0a783cc3e
+lib/assistant-guide.ts 43da872e73eb41f7250008ea7234e13c2073401906ac962437ecf2d9890eb698
+lib/assistant-session.ts 2229fb9865cd7e30ce350dfd018d435bf654975015c2d2f44919f5b8bda172e3
+lib/whatsapp-worker.ts f1868ff9311a9fded672bc320760ff2f56b5ebc19db0abc621b86937cbaf6e9b
+lib/whatsapp-ai.ts 4906b9908e56f27153a5b376ebe2de290982884143aae67ff03b2efe2f7a162f
+
+12. CRUZAMENTO FINAL SOLICITADO PELO ORQUESTRADOR
+
+BS-01 (backend-supabase.txt): REQUEST pode permanecer reservado após interrupção antes de settle. O código SQL lido abre a reserva REQUEST sem deadline; o endpoint de texto /api/finance/interpret e o adaptador mobile respondem 409 ao duplicate sem result. O risco é de recuperação/contagem, não de entendimento da linguagem. O adaptador WhatsApp deve ser confrontado separadamente, pois usa a mesma reserva, mas não o mesmo retorno 409. Teste a propor: interromper entre reserva e interpretação e entre geração e devolução do resultado; reenviar UUID/texto; conciliar estado/recibo antes de reexecutar. A solução de lease deve distinguir idempotência da requisição, operação financeira e envio externo.
+
+QS-02 (qualidade-seguranca.txt): coincide com IW-03; consolidar como um único item de outbox/recovery, sem duas implementações concorrentes. O caso de 429 deve respeitar a orientação do provedor; o caso incerto exige conciliação, não retry cego.
+
+QS-03 (qualidade-seguranca.txt): divergência SQLite/Postgres no reply claim. SQLite verifica dono/remetente/lease; anota_reply_claim(p_id) cloud reivindica só por ID. patchMessage cloud atualiza o objeto local mesmo quando o PATCH condicional não alterou linha, e vários chamadores continuam. A inspeção desta frente confirma esses caminhos em whatsapp-store.ts:27-28 e schema.sql:126-127. Ainda é risco de corrida sem reprodução em Postgres, não evidência de invasão ou escrita financeira indevida. Teste A/B proposto: A perde lease, B persiste resposta nova, A tenta publicar conteúdo antigo. Aceite conjunto: recusa atômica da posse antiga, conteúdo correspondente à revisão reivindicada, nenhuma continuação após PATCH recusado, igualdade de contrato local/cloud e teste de reset durante envio.
+
+PA-12 (produto-assinaturas.txt): consolidado em IW-08 após verificar a página oficial. A data anunciada é 26/02/2027. Preparar avaliação/migração é pendência prioritária de ciclo de vida; não foi executada migração.
+
+Este cruzamento leu apenas os trechos essenciais dos três relatórios citados e o aviso oficial solicitado. Não amplia os resultados de runtime: não houve teste, chamada paga, correção ou acesso de produção nesta missão.
+
+Entrega encerrada na fase de diagnóstico. Nenhuma correção foi implementada. Aguardando atribuição de implementação pelo orquestrador, em checkout isolado e escopo definido.

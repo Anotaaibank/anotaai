@@ -1,0 +1,142 @@
+ANOTEI — AUDITORIA INICIAL DE INTERFACE E MOBILE
+Data: 27/10/2026 — America/Sao_Paulo
+Frente: Interface e Mobile
+Coordenação: Agente Orquestrador Anotai
+
+1. AMBIENTE, ESCOPO E LIMITES DA EVIDÊNCIA
+
+Checkout: C:\Users\Bruno Lira\OneDrive\Documentos\ChatGPT\Anota aí
+Branch: codex/mobile-foundation
+Commit: d3a4953d4a80a187b0addb5f3394cbe9f384e0a6
+Produto web: Next 16.3.4, React 19.2.6. Base nativa: Expo 58.0.16, React Native 0.88.0, React 19.3.0, Router 58.0.24.
+
+Executado nesta missão: leitura de código/documentação, rastreamento estático de jornadas e observação visual da página pública /conheca em navegador desktop. A página pública renderizou a identidade e conteúdo esperados; captura em docs/agentes/relatorios/interface-evidencias/publico-desktop-2026-10-27.png. Essa captura é da versão pública, que não teve o artefato/commit implantado verificado nesta frente. Não comprova o funcionamento dos fluxos autenticados nem da base nativa.
+
+Não executado: login/cadastro em produção, consulta a contas de clientes, submissão de formulários, pagamento, chamadas de IA, WhatsApp, testes automatizados, builds, instalações, simulador, aparelhos Android/iPhone, leitor de tela real ou QA em viewport mobile. Nenhum código de produto foi alterado. A inspeção do navegador retornou uma árvore de acessibilidade insuficiente para avaliar semântica; não interpretei isso como defeito de acessibilidade do site.
+
+Os 304 testes e bundles anteriores são evidência histórica descrita nos documentos; não foram executados por esta frente. Os achados abaixo distinguem comportamento demonstrável pelo código de hipóteses que dependem de execução em homologação.
+
+2. DOCUMENTOS E SUPERFÍCIES EXAMINADOS
+
+AGENTS.md, mobile/AGENTS.md, README.md, docs/ARQUITETURA.md, RELATORIO_MOBILE.md, CONFIGURACAO_WINDOWS.md, CHECKLIST_LANCAMENTO.md, PENDENCIAS_MANUAIS.md e estrutura dos 19 tópicos de lib/user-manual.json.
+
+Web: rotas painel, assinatura, cadastro por token e layout; componentes Login, PersonalRegistration, PasswordInput, Dashboard, MobileMenu, Finance, ExpenseForm, ManualTransactions, OverviewCalendar, AgendaCalendar, SubscriptionPayment, SubscriptionPaymentMethods, VoiceAssistant e Localization; lib/localized-tree.ts; CSS base, pessoal, mobile, checkout e ordem de importação do layout. Gestão, WhatsApp, manual e página pública foram mapeados; não houve execução das operações administrativas ou dos seus fluxos completos.
+
+Native: package/config/EAS/release-policy; layouts e todas as telas atuais; componentes Page/Field/Action/Confirmation/useSnapshot; sessão, transporte, calendário e formulário; interface com /api/mobile/v1 e expiração de conversa no backend, apenas para rastrear os estados exibidos ao usuário.
+
+3. O QUE PRESERVAR
+
+- Mobile web já tem barra inferior, menu <dialog> com showModal, restauração de foco, safe areas, campos de 16px em telas pequenas e ações com altura mínima. Não há justificativa para substituir o layout inteiro.
+- ManualTransactions faz bloqueio de rolagem e contenção de Tab/Escape no seu próprio fluxo. Usá-lo como referência ao padronizar outros modais.
+- Agenda web e calendário da visão geral têm rótulos de tipo, indicação de hoje/seleção e descrição acessível dos registros, além das cores. A navegação mensal web atualiza também a seleção.
+- Cadastro por convite tem confirmação de senha, controle mostrar/ocultar, links de volta ao login, tratamento de conta criada e redirecionamento após verificar a sessão.
+- Checkout tem duas etapas, tratamento de popstate, foco no título e pedido de validação Pix com identificador estável por submissão. Cartão está claramente indicado como ainda não integrado. Não trocar a cobrança sem decisão de produto/backend.
+- A voz web abre automaticamente quando acionada. close() chama stop(), fecha recursos e retorna foco; minimizar mantém indicador de microfone e controle de encerramento. Inspeção em components/VoiceAssistant.tsx:25–31 e 46; comportamento em aparelho ainda precisa ser medido.
+- A base nativa usa componentes React Native, navegação protegida, API no servidor e confirmação antes da gravação; não usa WebView. A sessão tem controle para descartar respostas de chamadas após troca de conta. Datas de hoje são calculadas com America/Sao_Paulo em core/forms.ts, sem o defeito comum de usar UTC para esse campo.
+
+4. ACHADOS PRIORITÁRIOS
+
+IM-01 — P1 — Assistente nativo não recupera conversa expirada
+Classificação: defeito detectado por rastreamento estático de cliente e servidor; reprodução em execução ainda pendente.
+Fontes: mobile/src/app/(tabs)/assistant.tsx:7; mobile/src/core/api.ts:1–18; lib/assistant-conversation.ts:13–20; lib/mobile-api.ts:51–58. Comparação: components/VoiceAssistant.tsx:44 já limpa o contexto após HTTP 410.
+Reprodução prevista: manter a tela nativa e o conversation_id, ficar sem usar por mais de 20 minutos e enviar novo pedido. O servidor não encontra a conversa de texto expirada e responde 410. A tela só seta o erro; mantém conversation. Os pedidos seguintes continuam enviando o mesmo identificador, contrariando a própria orientação de “enviar novamente”. Trocar de aba pode não desmontar a tela.
+Esperado: limpar contexto/identificador e proposta antigos após 410, preservar o texto digitado e permitir iniciar conversa nova; não repetir automaticamente uma escrita incerta.
+Impacto: o assistente pode ficar inutilizável até a tela ser remontada/reiniciada, embora autenticação e backend estejam disponíveis.
+Proposta: tratar ApiError.status===410 no cliente e oferecer recomeço explícito, seguindo o contrato existente. Backend/IA devem confirmar a semântica; nenhuma alteração no prazo necessária nesta correção.
+Aceite: simular 410 e reinício do servidor; o pedido seguinte segue sem conversation_id antigo e pode obter nova conversa; nenhuma operação financeira duplicada.
+
+IM-02 — P1 — Modais financeiros fora de ManualTransactions não têm gestão de foco equivalente
+Classificação: lacuna de implementação comprovada no código; impacto concreto no teclado/leitor de tela precisa ser reproduzido em homologação.
+Fontes: components/Finance.tsx:20–24 e 48–53; components/ManualTransactions.tsx:9–25; components/ExpenseForm.tsx:10–14; app/mobile-app.css:24 e 67–68.
+Os editores e confirmações de Finance usam section role=dialog/aria-modal, mas não possuem showModal, foco inicial/restauração, contenção de Tab ou tratamento de Escape. O bloqueio de overflow via CSS não torna a página subjacente inerte. A contenção oferecida por ManualTransactions atende somente os fluxos abertos por esse componente, não os botões de perfil/rendas/agenda de Finance. Em perfil, nem o autofocus condicional da descrição é renderizado.
+Reprodução prevista: abrir “Cadastrar/Ajustar salário e saldo” a partir da visão geral ou um editor financeiro diretamente pela sua aba; usar Tab/Shift+Tab e Escape. Verificar se o foco permanece no conteúdo subjacente ou sai do diálogo.
+Esperado: diálogo com nome, foco inicial, fundo não interativo, ciclo de foco e retorno ao acionador; fechar respeita estado de gravação.
+Proposta: primitiva única de diálogo, integrada gradualmente sem substituir os modais do menu/voz que já funcionam. Evitar camadas de diálogo concorrentes durante a transição editor→confirmação.
+Aceite: teclado e leitor de tela percorrem somente o diálogo ativo; foco é restaurado; Escape não cancela gravação em andamento; corpo volta a rolar após fechar.
+
+IM-03 — P1 — “Configurar meu saldo” abre alteração do saldo inicial, não ajuste do saldo atual
+Classificação: risco de uso e inconsistência de semântica, não erro matemático comprovado do backend.
+Fontes: components/Finance.tsx:30–31, 48–53; ação profile_upsert em :52.
+O cartão “SALDO NA CONTA” mostra balance_cents, mas seu botão abre editor de perfil e envia opening_balance_cents/opening_date. O formulário se identifica como saldo inicial; ainda assim, o caminho parte de um valor atual e pode induzir o usuário a sobrescrever a base para “corrigir” o saldo de hoje, em vez de gerar ajuste histórico. O saldo absoluto já existe no domínio e na IA; alinhar com backend para expor a operação manual correta.
+Proposta: distinguir “Ajustar saldo atual” de “Editar saldo inicial”; explicar o impacto e usar resumo/validação próprios para a operação de ajuste. Não mudar o significado de profile_upsert pela interface.
+Aceite: um histórico sintético com entrada e despesa permanece intacto ao corrigir saldo atual de 1.100 para 1.500; o resumo informa o ajuste e não uma receita; a edição da base permanece separada.
+
+IM-04 — P2 — Mês do calendário nativo e detalhes selecionados podem divergir
+Classificação: defeito de estado demonstrável pelo código, sem teste de tela executado.
+Fonte: mobile/src/app/(tabs)/agenda.tsx:8. move(step) atualiza somente month; o título da lista e seus registros usam day.
+Reprodução prevista: selecionar um dia com registro e tocar “Próximo”. A grade muda de mês, mas o dia e registros abaixo continuam no mês anterior até tocar em outra data.
+Proposta: sincronizar a seleção com o mês navegado (ou explicitar e separar seleção fora do mês). Preferir o mesmo comportamento já usado no web.
+Aceite: cabeçalho, seleção visível e lista de detalhes pertencem ao mesmo período em navegação anterior/próxima, inclusive na virada do ano.
+
+IM-05 — P2 — Retorno ao app nativo não atualiza os valores automaticamente
+Classificação: lacuna de atualização no código; comportamento em aparelho precisa de validação.
+Fontes: mobile/src/components/use-snapshot.ts:5–7; mobile/src/providers/session.tsx:23; mobile/src/app/(tabs)/index.tsx:8; components/Dashboard.tsx:39–40 para contraste de comportamento existente.
+O hook nativo busca no foco de navegação e no botão Atualizar. O listener de AppState da sessão só valida a sessão; não renova snapshots. Voltar do WhatsApp mantendo a mesma aba selecionada pode preservar o saldo antigo até clicar Atualizar ou trocar de aba. Isso não demonstra falha de persistência do WhatsApp.
+Proposta: atualizar ao recuperar foreground, com deduplicação e proteção contra respostas antigas; considerar sinalização de hora da última atualização, loading e falha. Não copiar polling agressivo para o mobile sem decisão operacional.
+Aceite: confirmar lançamento sintético por um segundo cliente de teste, retornar à mesma aba e observar atualização automática sem duplicar requisições/escritas; testar perda de rede.
+
+IM-06 — P2 — Tela Conta nativa descarta erros e carregamento do uso
+Classificação: omissão comprovada no código.
+Fonte: mobile/src/app/(tabs)/settings.tsx:6, que recebe apenas data de useSnapshot; o Notice existente exibe somente falha de logout. O hook fornece error/loading, mas a tela os ignora.
+Reprodução prevista: snapshot responder erro de rede ou 402. O uso desaparece/permanece sem indicação adequada e a tela não oferece tentativa nem orientação efetiva de renovação. Outras telas exibem o erro, mas não há jornada nativa de assinatura.
+Proposta: estados explícitos de loading, erro e retry; tratar assinatura expirada com instrução/caminho aprovado por Produto/Backend, sem iniciar nova integração de cobrança.
+Aceite: rede indisponível, 401, 402 e 503 têm resultados distintos e compreensíveis; não apresentar consumo zero quando não foi carregado.
+
+IM-07 — P2 — Continuidade do checkout se perde no login
+Classificação: inconsistência de redirecionamento comprovada no código, impacto de jornada a reproduzir em homologação.
+Fontes: components/SubscriptionPayment.tsx:18 e components/Login.tsx:8; Dashboard.tsx:39.
+Checkout sem sessão manda para /?next=assinatura. Login só reconhece next=gestao e, nos demais casos, vai para /painel. Assinante com acesso válido que queria renovar cai fora do checkout; quem não tem acesso passa pelo painel e volta a /assinatura por 402. Não classifiquei isso como loop infinito.
+Proposta: whitelist de destinos internos e retorno correto ao checkout após autenticação; preservar o caminho de gestão e impedir open redirect. Backend/Produto devem validar as rotas permitidas.
+Aceite: sessão expirada durante renovação volta à assinatura após login; login comum vai ao painel; destino externo ou desconhecido não é aceito.
+
+IM-08 — P2 — Requisições web de cadastro/login/checkout sem prazo explícito
+Classificação: risco de UX sob rede instável; travamento não reproduzido.
+Fontes: Login.tsx:8; PersonalRegistration.tsx:16; SubscriptionPayment.tsx:17–23 e 34–36; Finance.tsx:20–22. A checagem de sessão pós-cadastro tem timeout, mas o POST anterior não.
+Uma requisição que fica pendente mantém ações em busy por tempo imprevisível. Proposta: política comum de timeout/erro e recuperação, distinguindo consulta, proposta e confirmação. Em uma confirmação com resultado incerto, reaproveitar seu identificador e conferir histórico; nunca gerar automaticamente outra operação financeira.
+Aceite: rede lenta, offline e timeout após commit deixam uma saída clara; reenviar não duplica e voltar não encerra gravação silenciosamente.
+
+IM-09 — P2 — Estratégia de teclado nativo e layout com fontes ampliadas não validada
+Classificação: risco de layout, não defeito de tela comprovado.
+Fontes: mobile/src/components/ui.tsx:5 e 9; agenda.tsx:8; sign-in.tsx:6–7; entry.tsx:9.
+Page usa SafeAreaView/ScrollView e keyboardShouldPersistTaps, mas não há política explícita para ajuste do teclado, foco e visibilidade dos últimos campos. A barra de tabs oculta no teclado, o que é positivo; ainda falta comprovação de que login/formulários permanecem operáveis em iPhone/Android com teclado e fonte 200%. Grade de 7 colunas e navegação mensal merecem testes de alvos de toque em tela pequena. Não derivei falha WCAG apenas do tamanho estimado.
+Aceite: todos os campos, erro, Confirmar/Editar e voltar continuam alcançáveis sem gesto impreciso em 320–390px equivalentes e fontes maiores, sem cortar conteúdo ou bloquear rolagem.
+
+5. LACUNAS DE PRODUTO NATIVO, NÃO REGRESSÕES CONFIRMADAS
+
+sign-in.tsx e settings.tsx informam corretamente que cadastro/convite, recuperação/exclusão e documentos finais não estão integrados. assistant.tsx informa que só texto está conectado; módulo de áudio instalado não é voz funcional. As compras/restauração estão pendentes. release-policy.json mantém todos esses bloqueios. Não há nesta revisão evidência de APK/AAB/IPA assinado ou QA em aparelho.
+
+O nativo também tem formas mais limitadas que o web: data digitada em AAAA-MM-DD, categoria padrão, sem todo o gerenciamento de reservas/recorrências e sem equivalência completa da gestão. Definir com Produto o primeiro escopo de distribuição; não prometer portabilidade integral por ter bundles.
+
+6. MATRIZ DE VALIDAÇÃO PROPOSTA
+
+Ambientes: homologação isolada com dados sintéticos e artefato identificado; desktop 1280/1440; mobile web 320x568, 360x800, 390x844 e paisagem; Safari iOS e Chrome Android; teclado aberto; fonte 200%; modo claro/escuro nativo; movimento reduzido. Estes tamanhos são cenários de teste propostos, não dispositivos testados nesta missão.
+
+Jornadas prioritárias e critérios:
+A. Convite novo/usado/expirado → cadastro → login: repetir senha e olho funcionam, erro preserva dados não sensíveis, salário/saldo aparecem após sessão; cadastro já existente oferece entrada clara.
+B. Checkout → login → plano → pagamento em análise → liberação: Voltar do navegador e da página coerentes; nenhuma cobrança por clicar em cartão “em breve”; verificar status e recuperar rede sem pedidos duplicados.
+C. Entradas/saídas → resumo → Editar/Confirmar: teclado não cobre ação, data/valor/status legíveis, recorrência explícita, saldo muda somente após recibo.
+D. Agenda: cores e texto, hoje, registros mistos, virada mês/ano, fonte ampliada, seleção sincronizada, ações de editar/pagar/receber apenas no registro correto.
+E. WhatsApp → retorno ao mesmo painel: valores e agenda atualizam com hora da atualização; erro de consulta não vira mensagem falsa de gravação perdida.
+F. Sessão expirada/troca de conta: nada da conta anterior aparece; 401/402/410 têm recuperação correspondente; logout não mantém microfone ativo.
+G. Voz web: iniciar, negar microfone, áudio bloqueado, minimizar, encerrar pelo X, mudar aba e voltar; medir estado e recursos reais, sem chamada paga nesta fase.
+H. Acessibilidade: Tab/Shift+Tab/Escape, foco inicial/restaurado, TalkBack/VoiceOver, nomes/estados selecionados, mensagens de erro e leitura de valores.
+
+Cada execução futura deve registrar commit, ambiente, dispositivo/navegador, dados sintéticos, passos, esperado/observado, captura e resultado. Não utilizar conta de assinante como fixture.
+
+7. PRÓXIMAS TRÊS TAREFAS PARA ATRIBUIÇÃO
+
+1) Recuperação de estados do cliente nativo (IM-01, IM-04, IM-06): checkout isolado, contratos 401/402/410 combinados, testes úteis da transição e QA em app. Não habilitar API de produção. Coordenação com Backend/IA e Produto para 402.
+2) Unificar foco e ciclo dos modais financeiros (IM-02) e retorno ao checkout (IM-07): preservar fluxo já funcional de menu/voz e ManualTransactions; validar web em homologação com QA. Dividir arquivos para evitar conflito com Backend.
+3) QA mobile de ponta a ponta com atualização no retorno do WhatsApp, teclado e rede instável (IM-05, IM-08, IM-09), incluindo a semântica de ajustar saldo atual (IM-03). Produto/Backend definem contrato e texto; Qualidade revisa casos e evidências.
+
+Nenhuma tarefa de implementação foi iniciada. O orquestrador deve ordenar as mudanças após cruzar este relatório com Backend, IA, Qualidade e Produto.
+
+8. FONTES OFICIAIS CONSULTADAS
+
+Expo SDK 58: https://docs.expo.dev/versions/v58.0.0/
+React Native — teclado: https://reactnative.dev/docs/keyboardavoidingview
+React Native — acessibilidade: https://reactnative.dev/docs/accessibility
+W3C — padrão de diálogo modal: https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/
+MDN — env()/safe areas: https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/env
+
+As fontes sustentam critérios de avaliação. Nenhuma mudança de API foi realizada; a documentação Next instalada deverá ser lida para a correção específica quando ela for atribuída.

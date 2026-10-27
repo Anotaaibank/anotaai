@@ -1,0 +1,150 @@
+ANOTEI — DIAGNÓSTICO INICIAL DE BACKEND E SUPABASE
+Data: 27/10/2026 — America/Sao_Paulo
+Frente: Backend e Supabase
+Orquestrador: Agente Orquestrador Anotai
+Commit analisado: d3a4953d4a80a187b0addb5f3394cbe9f384e0a6
+Branch observada: codex/mobile-foundation
+Diretório: C:\Users\Bruno Lira\OneDrive\Documentos\ChatGPT\Anota aí
+
+1. ESCOPO E FORÇA DAS EVIDÊNCIAS
+
+Auditoria por leitura, sem alteração de implementação. Não executei testes, instalação, build, migração, carga ou consulta a registros de clientes. O único arquivo escrito por esta frente é este relatório. Não li arquivos de ambiente privados nem fiz chamadas pagas.
+
+Consultei o projeto Supabase yqbbbqkouedhrunazpqd pela ferramenta get_project: a conexão retornou “You do not have permission to perform this action”. Não tentei outro projeto, organização ou credencial. Versão do Postgres, tabelas efetivas, grants, políticas, funções implantadas, histórico de migrações, índices e planos de execução de produção NÃO foram verificados.
+
+Nenhum cenário abaixo foi reproduzido em runtime nesta rodada. “Confirmado por inspeção” significa que o caminho/estado está presente no código, não que a falha tenha ocorrido em produção. As aprovações de 304 testes e build descritas em relatórios anteriores pertencem às execuções anteriores; não são novas execuções desta frente.
+
+Li AGENTS.md; README.md; docs/ARQUITETURA.md, SEGURANCA.md, personal-finance.md, subscriber-access.md, RELATORIO_MOBILE.md e PENDENCIAS_MANUAIS.md. Cruzei-os com autenticação, servidor, finanças, cadastros, acesso/uso de assinatura, WhatsApp e API mobile; SQL de database/ e inventário das sete migrações; testes de saldo, autenticação, mobile e exemplos SQL. Alguns documentos de 8/10 dizem “SQLite ativo/SQL não aplicado”; são históricos e não devem substituir a evidência atual.
+
+2. MAPA DOS FLUXOS
+
+Navegador:
+cookie opaco HttpOnly → authorizeIdentity → cloudSession (ou userLocal) → authorize + acesso de assinatura → regras do módulo → query com JWT do titular → PostgREST/RPC → dados do titular.
+
+Sessão cloud:
+Supabase Auth autentica → access/refresh tokens cifrados no SQLite do servidor → cookie contém somente token opaco → cada consulta resolve sessão, renova quando necessário e valida /auth/v1/user. Prazo local de 24 horas. O nome em user_metadata é exibição; não encontrei esse campo sendo usado para conceder privilégio.
+
+Finanças:
+command validado → buildFinancePlan → resumo e signFinance → confirmação de titular e prazo → applyFinance → RPC transacional → recibo/idempotência. O código de mobile e WhatsApp confere explicitamente recibo salvo e operation_id. As APIs manuais também possuem caminhos de gravação direta de formulário; não se deve confundir estes caminhos com o fluxo de confirmação de voz.
+
+WhatsApp:
+webhook verifica conta/conexão/chave/remetente → personalRecipient identifica conta familiar → enqueue com unique(user_id,provider_id) → claim/lease → interpretação e proposta → confirmação → RPC exclusivo de service_role revalida mensagem, lease e vínculo do remetente antes da gravação.
+
+Cadastro por convite:
+token individual válido → criação Auth com metadata de pendência → anota_register_customer agrega vínculo, perfil financeiro e dados cadastrais em uma transação Postgres → atualização de metadata Auth → login → sessão local cifrada. São etapas distribuídas entre Auth, banco e SQLite, não uma única transação global.
+
+Assinatura:
+requireSubscriptionAccess no servidor → anota_access_allowed no banco. Tabelas financeiras têm políticas de titular/licença e triggers de acesso. Pix exige revisão administrativa; request_id de pagamento e status impedem prolongamento repetido. Funções de gestão usam papel de servidor e verificam administrador no banco. isManager no servidor usa configuração de IDs, enquanto o SQL usa anota_access_accounts.exempt: essas duas configurações precisam ser reconciliadas na operação.
+
+Mobile:
+feature flag desligada por padrão → bearer cifrado, sem cookie alternativo → sessão subjacente validada → acesso de assinatura → mesmas regras financeiras. Não alterei a flag ou a implantação.
+
+3. INVARIANTES PRESENTES NO CÓDIGO
+
+- Titular derivado da sessão: lib/server.ts:14-18; lib/mobile-api.ts:16-21. SQL de leitura usa auth.uid()=user_id; rotinas do worker recebem identidade somente do servidor e revalidam o vínculo.
+- Segurança de funções: schema anota_private sem acesso de clientes; search_path vazio; EXECUTE de rotinas privilegiadas revogado de public/anon/authenticated. SQL: database/schema.sql, finance.sql, personal-access.sql e security.sql. Não atesta os grants efetivos do servidor remoto.
+- Valores inteiros e limites: lib/finance.ts:16-21; amount_cents bigint com check no esquema. Uma entrada prevista não aumenta o caixa; despesa prevista não reduz caixa realizado.
+- Ajuste de saldo atual é documento BALANCE_ADJUSTMENT, distinto de INCOME e PROFILE: lib/finance.ts:27-32. A migração 20261017134237 usa base/revisões e saldo anterior para rejeitar alteração concorrente; ajustes históricos não são editáveis pelo mesmo fluxo.
+- Confirmação HMAC vinculada ao usuário, com dez minutos: lib/finance.ts:108-110. Recibo de operação impede replay com conteúdo/titular diferente: database/rpc-identifiers.sql e lib/finance-store.ts:12-16.
+- Concorrência: locks por titular e revisões esperadas na escrita; migração de ajuste acrescenta trava compartilhada aos escritores legados. Reservas rejeitam transferências órfãs e principal negativo histórico.
+- Celulares de casal têm unicidade/vínculo e limite de dois na estrutura de assinante. Funções de WhatsApp e assinatura reavaliam autorização. Remover/desativar deve ser testado também durante uma operação em andamento.
+
+4. ACHADOS PRIORIZADOS
+
+BS-01 — P1 — Pedidos de IA podem ficar indefinidamente reservados após interrupção
+Tipo: lacuna de recuperação confirmada na leitura; runtime ainda não reproduzido.
+Evidências:
+supabase/migrations/20261015141044_plans_usage_customer_details.sql:124-143: reserva REQUEST tem is_open=true, sem deadline; evento anterior retorna duplicate mesmo aberto e sem resultado.
+app/api/finance/interpret/route.ts:16-18 e lib/mobile-api.ts:56-59: duplicate sem result vira 409 “em processamento”.
+lib/assistant-server.ts:23: o recuperador encontrado trata VOICE; não encontrei reconciliador de REQUEST interrompido.
+Reprodução proposta em homologação: reservar um REQUEST sintético; encerrar o processo antes de settle; reiniciar e reenviar o mesmo UUID/texto. Verificar 409 e consumo preso. Não executar esse teste em conta real.
+Impacto: tentativa com mesmo ID não recupera a resposta; tentativa com novo ID pode consumir outra unidade. Não significa duplicação financeira automática: idempotência de gravação permanece outra barreira.
+Proposta: definir lease/deadline e estados de execução, com retomada/reconciliação controlada. Um timeout não pode simplesmente liberar nova execução se a operação anterior já comitou. Conferir recibo financeiro antes de reprocessar.
+Aceite: interrupções antes/depois de interpretação e commit; mesmo ID retoma ou informa resultado certo; nenhum débito duplicado ou franquia permanentemente aberta.
+Dependências: IA/WhatsApp e Qualidade; desenho de fila/estado aprovado pelo orquestrador.
+
+BS-02 — P1 ANTES DE MÚLTIPLAS RÉPLICAS — Sessões/limitação dependem de armazenamento local
+Tipo: risco arquitetural confirmado, já reconhecido no README; não é defeito de isolamento observado.
+Evidências: lib/cloud-auth.ts:35-48 mantém cloud_sessions no SQLite e single-flight de refresh em Map; lib/local-db.ts:9-27,53 mantém banco/limitadores locais. Não encontrei limpeza periódica de cloud_sessions expiradas.
+Cenário a testar: login atendido pelo servidor A, requisição seguinte no servidor B com outro volume; sessão inexiste em B. Se ambos acessarem o mesmo SQLite, o Map de renovação continua separado por processo.
+Impacto: falhas intermitentes de sessão ao escalar, competição de refresh e limites inconsistentes. Um volume persistente único atende ao desenho atual de instância única, mas não certifica alta disponibilidade.
+Proposta: decisão explícita de armazenamento compartilhado para sessão/limites, proteção de refresh distribuída e retenção de sessões. Não migrar a arquitetura ou expor tokens ao cliente nesta rodada.
+Aceite: sessão, logout, renovação concorrente, expiração e revogação em duas instâncias, sem reutilizar dados entre titulares.
+
+BS-03 — P1 ANTES DE GRANDE VOLUME — Conexão mestre concentra lista de telefones e buscas administrativas
+Tipo: risco de escala confirmado por inspeção, sem benchmark.
+Evidências: database/household-billing.sql:88 e database/household-routing-fix.sql alteram allowed_phones da conexão mestre; lib/whatsapp-members.ts:15-16,20-21,30 lê bot completo e/ou todas as invitations; invitationViews:50 faz consulta de destinatário para cada convite. O webhook lê rawBot e verifica allowed_phones antes do roteamento.
+Impacto: a lista mestre cresce com clientes; leituras de bot podem transportar o conjunto completo, cadastro/revisões disputam a mesma linha e gestão pode executar N consultas. O vínculo relacional em anota_household_phones já oferece base para reduzir esse acoplamento.
+Proposta: separar conexão do provedor, autorização de remetente e conta destinatária; lookup indexado por telefone/titular e gestão paginada, sem lista mestre de todos os clientes em cada evento. Preservar bloqueio de remetentes desconhecidos e revogação dentro da transação.
+Aceite: medir cadastro, webhook e gestão com massa sintética crescente; nenhuma permissão de fallback para conta administrativa quando um vínculo é removido.
+Dependências: IA/WhatsApp, arquitetura/operação e QA.
+
+BS-04 — P2 — Resumos usam históricos completos e leituras sem snapshot único
+Tipo: risco de desempenho e consistência de leitura, confirmado no desenho; não há corrupção comprovada.
+Evidências: lib/server.ts:16; lib/finance-server.ts:9-11 paginam com OFFSET e acumulam tudo em memória, até 100 mil registros. financeState usa Promise.all de consultas independentes a documentos e despesas. financeStateForQuery:12-26 já faz alguns filtros por período, mas não cobre saldo/resumo completo.
+Cenário: alteração financeira entre páginas ou entre consultas de documentos e despesas pode produzir um resumo com revisões diferentes; OFFSET também pode omitir/repetir itens se a ordenação mudar entre páginas. A validação de base do ajuste oferece proteção adicional na escrita, mas não torna a leitura uma transação consistente.
+Proposta: resumos/agregações por titular no banco, consulta com snapshot consistente para operações dependentes do saldo, páginas por cursor e filtros explícitos; índices compostos/expressionais apenas após EXPLAIN em ambiente autorizado.
+Aceite: comparações de saldo/resumo sob alterações concorrentes e grandes históricos, com métricas de tempo, bytes e consultas. “100 mil registros por consulta” não equivale a “100 mil clientes simultâneos”.
+
+BS-05 — P2 — Validações SQL com NULL não equivalem à validação TypeScript
+Tipo: divergência detectada por inspeção; hipótese de aceitação de JSON malformado ainda exige reprodução Postgres.
+Evidências: database/finance.sql:37-44 usa testes como jsonb_typeof(d->'salary')<>'boolean' e d->>'rate_period' not in(...), sem exigir todas as chaves de INCOME/RESERVE/APPOINTMENT. A função antes de BALANCE_ADJUSTMENT é preservada em 20261017134237:6-21. PROFILE e BILL_RULE já usam parte das verificações de presença; isso não torna todos os branches equivalentes.
+Em SQL, comparação comum com NULL produz NULL e IF não entra por essa condição. Exemplo a testar: documento RESERVE válido no topo com details={} ou INCOME sem salary. Não concluo que esses dados estejam em produção. A UI/builder normal valida esses campos, mas RPC público autenticado é uma fronteira própria e deve validar o contrato integral.
+Proposta: conferir presença, tipo e nulidade com predicados explícitos/IS DISTINCT FROM; manter regra de campos opcionais; adicionar testes diretos do RPC como authenticated A e B, não somente testes do builder TS.
+Aceite: matriz campo ausente, JSON null, tipo errado, excesso de chaves e documento de outro usuário; transação inteira rejeitada sem recibo ou escrita parcial. Manter ações válidas compatíveis.
+
+BS-06 — P2 — Cadastro por convite não retoma automaticamente após commit com resposta perdida
+Tipo: lacuna de recuperação no fluxo distribuído, confirmada na leitura; não reproduzida em runtime.
+Evidências: lib/invitation-registration-cloud.ts:17,20,33-36; lib/whatsapp-members.ts:35-41 recusa convite já associado a user_id; database/personal-access.sql:74-82 consome o convite; anota_register_customer:38-47 na migração de planos insere detalhes e assinatura.
+Cenário a testar: Auth criado e RPC concluído; resposta de RPC ou login final falha. Cliente não recebe sessão; reenvio do cadastro encontra convite já utilizado. Login normal pode recuperar o acesso, mas o mesmo fluxo não reconcilia explicitamente a conclusão. Falha anterior ao commit possui alguma recuperação via metadata registration_pending.
+Proposta: estado de onboarding recuperável e idempotente por convite/usuário, sem aceitar reutilização por outra pessoa. Orientar login quando concluído e oferecer retomada segura autenticada. Não “corrigir” liberando tokens de convite usados indiscriminadamente.
+Aceite: falha em cada fronteira Auth→RPC→metadata→login→SQLite, repetição do mesmo cadastro e tentativa por outro usuário. Um perfil e uma assinatura, sem recriar saldo inicial.
+Dependências: Interface/Mobile para mensagens/retomada e QA para falhas injetadas.
+
+BS-07 — P1 PARA HOMOLOGAÇÃO REPRODUZÍVEL — Baseline SQL fora da cadeia de migrações e cobertura Postgres fora do CI preparado
+Tipo: lacuna de implantação/verificação confirmada no repositório.
+Evidências: README.md:21 manda aplicar sete arquivos de database/ manualmente; docs/subscriber-access.md também exige household-billing.sql e household-routing-fix.sql. A primeira migração registrada em supabase/migrations/20261014210626_recurring_bills.sql:2 já pressupõe anota_finance_documents. O pipeline .github/workflows/mobile-checks.yml:24-26 executa validação local/HTTP/mobile, sem etapa de criar Postgres e rodar tests/sql/. As migrações usam pg_get_functiondef/replace com dependência textual de versões anteriores.
+Impacto: iniciar só a cadeia supabase/migrations em banco vazio não cria o esquema base; um ambiente pode funcionar por ter recebido SQL manual que outro não recebeu. Testes SQLite não detectam diferenças de RLS, NULL, PL/pgSQL, grants e locks.
+Proposta: manifestar a ordem completa e hashes, comparar com histórico remoto quando houver acesso, e criar rotina testada de bootstrap/reset para ambiente descartável. Planejar baseline versionada sem editar retrospectivamente migrações aplicadas. Adicionar SQL/RLS e concorrência ao CI em homologação isolada.
+Aceite: banco vazio → schema completo → testes A/B/admin/remetentes → segunda verificação sem drift inesperado; ordem e rollback operacional documentados. Não executar fixtures de tests/sql/ em produção.
+Dependências: orquestrador/operação e Qualidade.
+
+5. OUTROS PONTOS PARA TRIAGEM, SEM CLASSIFICAR COMO BUG COMPROVADO
+
+- lib/cloud-auth.ts:18-28 tenta migração de senha antiga em qualquer resposta não OK de Auth, inclusive potencial 429/5xx, e usa scryptSync. O limitador do endpoint é por e-mail, em SQLite. Recomendo separar credencial inválida de indisponibilidade, revisar limites agregados/origem confiável e custo síncrono com QA. Não fiz teste de abuso.
+- SQLite e Postgres duplicam regras. Há diferenças deliberadas (licença/quotas isentas em desenvolvimento, validações de tabela somente em SQL). Exigir matriz de paridade, não igualdade superficial dos testes.
+- Recuperação de senha/exclusão e rotação/revogação abrangente seguem pendentes nos documentos. A exclusão precisa respeitar sessões e família; não basta remover Auth.
+- Segredo de assinatura e segredo de cifragem compartilham a configuração de WhatsApp em parte dos fluxos. Há domínio em alguns tokens, mas desenho de rotação e segregação merece decisão operacional; não rotacione sem plano para dados cifrados existentes.
+- Documentação está em camadas temporais. O README e relatórios antigos precisam de inventário de estado atual para não orientar aplicações parciais ou repetição de SQL.
+
+6. ROTEIRO PROPOSTO DE VERIFICAÇÃO EM AMBIENTE ISOLADO
+
+Não executado. Depende de ambiente autorizado e janela do orquestrador.
+1) Criar Postgres/Supabase descartável compatível com a versão real; registrar versões, sem chaves reais de assinantes.
+2) Aplicar ordem de base: schema, finance, commerce, security, rpc-identifiers, personal-access, legacy-auth; household-billing e household-routing-fix; depois as migrações cronológicas. Confirmar dependências e histórico antes de transformar isso em rotina de produção.
+3) Inventariar pg_policies, relrowsecurity, grants e funções privilegiadas. Testar como anon, authenticated A, authenticated B e serviço; consultas entre contas devem retornar vazio/erro conforme contrato, escrita deve falhar integralmente.
+4) Executar fixtures SQL com BEGIN/ROLLBACK controlados pelo runner; gerar UUIDs exclusivos. Não assumir que cada arquivo existente já contém o envelope transacional.
+5) Acrescentar testes de JSON null/campos ausentes, saldo atual versus inicial, centavos, perfil único, entrada/despesa futura, reservas, recorrência, revisão e repetição de confirmação.
+6) Usar conexões distintas para concorrência: saldo entre resumo/confirmar, resgate duplo, pagamento Pix repetido, desativação de remetente durante processamento e recuperação de pedidos reservados.
+7) Injetar falhas pós-commit e reinícios em onboarding/usage; confrontar recibos, saldo, vínculo e franquia.
+8) Só então medir EXPLAIN/latência/bytes/locks com massa sintética e avaliar índices. Não há estimativa certificada de capacidade nesta auditoria.
+
+7. PRÓXIMAS TRÊS TAREFAS PARA O ORQUESTRADOR ATRIBUIR
+
+A. Backend + QA + operação: homologação descartável com bootstrap completo, inventário de privilégios e regressão SQL; usar o resultado para confirmar/corrigir BS-05 e detectar drift. Requer acesso aprovado ao ambiente de teste; produção permanece somente leitura de metadados quando disponível.
+B. Backend + IA/WhatsApp + QA: contrato de lease/reconciliação de REQUEST e retomada de cadastro pós-commit, com falhas injetadas e idempotência. Separar em mudanças pequenas de usage e onboarding.
+C. Orquestrador + Backend: decisão de sessões/limitadores compartilhados e lookup relacional de telefones, seguida de resumo financeiro consistente/paginado. Projetar para volume medido; não trocar toda a arquitetura de uma vez.
+
+8. DOCUMENTAÇÃO OFICIAL CONSULTADA
+
+https://supabase.com/docs/guides/database/postgres/row-level-security
+https://supabase.com/docs/guides/database/testing
+https://www.postgresql.org/docs/current/explicit-locking.html
+https://www.postgresql.org/docs/current/functions-comparison.html
+Skills locais: supabase; supabase-postgres-best-practices, referências security-rls-basics, query-missing-indexes e data-pagination.
+A tentativa de ler https://supabase.com/changelog.md foi recusada pelo leitor web por content-type text/markdown; nenhuma conclusão de changelog foi tomada. Não usei documentação como comprovação de configuração do projeto remoto.
+
+PARECER
+O backend possui barreiras relevantes de titularidade, transação, revisão e idempotência que devem ser preservadas. A prioridade desta frente é comprovar a cadeia SQL em homologação, fechar recuperação de falhas e preparar estado/consultas para escala. Não identifiquei por leitura um vazamento reproduzido entre titulares; também não atesto a segurança ou capacidade do ambiente de produção sem acesso e testes adequados.
+
+Diagnóstico entregue. Aguardando atribuição de implementação pelo orquestrador.

@@ -1,0 +1,61 @@
+{
+  "created_on": "2026-10-27",
+  "section": {
+    "id": "e201f491-76eb-473c-80f0-9cb396292c7a",
+    "name": "Anotei — Equipe de agentes"
+  },
+  "host_id": "local",
+  "workspace": "C:\\Users\\Bruno Lira\\OneDrive\\Documentos\\ChatGPT\\Anota aí",
+  "orchestrator": {
+    "thread_id": "01a118a2-73d8-7872-96f2-022acbb49ba9",
+    "title": "Agente Orquestrador Anotai",
+    "responsibility": "Arquitetura, operação, prioridades, contratos, integração e coordenação"
+  },
+  "agents": [
+    {
+      "thread_id": "01a17dd3-e7f9-72b1-9df1-b63b29b9c53b",
+      "title": "Anotei — Backend e Supabase",
+      "prompt": "01-backend-supabase.txt",
+      "report": "relatorios/backend-supabase.txt",
+      "initial_report_status": "received"
+    },
+    {
+      "thread_id": "01a17dd4-8f61-7a72-856b-34d369000c73",
+      "title": "Anotei — IA e WhatsApp",
+      "prompt": "02-ia-whatsapp.txt",
+      "report": "relatorios/ia-whatsapp.txt",
+      "initial_report_status": "received"
+    },
+    {
+      "thread_id": "01a17dd4-fedd-7c31-a6b4-5851d62b8ab4",
+      "title": "Anotei — Interface e Mobile",
+      "prompt": "03-interface-mobile.txt",
+      "report": "relatorios/interface-mobile.txt",
+      "initial_report_status": "received"
+    },
+    {
+      "thread_id": "01a17dd5-562e-7bd2-a408-a951f02c6df2",
+      "title": "Anotei — Qualidade e Segurança",
+      "prompt": "04-qualidade-seguranca.txt",
+      "report": "relatorios/qualidade-seguranca.txt",
+      "initial_report_status": "received"
+    },
+    {
+      "thread_id": "01a17dd5-b266-7543-806c-2f3735111d0f",
+      "title": "Anotei — Produto e Assinaturas",
+      "prompt": "05-produto-assinaturas.txt",
+      "report": "relatorios/produto-assinaturas.txt",
+      "initial_report_status": "received"
+    }
+  ],
+  "initial_mission": "Auditoria de leitura e relatório próprio, sem implementar correções",
+  "initial_dispatch": "Os cinco prompts completos foram enviados às conversas correspondentes",
+  "shared_checkout_constraints": [
+    "Sem instalações, builds ou suítes concorrentes",
+    "Sem troca de branch ou alteração de código do aplicativo",
+    "Cada frente pode gravar somente o próprio relatório de auditoria",
+    "Implementações futuras exigem escopo e isolamento coordenados"
+  ],
+  "production_changes_authorized_by_this_setup": false,
+  "audit_status_as_of": "2026-10-27"
+}

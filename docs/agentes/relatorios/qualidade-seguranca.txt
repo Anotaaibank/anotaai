@@ -1,0 +1,185 @@
+ANOTEI — DIAGNÓSTICO INICIAL DE QUALIDADE E SEGURANÇA
+Data: 27/10/2026 — America/Sao_Paulo
+Frente: Qualidade e Segurança
+Destinatário: Agente Orquestrador Anotai
+
+1. ESCOPO, VERSÃO E LIMITES
+
+Checkout: C:\Users\Bruno Lira\OneDrive\Documentos\ChatGPT\Anota aí
+Branch observada: codex/mobile-foundation
+Commit observado: d3a4953d4a80a187b0addb5f3394cbe9f384e0a6
+Web: Next 16.3.4, React 19.2.6, TypeScript 5.9.3.
+Base nativa: Expo SDK 58, com instalação e lockfile separados.
+
+Esta missão realizou inspeção estática, inventário dos testes, leitura de evidências anteriores e consulta a fontes oficiais. Não executou suítes, builds, instalações, ASR/IA paga, mensagens WhatsApp, SQL remoto, testes de carga ou exploração. Não mudou o aplicativo, banco, permissões, dependências, branches ou publicação. Escreveu somente este relatório.
+
+O MCP de Supabase recusou a consulta de metadados ao projeto esperado yqbbbqkouedhrunazpqd: “You do not have permission to perform this action”. Não foi tentado outro projeto, nem reconectado plugin. RLS, grants, logs, índices e migrações aplicados em produção NÃO foram atestados nesta revisão. deployment/target.json identifica o projeto e repositório corretos; seu indicador de prontidão é configuração, não prova de validação.
+
+Cada achado abaixo distingue observação no código de hipótese de comportamento em execução. Reprodução descrita é um procedimento para a futura homologação; não significa que foi executada nesta missão. Nenhum incidente real ou vazamento de cliente foi demonstrado.
+
+2. MATERIAL EXAMINADO
+
+Instruções: AGENTS.md e mobile/AGENTS.md.
+Documentação: README.md; docs/ARQUITETURA.md, SEGURANCA.md, DEPENDENCIAS_MOBILE.md, RELATORIO_MOBILE.md, PENDENCIAS_MANUAIS.md, CHECKLIST_LANCAMENTO.md; docs/audit-2026-10-17/README.md e evidência mobile de 21/10.
+Servidor: lib/server.ts, cloud-auth.ts, local-db.ts, mobile-api.ts, mobile-session-codec.ts, secret-box.ts, subscription-access.ts, commerce.ts, finance.ts e partes de finance-server.ts.
+WhatsApp: lib/whatsapp-store.ts, whatsapp-worker.ts, whatsapp-finance.ts, whatsapp-expenses.ts, whatsapp.ts; webhook e autenticação do worker; SQL de inbox, permissões e finanças.
+Fluxos web/nativos: endpoints de sessão/finanças/voz, componentes de confirmação, armazenamento e provider de sessão nativa; bloqueio da demonstração em produção e restrição da gestão.
+Verificação/operação: .github/workflows/mobile-checks.yml, Dockerfile, scripts/offline-validation.mjs, validate-mobile-backend.mjs, smoke-mobile-api.mjs, app-runtime.mjs, deployment-preflight.mjs; mobile/scripts/release*.mjs e release-policy.json.
+Inventário dos testes: 52 arquivos .test.ts na raiz, 304 definições estáticas de test(), seis fixtures SQL e dois arquivos de testes mobile. A contagem não mede cobertura de linhas, robustez ou compreensão de linguagem.
+
+Leitura seletiva incluiu autenticação cloud, API mobile, integridade de contexto, decisões WhatsApp, worker, integrações e testes SQL. Não se afirma revisão exaustiva de todas as linhas ou execução dos 304 casos.
+
+Uma busca estreita por padrões literais de chaves OpenAI/Supabase e cabeçalhos de chaves privadas no HEAD de app/components/lib/database/supabase/mobile não encontrou correspondências. Não leu ambientes privados nem inspecionou todos os formatos, artefatos ou histórico Git; NÃO é certificação de ausência de segredos.
+
+3. CONTROLES POSITIVOS OBSERVADOS NO CÓDIGO
+
+- Sessão cloud usa cookie opaco; access/refresh tokens ficam cifrados no servidor. Refresh concorrente é agrupado por sessão no processo e revalida o titular. Login não concede gestão por nome, e-mail ou user_metadata.
+- Escritas financeiras derivam o titular autenticado. Os arquivos SQL contêm políticas de leitura por proprietário, bloqueios por dono, validação de concorrência e recibos idempotentes. O RPC WhatsApp atual em database/personal-access.sql:106-114 confere mensagem, lease e remetente autorizado antes da aplicação financeira.
+- Confirmação HMAC é vinculada ao usuário/remetente, expira e distingue preparação de gravação; assinatura inválida não deve chegar ao escritor. Fluxos existentes têm casos de duplicidade, adulteração, expiração e outro titular.
+- Webhook filtra número/instância, remetente autorizado, grupo, eventos próprios e mensagens fora da janela; inbox usa unicidade por usuário/evento. Uma nova intenção não deve herdar o contexto de outro remetente.
+- API mobile fica desligada por padrão, rejeita cookies e campos de dono, valida bearer cifrado e reaproveita as regras existentes. No dispositivo, o token usa SecureStore; preview web usa memória.
+- Há separação entre ACEITO pelo provedor e entrega não confirmada. Não reenviar automaticamente um envio INCERTO evita duplicação; a lacuna é a reconciliação/recuperação operacional descrita abaixo.
+- Demonstração é bloqueada fora de development em app/demo/page.tsx. Gestão exige autorização de gestor no servidor. Bloqueios de release mobile continuam falsos/pendentes.
+
+Estas observações não confirmam que a versão publicada possui todas as mesmas configurações ou que o banco real aplicou os SQL corretos.
+
+4. ACHADOS PRIORIZADOS
+
+QS-01 — DEPENDÊNCIAS WEB EXIGEM TRIAGEM E ATUALIZAÇÃO
+Classificação: alerta de versão confirmado; exploração não demonstrada.
+Prioridade: P1, antes da expansão comercial; severidade de referência dos advisories inclui Critical.
+Evidência: package.json:22 e pnpm-lock.yaml:301 fixam Next 16.3.4. O artefato de audit de 27/10 produzido por outra revisão aponta 11 avisos de produção: três críticos, dois altos, cinco moderados e um baixo. Este agente NÃO executou novo audit.
+Triagem própria: os avisos primários consultados indicam correções 16.3.6 ou 16.4.1 conforme a falha. GHSA-2464-fhr4-w9xw possui workaround sharp >=0.35.5; o lockfile já resolve sharp 0.35.5 (linhas 346/575/601). A presença do pacote Next na faixa afetada, portanto, não demonstra essa exploração no artefato instalado. Busca no código de produto não encontrou uso de next/og/ImageResponse, next/image, use cache ou use server; isso reduz a evidência de alcance de alguns avisos, mas não comprova segurança de rotas geradas ou do artefato remoto.
+Impacto: manutenção de framework e superfície residual sem aprovação formal da atualização/mitigação. Não registrar “três RCE exploráveis no Anotei”.
+Reprodução futura: gerar SBOM/audit do lock e artefato Docker em homologação, verificar alcance de cada advisory sem exploração em produção e validar versão corrigida compatível.
+Aceite: quadro por advisory com versão, alcance, mitigação, prazo/responsável; versão suportada corrigida; regressão de build, autenticação, finanças, voz e WhatsApp. Não impor overrides de majors indiscriminadamente.
+
+QS-02 — RESPOSTA PODE FICAR PRESA EM ENVIANDO APÓS INTERRUPÇÃO
+Classificação: lacuna de recuperação confirmada por inspeção; falha em execução ainda não reproduzida.
+Prioridade: P1 de confiabilidade, severidade alta para disponibilidade do canal principal.
+Evidência: lib/whatsapp-store.ts:28-29 e database/schema.sql:126-127; lib/whatsapp-worker.ts:52; lib/whatsapp.ts:4-11. replyClaim marca ENVIANDO antes do envio; pendingReplies busca apenas NAO_ENVIADO. A recuperação do claim de mensagem considera PROCESSANDO, não uma resposta finalizada com reply_status ENVIANDO. Não foi localizada rotina específica que reconcilie esse envio abandonado. Respostas FALHOU por 429 também deixam a seleção automática.
+Cenário de homologação: preparar uma resposta, parar o worker depois do claim ENVIANDO e antes/depois da requisição ao provedor, reiniciar e verificar se existe resolução observável. Repetir com falha definitiva e com aceite sem resposta de rede.
+Esperado: estado persistente com tentativa, horário, identificador do provedor quando disponível, reconciliação e ação segura de operador; falha definitiva pode ter retry controlado. Envio incerto NÃO deve ser repetido cegamente.
+Impacto: mensagem sem retorno e lembrete perdido, mesmo com operação financeira gravada. É um cenário plausível para “não chegou”, não atribuição de causa a um cliente real.
+Aceite: testes de falha antes do envio, após aceite e antes de gravar o resultado; nenhum lançamento duplicado; resultado de envio claramente separado de entrega ao aparelho; alerta/ação para casos sem resolução.
+
+QS-03 — CONTRATO CLOUD DE REPLY CLAIM NÃO VALIDA O LEASE DO CHAMADOR
+Classificação: divergência SQLite/Postgres confirmada; risco de corrida, não exploração reproduzida.
+Prioridade: P1 antes de ampliar workers; severidade média no desenho atual de uma instância.
+Evidência: lib/whatsapp-store.ts:27-28; database/schema.sql:118-127. O caminho SQLite confere user_id, sender e lease do objeto recebido. A RPC cloud anota_reply_claim recebe somente p_id. Além disso, patchMessage cloud faz Object.assign(row, patch) mesmo quando o PATCH condicional não altera nenhuma linha, e vários chamadores não verificam seu retorno.
+Cenário: worker A tem lease antigo; B assume novo lease e persiste nova resposta. A falha no patch por lease, mas mantém o objeto local com a resposta antiga. Se A reivindicar a resposta atual apenas pelo ID, pode enviar conteúdo/código antigo e deixar a linha atual em ENVIANDO porque seu patch final também perde o lease. O cenário depende da interleaving indicada e deve ser testado em Postgres descartável.
+Impacto: resposta/proposta divergente do estado salvo e perda do envio correto. Não demonstrado acesso entre clientes ou gravação financeira sem permissão; os guards financeiros são separados e mais fortes.
+Aceite: claim atômico com dono/remetente/lease ou revisão equivalente e conteúdo reivindicado retornado pelo banco; não continuar após patch recusado; igualdade de contrato local/cloud; teste determinístico de A/B e de reset de contexto durante o envio.
+
+QS-04 — ESTADO LOCAL IMPEDE CERTIFICAR ESCALA HORIZONTAL
+Classificação: risco arquitetural confirmado; limitação documentada, não defeito de operação em uma instância.
+Prioridade: P1 antes de múltiplas réplicas; severidade alta para sessões/conversas sob distribuição inadequada.
+Evidência: lib/cloud-auth.ts:35-39 guarda cloud_sessions em SQLite; lib/local-db.ts:53 guarda limitadores localmente; lib/assistant-conversation.ts:15-21 mantém conversas em Map com limite de 1000; lib/assistant-server.ts:8-16 mantém chamadas de voz em memória. README.md já recomenda uma instância e volume persistente. Há recuperação específica de chamadas de voz vencidas; não ignorar esse controle existente.
+Cenário futuro: login em réplica A, chamada na B; reinício/redistribuição entre preparar e confirmar; refresh concorrente em processos; quotas e bloqueios por origem. Não foi executado teste de carga ou duas réplicas.
+Aceite: decisão arquitetural explícita sobre estado compartilhado/afinidade e falhas; teste em duas instâncias com volume/armazenamento autorizado; limite de 1000 conversas entendido como proteção por processo, não capacidade de 1000 assinantes; métricas e orçamento de capacidade definidos.
+
+QS-05 — FILTROS DO CI NÃO COBREM ALTERAÇÕES ISOLADAS DE UI E SQL
+Classificação: falha de configuração observada estaticamente; execução remota não verificada.
+Prioridade: P1 de controle de regressão; severidade média.
+Evidência: .github/workflows/mobile-checks.yml:4. paths inclui app/api, lib, tests e mobile, mas não components/**, app/**/*.css, páginas app fora de api, database/**, supabase/migrations/**, Dockerfile ou next.config.ts. Um PR apenas de RLS ou interface não satisfaz esse filtro. Não há gatilho push neste workflow. Não se afirma ausência de outros controles organizacionais remotos, pois não foram inspecionados.
+Reprodução futura: PR sintético alterando somente um desses caminhos; observar checks esperados antes de integrar. O histórico do orquestrador informa workflow ainda local, condição que também precisa ser confirmada antes do push.
+Aceite: cobertura de caminhos/fluxos combinada com o orquestrador, check obrigatório que não fica indefinidamente pendente em PR filtrado e validação de PRs de SQL, UI, dependências e runtime. Não publicar nem alterar proteção de main nesta missão.
+
+QS-06 — POSTGRES/RLS E MIGRAÇÕES NÃO INTEGRAM A ESTEIRA EXAMINADA
+Classificação: lacuna de cobertura confirmada; banco remoto não auditado.
+Prioridade: P1 de isolamento e reprodutibilidade; severidade alta do risco não coberto.
+Evidência: .github/workflows/mobile-checks.yml:22-26; scripts/validate-mobile-backend.mjs:5-13 e smoke-mobile-api.mjs:9-13 forçam SQLite em memória. Existem seis fixtures tests/sql/, algumas com troca de papéis, mas não foi localizado executor de Postgres para elas na esteira examinada. README.md:21 depende de SQL inicial em database/ seguido das migrações.
+Observação de segurança do harness: tests/sql/communications.sql e subscription-plans.sql começam inserindo fixtures e não contêm BEGIN/ROLLBACK externos próprios. Outros arquivos dependem de placeholders e wrapper. Não executar indiscriminadamente com psql; preparar executor com alvo descartável, transação, rollback e pré-condições de ambiente.
+Cenário de homologação: construir banco vazio pela mesma sequência, depois executar como anon, authenticated A/B e service_role; conferir SELECT/UPDATE/EXECUTE, funções privadas, troca de dono, conta desativada e assinatura vencida. Testes SQLite não validam SECURITY DEFINER, grants ou políticas Postgres.
+Aceite: bootstrap reproduzível, teste de migração do estado anterior, rejeição de drift, fixtures isoladas sem resíduos e resultados por papel. Consulta MCP negada não autoriza contornar permissões.
+
+QS-07 — RECIBO DE PERSISTÊNCIA NÃO É VALIDADO UNIFORMEMENTE NO WEB
+Classificação: lacuna de contrato confirmada no código; resposta falsa de banco não provocada nesta missão.
+Prioridade: P2 de defesa e consistência; severidade média.
+Evidência: app/api/finance/route.ts:7 devolve applyFinance diretamente; app/api/assistant/finance/route.ts:11 cria contexto saved:true após o retorno sem verificar ok/saved/operation_id. Em contraste, mobile-api.ts e finance-server.ts usam verifiedFinanceReceipt em seus respectivos caminhos. components/Finance.tsx:20-22 trata HTTP 2xx como sucesso; VoiceAssistant verifica saved, mas não o operation_id esperado.
+Cenário de teste de contrato: transporte sintético retorna HTTP 200 com {}, saved:false ou operation_id de outra operação. O formulário manual não deve limpar a proposta ou apresentar sucesso; a ferramenta de voz não deve gerar contexto afirmativo.
+Impacto: deriva do RPC/contrato pode produzir feedback de sucesso sem prova uniforme. Não há evidência de RPC real atualmente devolvendo recibo falso. O writer SQL normal entrega recibo idempotente.
+Aceite: o mesmo verificador de recibo antes do feedback em todos os canais; fixture de resposta incompleta/trocada; confirmação mantida para reconciliação; transação já gravada continua reconhecida mesmo se contexto opcional falhar.
+
+QS-08 — CONTROLE DE LOGIN VISÍVEL É POR E-MAIL, LOCAL E SÍNCRONO
+Classificação: risco de abuso/disponibilidade; exploração e controles de borda não verificados.
+Prioridade: P2, revisar antes de aquisição em volume; severidade média.
+Evidência: app/api/session/route.ts:19 e lib/mobile-api.ts:33 usam throttleLocal('login:'+email,10,600000). lib/local-db.ts:53 persiste o limitador em SQLite; fallback legado usa scryptSync no processo. Não foi observado limite por origem/global nesses fluxos de aplicação. Um header Origin protege o navegador contra CSRF, mas não autentica um cliente HTTP arbitrário.
+Cenários apenas em homologação: tentativas com um e-mail-alvo podem consumir a janela da conta; distribuição entre e-mails/processos pode contornar o limite agregado. Não foi feito ataque, enumeração ou benchmark. Supabase/proxy/WAF podem impor controles adicionais desconhecidos.
+Aceite: avaliar limites combinados por conta/origem e proteção global com IP de proxy confiável, comportamento contra lockout, observabilidade sem e-mail/senha em logs e benchmark controlado do custo do login. Manter a simplificação de senha já aprovada por Bruno enquanto se propõem compensações e critérios revisáveis; não mudar a política comercial unilateralmente.
+
+QS-09 — RECUPERAÇÃO, BACKUP E READINESS OPERACIONAL AINDA SEM PROVA
+Classificação: lacuna de evidência e prontidão; não se afirma inexistência de backups do provedor.
+Prioridade: P1 antes de depender comercialmente da operação; severidade alta em perda de volume/dados.
+Evidência: docs/SEGURANCA.md:9 registra ensaio de restauração pendente. Não foi localizado ensaio executável/evidência de recuperação no material inspecionado. app/api/health/route.ts:1 responde status ok estático; não consulta banco, fila ou worker. Esse endpoint é liveness e não demonstra prontidão dessas dependências. Runtime supervisiona processos, mas isso não valida recuperação de dados.
+Aceite: inventário de backup Supabase + volume SQLite, RPO/RTO aprovados, restauração em ambiente descartável, conferência de vínculos/contagens/segredos necessários e retomada sem reenvio indevido. Adicionar sinais de readiness e alerta de fila parada/mais antiga sem expor dados. Não restaurar ou testar indisponibilidade em produção.
+
+QS-10 — COBERTURA ATUAL NÃO CERTIFICA ÁUDIO HUMANO, APARELHO E WHATSAPP REAL
+Classificação: lacuna de validação do produto, com bons testes locais existentes.
+Prioridade: P1 antes de promessa comercial ampla; severidade alta para o fluxo principal.
+Evidência: 304 definições de teste incluem regras, integração local e fetch/modelos simulados. Testes do worker verificam entradas/saídas/agenda e persistência SQLite, mas não exercitam necessariamente Supabase, provedor e celular no mesmo percurso. docs/audit-2026-10-17/README.md registra modelo/ASR reais em amostras pequenas e declara ausência do fluxo WhatsApp real completo. scripts/generate-audit-audio.ps1:6-12 mostra WAVs sintetizados por Microsoft Maria: transcrição real desses WAVs não equivale a áudio humano em ruído.
+docs/verification-mobile-2026-10-21.json declara QA visual final limpo e aparelhos reais ainda não executados, apesar de bundles e testes aprovados. Recuperação/exclusão, voz nativa e billing também seguem pendentes na política de release.
+Aceite: matriz por canal com contas sintéticas distintas e casal; áudio humano autorizado, sotaques/ruído e mensagens inéditas; resumo → edição → confirmação → recibo no banco → calendário/saldo visível; checagem de entrega no aparelho. Separar avaliação independente de reteste dirigido. Nenhuma chamada paga ou envio real é autorizado por este relatório.
+
+5. PLANO DE REGRESSÃO PROPOSTO — SEM EXECUÇÃO NESTA MISSÃO
+
+Ambiente recomendado: checkout isolado coordenado, banco Postgres descartável, chaves sintéticas ou sandbox autorizado, fake do provedor para falhas determinísticas. Casos com IA/ASR reais ou WhatsApp real exigem ambiente/número e orçamento previamente aprovados. Nunca usar credenciais de produção nos fixtures.
+
+Matriz financeira com relógio controlado em 27/10/2026, America/Sao_Paulo:
+- Baseline: saldo inicial 1.000 + renda anterior 300 - despesa anterior 200 = saldo atual 1.100.
+- “Atualiza meu saldo de 1.100 para 1.500”: BALANCE_ADJUSTMENT de +400; mantém PROFILE e renda histórica; repetir a confirmação não duplica. Se outra despesa mudou a base, rejeita e exige novo resumo.
+- “Acabei de ganhar mais 500, adiciona ao saldo”: um INCOME realizado; saldo 1.600 após confirmar; nada antes.
+- “Gastei 25 no McDonald’s”: uma despesa realizada hoje; saldo 1.075; não perguntar data/categoria já inferível.
+- “Dia 25 vou pagar 800 da última parcela da moto”: prevista para a próxima ocorrência futura válida do dia 25 (neste relógio, 25/11/2026), sem BILL_RULE e sem reduzir saldo atual.
+- “Amanhã tenho dentista às 15h”: APPOINTMENT em 28/10/2026 às 15h, sem movimentação financeira.
+- Editar cada proposta e confirmar; não reaproveitar o código anterior. Caso múltiplas propostas coexistam, um “1” ambíguo deve solicitar escolha.
+- Recorrência mensal com dia 29/30/31, fevereiro, fim de ano e exclusão somente dos vencimentos aplicáveis; renda prevista versus recebida; custo de trabalho abatido uma única vez.
+
+Matriz de isolamento e autorização:
+- Contas A/B independentes, gestor G e segundo número do casal A2. Cada ação e cada consulta deve derivar a conta correta, sem herança de contexto de B.
+- Anon/autenticado sem acesso, cliente inadimplente, remetente desconhecido/revogado, grupo, evento próprio, webhook com segredo errado, replay do mesmo provider_id e UUID de outra conta.
+- Confirmação de outro dono/remetente, adulterada, expirada, repetida, alvo alterado e operação com mesmo ID/dados diferentes.
+- Login/logout/refresh concorrentes, expiração, troca de dispositivo e reinício. Rotas web usam cookie; mobile rejeita cookie e token de domínio incorreto.
+- Postgres: provar grants/RLS/EXECUTE por papel, não apenas filtro na URL feito com service_role.
+
+Matriz de falhas e recuperação:
+- Timeout antes do commit, depois do commit e antes da resposta HTTP: mesmo operation_id deve retornar recibo sem novo efeito financeiro.
+- Worker A perde lease e B assume; patch recusado não pode gerar envio antigo ou apropriar resposta de B.
+- Processo cai depois do claim ENVIANDO; provedor aceita e a resposta se perde; 429 definitivo; credencial revogada; falha no patch final. Resultado esperado explicitamente reconciliado, sem reenvio cego ou duplicação.
+- Reinício com conversa/pagamento pendente, vencimento durante fila, desativação durante envio, reinício/reset somente do remetente pretendido.
+- Restaurar backup descartável, recomeçar workers e conferir registros, convites, autorização e outbox.
+
+Matriz de interface/aparelho:
+- Cadastro existente, volta ao login, mostrar/confirmar senha, status separado de cadastro/envio/assinatura, erros 401/402/409/429, rede lenta, offline e retorno do background.
+- Celular pequeno, teclado aberto, foco, rolagem horizontal, botão Voltar e fechamento do modal de voz com microfone efetivamente desligado. Tela de saldo/agenda deve refletir os recibos reais.
+- Pelo menos Android e iPhone reais para recursos nativos; bundle/doctor/preview web ficam em linhas próprias da evidência.
+
+Carga e métricas (fase posterior, homologação autorizada):
+Definir contas cadastradas, usuários ativos simultâneos e taxa de texto/áudio separadamente; medir p50/p95/p99 por etapa, idade/tamanho da fila, taxa de erro, CPU/memória/conexões e operações/custo por comando concluído. Proposta preparada, envio aceito e lançamento persistido são denominadores diferentes. Aumentar carga gradualmente, com critério de parada, sem inferir capacidade de 100 mil pelo número de testes.
+
+6. O QUE FOI E O QUE NÃO FOI EXECUTADO
+
+Executado: git status/branch/commit; leitura de arquivos e busca estática; inventário das definições de teste e fixtures; leitura de relatórios anteriores; verificação de versão no lockfile; busca estreita por padrões de segredo sem valores; consulta de fontes primárias; uma tentativa de leitura de metadados Supabase no projeto permitido, negada.
+Não executado: typecheck, lint, testes unitários/integração/SQL, build, audit novo, browser/aparelho, modelo/ASR real, WhatsApp, carga, pentest, exploração, backup/restauração, deploy ou modificação de configurações. Não há resultados atuais de execução a declarar como próprios. Os números de sucesso dos documentos de 17/10 e 21/10 são históricos, de outras execuções.
+Não solicitado nem usado: ambientes privados, senhas, chaves, transcrições de assinantes, SQL no banco real ou outro projeto Supabase. Custos de novas chamadas de IA/ASR: zero nesta missão. Não foram criados recursos pagos.
+
+7. PRÓXIMAS TRÊS TAREFAS PARA O ORQUESTRADOR
+
+1. Arquitetura/operação + backend, com revisão QA: triagem de advisories e atualização controlada do framework; identificar artefato publicado, versões efetivas e mitigação. Entrega: quadro de alcance, patch em branch e regressão isolada. Aprovação de publicação é separada.
+2. Backend + IA/WhatsApp + QA: tornar reply claim/lease e recuperação da outbox verificáveis e equivalentes local/cloud. Entrega: testes determinísticos A/B, queda em ENVIANDO, 429 e envio incerto; correção atribuída aos donos do código, com política de reconciliação.
+3. QA + operação + backend/frontend: fechar a esteira de PR e o percurso Postgres/RLS/HTTP/UI com contas sintéticas, além de agendar validação controlada em aparelhos e áudio humano. Entrega: check obrigatório cobrindo SQL/UI, executor seguro de fixtures e tabela de provas por canal; não misturar fake com integração real.
+
+Dependências: acesso autorizado ao projeto Supabase para revisão posterior; definição de homologação e backup pelo orquestrador; isolamento de checkout/janela de testes; frontend/backend para uniformizar recibos; aprovação de números de teste e orçamento para IA/ASR reais. Os achados não autorizam essas operações automaticamente.
+
+8. FONTES PRIMÁRIAS CONSULTADAS
+
+OWASP ASVS 5.0.0: https://asvs.owasp.org/
+OWASP API Security Top 10: https://api-security.owasp.org/editions/2023/en/0x11-t10/
+Supabase RLS: https://supabase.com/docs/guides/database/postgres/row-level-security
+OpenAI Evaluation best practices: https://developers.openai.com/api/docs/guides/evaluation-best-practices
+Advisories Next: https://github.com/advisories/GHSA-2464-fhr4-w9xw ; https://github.com/advisories/GHSA-673q-mjm6-r5xr ; https://github.com/advisories/GHSA-vcvr-r3jv-pc5j
+
+Limitações de consulta: a URL markdown do changelog Supabase não foi renderizada pela ferramenta; a URL antiga da página OWASP API retornou 404 e foi substituída pela página oficial da edição 2023. Não foram extraídas conclusões de breaking changes sem leitura correspondente. Nenhuma feature Supabase foi implementada.
+
+CONCLUSÃO DA FRENTE
+Há controles importantes de autenticação, confirmação e isolamento definidos e testados localmente em execuções anteriores. O principal ganho imediato de qualidade está em provar recuperação e concorrência do canal WhatsApp, padronizar recibos e exercitar Postgres/RLS e interface na esteira. A revisão não certifica produção, capacidade, ausência de bugs ou segurança integral. A frente aguarda atribuição de implementação pelo orquestrador.
