@@ -2,5 +2,32 @@ import {useState} from 'react';
 import {useSession} from '@/providers/session';
 import {useTheme} from '@/providers/theme';
 import {useSnapshot} from '@/components/use-snapshot';
-import {Action,Card,Label,Notice,Page} from '@/components/ui';
-export default function Settings(){const {user,logout}=useSession(),{dark,toggle}=useTheme(),{data}=useSnapshot(),[error,setError]=useState('');async function exit(){try{await logout();}catch{setError('Não foi possível concluir a saída com segurança. Reconecte e tente novamente; a sessão tem prazo de expiração.');}}const usage=data?.usage;return <Page title="Minha conta"><Card><Label>{user?.name}</Label><Label muted>{user?.email}</Label><Action secondary label={dark?'Usar tema claro':'Usar tema escuro'} onPress={toggle}/></Card>{usage?<Card><Label>Meu uso · {usage.plan_code}</Label><Label>Pedidos: {usage.requests} / {usage.limits.requests??'ilimitado'}</Label><Label>WhatsApp: {Math.ceil(usage.whatsapp_seconds/60)} min / {usage.limits.whatsapp_seconds===null?'ilimitado':usage.limits.whatsapp_seconds/60+' min'}</Label><Label>Voz no aplicativo: {Math.ceil(usage.voice_seconds/60)} min / {usage.limits.voice_seconds===null?'ilimitado':usage.limits.voice_seconds/60+' min'}</Label></Card>:null}<Card><Label>Assinaturas</Label><Label muted>Seu acesso é validado pelo servidor. Compras e restauração pelas lojas ainda aguardam a integração aprovada de pagamentos.</Label></Card><Card><Label>Privacidade e acesso</Label><Label muted>Recuperação de senha, exclusão da conta e documentos finais de privacidade estão pendentes nesta versão de desenvolvimento. A publicação nas lojas está bloqueada até concluir esses itens.</Label></Card><Notice error={error}/><Action secondary label="Sair da minha conta" onPress={()=>void exit()}/></Page>;}
+import {Action,Busy,Card,Label,Notice,Page} from '@/components/ui';
+
+export default function Settings() {
+  const {user,logout}=useSession(),{dark,toggle}=useTheme();
+  const {data,error:usageError,status,loading,refresh}=useSnapshot();
+  const [error,setError]=useState('');
+  async function exit(){try{await logout();}catch{setError('Não foi possível concluir a saída com segurança. Reconecte e tente novamente; a sessão tem prazo de expiração.');}}
+  const usage=data?.usage;
+  return <Page title="Minha conta">
+    <Card><Label>{user?.name}</Label><Label muted>{user?.email}</Label><Action secondary label={dark?'Usar tema claro':'Usar tema escuro'} onPress={toggle}/></Card>
+    <Card>
+      <Label>Meu uso</Label>
+      {loading?<><Busy/><Label muted>Atualizando seu uso…</Label></>:null}
+      <Notice error={usageError}/>
+      {status===402?<Label muted>Seu acesso precisa de regularização. Consulte sua assinatura no Anotei pela web ou fale com a administração.</Label>:null}
+      {usageError?<Action secondary label="Tentar atualizar meu uso" disabled={loading} onPress={()=>void refresh()}/>:null}
+      {usage&&!usageError?<>
+        <Label>Plano · {usage.plan_code}</Label>
+        <Label>Pedidos: {usage.requests} / {usage.limits.requests??'ilimitado'}</Label>
+        <Label>WhatsApp: {Math.ceil(usage.whatsapp_seconds/60)} min / {usage.limits.whatsapp_seconds===null?'ilimitado':usage.limits.whatsapp_seconds/60+' min'}</Label>
+        <Label>Voz no aplicativo: {Math.ceil(usage.voice_seconds/60)} min / {usage.limits.voice_seconds===null?'ilimitado':usage.limits.voice_seconds/60+' min'}</Label>
+      </>:null}
+      {!loading&&!usage&&!usageError?<Label muted>Seu uso ainda não está disponível.</Label>:null}
+    </Card>
+    <Card><Label>Assinaturas</Label><Label muted>Seu acesso é validado pelo servidor. Compras e restauração pelas lojas ainda aguardam a integração aprovada de pagamentos.</Label></Card>
+    <Card><Label>Privacidade e acesso</Label><Label muted>Recuperação de senha, exclusão da conta e documentos finais de privacidade estão pendentes nesta versão de desenvolvimento. A publicação nas lojas está bloqueada até concluir esses itens.</Label></Card>
+    <Notice error={error}/><Action secondary label="Sair da minha conta" onPress={()=>void exit()}/>
+  </Page>;
+}

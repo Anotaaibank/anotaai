@@ -1,0 +1,24 @@
+IMPLEMENTAÇÃO INTERFACE/MOBILE — IM-A / ORQ-06
+Data: 27/10/2026. Base: 5ba5048da7703663431db273ba6f25bbb14e92cd.
+Cópia exclusiva autorizada: C:\Users\BRUNOL~1\AppData\Local\Temp\anotei-hardening-TWxG2B\interface
+Branch: codex/interface-mobile-hardening. Nenhuma edição no checkout original.
+
+ETAPA NATIVA
+IM-01: cliente de conversa limpa somente o identificador expirado após 410. Preserva texto em erro e espera novo pedido explícito; não repete chamada nem confirmação automaticamente. Estado de envio bloqueia submissões simultâneas da tela.
+IM-04: mês e dia são um estado único; navegar seleciona o primeiro dia do mês mostrado, inclusive virada de ano.
+IM-05: recurso de snapshot invalida epochs ao perder foco/background; descarta respostas antigas, agrupa leituras concorrentes e atualiza somente a tela focada ao retornar ao foreground. Eventos active duplicados não fazem nova leitura.
+IM-06: Conta mostra loading, erro, retry e orientação para 402, sem inventar consumo zero. Falha de snapshot remove dados obsoletos; não implementa compra ou altera a assinatura.
+
+REPRODUÇÃO E TESTES
+Baseline: os corpos exatos dos handlers send/move da base 5ba5048 foram executados com estado/setters sintéticos. Resultado: terceira chamada ainda usava expired após 410; mês 2027-01 com seleção 2026-12-27. Evidência local .data/interface-baseline.json. Isso é reprodução de lógica, não execução em aparelho.
+node --experimental-strip-types --test --test-isolation=none tests/*.test.ts (workdir mobile): 17 passaram, 0 falhas (8 existentes + 9 novas).
+node node_modules/typescript/bin/tsc --noEmit (workdir mobile): passou.
+node node_modules/eslint/bin/eslint.js src tests (workdir mobile): passou.
+Os testes incluem transição 410 sem retry automático, rede incerta, calendário, dedupe/epoch e retorno. O hook real é exercitado com adaptadores React/AppState simulados; a tela Conta real é renderizada em React server com componentes nativos substituídos por primitivas de teste para verificar mensagens/ações. Não são testes Android/iPhone nem prova de UX física.
+Nenhuma chamada paga, ambiente, credencial ou node_modules do original foi copiado. Instalações por lockfile usaram cache pnpm. Versões/lockfiles/config/bloqueios de release preservados. Nenhum build completo, EAS, push, deploy ou operação de produção.
+
+ETAPA WEB IM-02
+Em andamento em commit separado. Contrato, foco/inert/Escape/restauração e evidências serão acrescentados após validação.
+
+PENDÊNCIAS
+QA em aparelho/simulador para ciclo real de AppState e UI nativa não executado. Integração completa e builds serão feitos pelo orquestrador. IM-03 e continuidade comercial não foram alterados.

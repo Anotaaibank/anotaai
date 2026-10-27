@@ -1,7 +1,31 @@
-import {useCallback,useEffect,useRef,useState} from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import {AppState} from 'react-native';
 import {useFocusEffect} from 'expo-router';
 import {useSession} from '@/providers/session';
 import type {SnapshotResponse} from '@/core/contracts';
-export function useSnapshot(){const {call}=useSession(),[data,setData]=useState<SnapshotResponse|null>(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),generation=useRef(0);
- const refresh=useCallback(async()=>{const n=++generation.current;setLoading(true);setError('');try{const next=await call<SnapshotResponse>({action:'snapshot'});if(n===generation.current)setData(next);}catch(e){if(n===generation.current)setError((e as Error).message);}finally{if(n===generation.current)setLoading(false);}},[call]);
- useFocusEffect(useCallback(()=>{void refresh();return()=>{generation.current++;};},[refresh]));useEffect(()=>()=>{generation.current++;},[]);return {data,error,loading,refresh};}
+import {createSnapshotResource, initialSnapshotState} from '@/core/snapshot-resource';
+
+export function useSnapshot() {
+  const {call} = useSession();
+  const [state, setState] = useState(initialSnapshotState<SnapshotResponse>);
+  const focused = useRef(false);
+  const resource = useMemo(() => createSnapshotResource(
+    () => call<SnapshotResponse>({action: 'snapshot'}), setState,
+  ), [call]);
+  useEffect(() => {
+    let previous = AppState.currentState;
+    const listener = AppState.addEventListener('change', next => {
+      const returned = next === 'active' && previous !== 'active';
+      previous = next;
+      if (next !== 'active') resource.deactivate();
+      else if (returned && focused.current) void resource.activate();
+    });
+    return () => {listener.remove(); resource.deactivate();};
+  }, [resource]);
+  useFocusEffect(useCallback(() => {
+    focused.current = true;
+    if (AppState.currentState !== 'background' && AppState.currentState !== 'inactive') void resource.activate();
+    return () => {focused.current = false; resource.deactivate();};
+  }, [resource]));
+  return {...state, refresh: resource.refresh};
+}
