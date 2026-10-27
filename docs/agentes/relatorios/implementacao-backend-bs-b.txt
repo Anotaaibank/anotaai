@@ -1,0 +1,158 @@
+ANOTEI — IMPLEMENTAÇÃO BS-B: VALIDAÇÃO FINANCEIRA E RECIBOS
+Data: 27/10/2026. Frente: Backend e Supabase.
+Destino: revisão e integração pelo Agente Orquestrador Anotai.
+
+VERSÃO E ESCOPO
+Base desta etapa: e9b9df383e2fb910b467959b6322ced98c26abb0.
+Implementação: c34e61ca4cb7121e74ab2d96f2763a04c7a6d34b.
+Branch: codex/backend-reply-cas.
+Cópia isolada: C:/Users/BRUNOL~1/AppData/Local/Temp/anotei-hardening-TWxG2B/backend.
+Não alterei checkout original, produção, migrações anteriores, prompts, workers,
+modelos, quotas, pagamentos, permissões administrativas ou API mobile.
+
+CORREÇÕES IMPLEMENTADAS
+1. QS-07 — os dois handlers de confirmação agora chamam verifiedFinanceReceipt,
+   função compartilhada já usada em outros caminhos. Exigem ok===true,
+   saved===true e operation_id exatamente igual ao plano assinado.
+   Uma resposta HTTP 200 do transporte, sozinha, não comprova gravação.
+   Recibo inválido produz HTTP 503. Não há retry automático da escrita.
+2. No endpoint de voz, a verificação acontece ANTES de financeState,
+   assistantSavedContext e do fallback {saved:true}. Uma falha de contexto
+   opcional após um recibo válido continua preservando o sucesso legítimo.
+   Tokens adulterados continuam recusados antes de chamar a persistência.
+3. BS-05 — a validação SQL exige tipos concretos e distingue NULL SQL/JSON null
+   de valores válidos. Os testes não dependem de SQL IF tratar NULL como false.
+   Casts numéricos e de datas são precedidos pela checagem dos tipos relevantes.
+4. Corrigido o baseline database/finance.sql para bancos novos. Mantido o marcador
+   exato de composição da migração histórica de BILL_RULE. Nenhum arquivo de
+   migração anterior foi editado.
+5. Nova migração CLI 20261027160432_finance_document_null_validation.sql substitui
+   somente o validador canônico composto. Inclui PROFILE, INCOME, RESERVE,
+   TRANSFER, APPOINTMENT, BILL_RULE e BALANCE_ADJUSTMENT. Não delega os tipos
+   antigos à cópia histórica vulnerável _before_balance.
+   Mantém revogação de execução direta a public/anon/authenticated/service_role.
+   Writers privilegiados conservam seus contratos, autenticação e transações.
+
+COMPATIBILIDADE DOS CAMPOS OPCIONAIS
+- PROFILE.has_extra_income continua opcional no documento persistido. Se presente,
+  deve ser booleano. Valores assinados e dia do salário mantêm limites anteriores.
+- INCOME.activity continua opcional; salary é obrigatório no documento persistido.
+  A entrada de comando salary opcional continua recebendo false do builder TS.
+- RESERVE recebe rate_percent=0 e rate_period=MENSAL quando omitidos no comando;
+  ambos permanecem concretos no documento persistido. Nenhum campo extra foi
+  tornado obrigatório na API de comandos.
+- APPOINTMENT.time e location podem faltar no documento histórico ou ser strings
+  vazias. Se presentes, devem ser strings válidas; done deve ser booleano.
+  No comando TS, todos os três continuam opcionais e o builder aplica defaults.
+- TRANSFER mantém reserve_id/direction. BILL_RULE mantém dia, categoria, método,
+  status PREVISTO e valor positivo. Não foi adicionada enumeração nova de categoria.
+- BALANCE_ADJUSTMENT continua realizado/ativo/hoje, exige hash e centavos inteiros,
+  delta=target-previous e amount=abs(delta). Não troca saldo inicial por ajuste,
+  não cria receita e não altera o writer append-only nem suas travas de revisão.
+
+EVIDÊNCIAS DE HANDLERS E REGRESSÃO
+Teste novo: tests/finance-receipt-handlers.test.ts.
+São handlers reais, assinatura/leitura reais do plano, validador de recibo real e
+helpers HTTP reais. Auth, transporte de persistência e contexto opcional são
+substituídos por stubs explícitos. Não houve Supabase/PostgREST/WhatsApp real.
+
+Antes da implementação (mesmos 24 casos iniciais): 6 passaram, 18 falharam.
+Depois da implementação (mesmos 24): 24 passaram, zero falhas.
+Falhas reproduzidas: null, objeto vazio, saved falso, ok falso, ID ausente,
+ID de outra operação, booleanos textuais, array e texto, em ambos endpoints.
+Também verifica replay preservado, token adulterado e indisponibilidade do
+contexto após sucesso legítimo. Acrescentados depois dois casos de falha de
+transporte que não permitem contexto saved. Total final novo: 26 casos.
+
+Regressão ampliada: 111/111, zero falhas, 21,475 s no processo de testes.
+Arquivos: finance-receipt-handlers, finance, balance-adjustment,
+whatsapp-reply-cas, whatsapp-worker, subscriber-reset e mobile-api.
+Typecheck final: node node_modules/typescript/bin/tsc --noEmit, exit 0.
+git diff --check: passou.
+Não rodei build concorrente; a integração/build ficam com a coordenação.
+
+Runner oficial exigido pelo AGENTS, após alinhar Origin do teste:
+node scripts/validate-mobile-backend.mjs --checks-only.
+Typecheck exit 0 (46,098 s) e suíte completa 347/347, zero skipped/falhas
+(108,691 s de parede; TAP 104,823 s). O runner isola variáveis, bloqueia chamadas
+externas com offline-validation.mjs e registrou paid_calls=0/production_writes=0.
+Não executa build com --checks-only. Evidência: .data/mobile-backend-results.json
+e .data/mobile-backend-tests.log, ignorados e contendo somente dados sintéticos.
+A QA reproduziu independentemente o conflito de Origin no primeiro commit c34e61c
+(403 antes da persistência simulada). A compatibilidade está no commit separado
+461ccb91730d9c3a1d496584cc707eda7afda4cf, já validado nesta frente com o runner
+oficial. Essa falha era do novo fixture HTTP, não um recibo inválido aceito pelo
+produto. A função sameOrigin e a política de origem não foram relaxadas.
+
+Comando reproduzível, com ANOTA_STORAGE=local, ANOTA_DATABASE_PATH=:memory:,
+ANOTA_RUN_WORKER=0, ANOTA_REQUIRE_SUBSCRIPTION=0, ANOTA_ASSISTANT_ENABLED=false:
+node --experimental-strip-types --test --test-isolation=none tests/finance-receipt-handlers.test.ts tests/finance.test.ts tests/balance-adjustment.test.ts tests/whatsapp-reply-cas.test.ts tests/whatsapp-worker.test.ts tests/subscriber-reset.test.ts tests/mobile-api.test.ts
+
+Logs locais ignorados (somente testes sintéticos): .data-receipts-before.log,
+.data-receipts-after.log, .data-bs-b-regression.log, .data-bs-b-typecheck-final.log.
+O segundo log contém a avaliação equivalente de 24 casos; a regressão ampliada
+inclui os dois casos extras. Tempo não mede latência de provedor/produção.
+SHA256 before: 703889b4d87990d5b40f36cc90e46f3f43d9f9a7656362dcaadb8290981937a5.
+SHA256 after24: ca55fd381daf9b85db52c179525e6a6be5c71918ae17bb253a1e6b0c1d1000d3.
+SHA256 regressão111: 4fb9aa495054fb238b8bd1fde231426e994942c8b14844b05f0e9c8aadd954b7.
+Os 26 testes de recibo também passaram com APP_URL=http://localhost:3100, usada
+pelo runner oficial. O teste deriva a Origin da configuração sem mudar o ambiente
+dos demais testes; a Request sintética não é enviada à rede.
+
+SQL REAL — RESULTADOS FORNECIDOS PELA QUALIDADE
+Fixture: tests/sql/finance-document-validation.sql.
+Inclui os sete tipos, campos obrigatórios omitidos/null, opcionais válidos/null,
+datas, métodos, recorrência e invariantes do ajuste de saldo. Roda em transação
+com rollback e usa tabela/função temporárias; não cria dados reais de assinantes.
+Exige anotei.test_run=anotei-disposable:<UUID> e banco anotei_test_<UUID sem hífens>,
+correspondentes ao runner QA. Não basta informar uma flag em qualquer banco.
+Imprime totais e rótulos de casos incorretos, encerrando com erro se houver falha.
+Runner e manifesto pertencem à QA e não foram alterados por esta frente.
+
+Baseline SQL fornecida pela QA: Postgres descartável 17.11, cadeia anterior SEM
+a nova migração. 202 casos: 163 corretos e 39 divergências, todos por aceitação
+de dados inválidos. O fixture terminou com FINANCE_VALIDATION_REGRESSION, como
+esperado, em 57,314 ms informados pela QA. Os 8 fixtures anteriores passaram.
+Exemplos: done ausente, id/data/descrição/status null, salary ausente,
+rate_percent/rate_period ausentes, reserve_id/direction ausentes, payment_method
+null e campos opcionais de agenda com tipo errado. Não foi falha do harness.
+Evidências da QA: ../qa/.data/qs-bsb-before/ (stdout dos 39 casos, stderr e JSON).
+Hash do bootstrap anterior: cbd3e9962e6e46b27826eede7a710155d6988ae1ada6bb318928cf1baca1924e.
+Depois da correção, QA confirmou a mesma avaliação em PG17.11: 202/202 corretos,
+zero divergências, 38,952 ms informados pelo harness (UTC 16:23:09.812).
+Nove de nove fixtures da cadeia passaram com rollback. Bootstrap posterior SHA256:
+94790707e9e9751e7397fe2c10a782a33af83e38a937c2cb4c3e3f0157419095.
+Fixture normalizado LF permaneceu idêntico (prefixo SHA8311ac19); diferença de hash
+bruto na cópia era somente LF/CRLF, não mudança de casos entre antes e depois.
+Evidência: ../qa/.data/qs-bsb-after/postgres-test-results.json (stdout202|202|0).
+Foram duas tentativas de inicialização do PG sem executar checks por sobrecarga do
+Windows; a QA preservou logs e repetiu o ambiente descartável. Essas tentativas não
+foram contabilizadas como teste de produto aprovado/reprovado. Não alterei o SQL
+para contornar o harness. Não se trata de aplicação no Supabase de produção.
+Após importar 461ccb9, QA não repetiu TS por orientação da coordenação; os 347/347
+acima são da cópia desta frente. A coordenação executará a integração completa.
+Nenhum SQL desta etapa foi executado por esta frente.
+Separadamente, a coordenação informou que BS-A passou 8/8 fixtures em Postgres
+17.11; esse resultado é da QA e não constitui ainda a avaliação SQL de BS-B.
+
+INTEGRAÇÃO E LIMITES
+Aplicar apenas mediante revisão da coordenação. A migração é aditiva e não reescreve
+registros. Validar tanto instalação vazia pela cadeia completa quanto upgrade do
+baseline anterior; comparar o fixture sem a migração e depois com ela.
+Uma linha histórica malformada não é consertada silenciosamente por esta alteração;
+se houver, precisará de diagnóstico e correção autenticada com confirmação.
+Rollback de aplicação não exige restaurar aceitação de null no banco. Não reabrir
+permissões diretas nem restaurar a função vulnerável para contornar falhas de dados.
+Recibo inválido pode ocorrer após commit real: a API pede conferir o histórico,
+não declara que a escrita foi revertida e não reenvia automaticamente o comando.
+Não alego execução completa via WhatsApp real, entendimento de linguagem natural,
+RLS remota auditada ou escala para um número de clientes a partir destes testes.
+Nenhuma chamada paga ou alteração remota foi necessária.
+
+DOCUMENTAÇÃO CONSULTADA
+Next instalada: node_modules/next/dist/docs/01-app/01-getting-started/15-route-handlers.md
+e 01-app/03-api-reference/03-file-conventions/route.md.
+Contratos locais: lib/finance.ts, lib/finance-server.ts, lib/server.ts,
+database/finance.sql e migrações de recorrência/ajuste do saldo.
+Semântica SQL NULL: https://www.postgresql.org/docs/current/functions-comparison.html
+Testes SQL isolados: https://supabase.com/docs/guides/database/testing
