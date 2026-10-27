@@ -1,3 +1,4 @@
+import {markLocalFinanceTarget,verifiedFinanceTarget} from './verified-finance-target.ts';
 import {incomeArchiveDraft,type IncomeOrigin} from './income-archive-language.ts';
 import {fold,literalMoney,financeDate,spokenNumber,moneyNumber} from './finance-date.ts';
 import {personalCategory} from './personal-expenses.ts';
@@ -73,7 +74,7 @@ export function naturalReadQuery(text:string,today:string):string|null{
  }
  return null;
 }
-export function naturalFinanceTurn(text:string,state:FinanceState,today:string,context:NaturalContext={}):FinanceDraft|null{
+function naturalFinanceTurnImpl(text:string,state:FinanceState,today:string,context:NaturalContext={}):FinanceDraft|null{
  const s=fold(text),guard=languageGuard(text);if(guard)return guard;
  const archive=incomeArchiveDraft(text,state,today,context);if(archive)return archive;
  const prefixed=prefixedCommand(text,today);if(prefixed)return prefixed;
@@ -128,4 +129,5 @@ export function naturalFinanceTurn(text:string,state:FinanceState,today:string,c
  }
  return financialMessageDraft(text,state,today);
 }
-export function sourceWithVerifiedTarget(source:string,draft:FinanceDraft){const command=draft.command as FinanceCommand|null;return command?.target_id&&draft.target_excerpt===command.target_id?source+'\nRegistro identificado nesta conversa: '+command.target_id:source;}
+export function naturalFinanceTurn(text:string,state:FinanceState,today:string,context:NaturalContext={}):FinanceDraft|null{return markLocalFinanceTarget(naturalFinanceTurnImpl(text,state,today,context),normalizeAssistantText(text),state);}
+export function sourceWithVerifiedTarget(source:string,draft:FinanceDraft){const target=verifiedFinanceTarget(normalizeAssistantText(source),draft);return target&&!source.includes(target)?source+'\nRegistro identificado nesta conversa: '+target:source;}

@@ -1,3 +1,4 @@
+import {whatsappPlanCopy} from './whatsapp-plan-copy.ts';
 import type {IncomeOrigin} from './income-archive-language.ts';
 import {readFinance,signFinance,type FinancePlan} from './finance.ts';
 import {AppError} from './model.ts';
@@ -39,10 +40,7 @@ export function editedWhatsappPlan(text:string,rows:PendingRow[],user:string,sen
  const pending=rows.find(r=>r.user_id===user&&r.sender===sender&&r.confirmation_code===code);if(!pending?.finance_confirmation||pending.confirmation_used)throw new AppError('Essa proposta já foi concluída, substituída ou cancelada.');
  return {pending,plan:readFinance(pending.finance_confirmation,whatsappActor(user,sender),key,now)};
 }
-export function whatsappPlanReply(plan:FinancePlan,code?:string){
- const lines=plan.lines.filter(line=>line.trim()).map(line=>'• '+line.replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g,'$3/$2/$1'));
- return `*${code?'⏳ Aguardando confirmação — ainda não salvo':'✅ Registrado'}*\n\n${plan.title}\n\n${lines.join('\n')}\n\n`+(code?`*1 — Confirmar*\n*2 — Editar*\n\nAinda não foi salvo. Responda em até 10 minutos.\nPara desistir: CANCELAR ${code}.\nSe houver várias propostas, use o botão ou envie CONFIRMAR ${code} / EDITAR ${code}.`:'Você já pode conferir no painel.');
-}
+export function whatsappPlanReply(plan:FinancePlan,code?:string){return whatsappPlanCopy(plan,code);}
 
 // A bare consent gets a deterministic instruction, never an automatic write or a new AI request.
 export function whatsappConfirmationHint(text:string,rows:{user_id:string;sender:string;finance_confirmation?:string;confirmation_code?:string;confirmation_used?:boolean}[],user:string,sender:string,key:string,now=Date.now()){
@@ -66,7 +64,7 @@ export function whatsappIncomeOrigins(rows:{id:string;user_id:string;sender:stri
   if(row.context_reset_at||row.reply_status==='LIMPO')break;
   if(row.status!=='LANCADO')continue;
   if(!row.confirmation_used||!row.finance_confirmation)return []; // Unknown newer outcome cannot prove an older creation was last.
-  try{const plan=readFinance(row.finance_confirmation,whatsappActor(user,sender),key,at);if(row.confirmation_code!==plan.id.replaceAll('-','').slice(0,10).toUpperCase())return [];const ids=plan.documents.filter(d=>d.expected===null&&d.document.kind==='INCOME'&&d.document.active&&d.document.status==='REALIZADO').map(d=>d.document.id);if(ids.length){latest=at;origins.push({message_id:row.id,confirmed_at:row.created_at,income_ids:[...new Set(ids)]});}}catch{return [];}
+  try{const plan=readFinance(row.finance_confirmation,whatsappActor(user,sender),key,at);if(row.confirmation_code!==plan.id.replaceAll('-','').slice(0,10).toUpperCase())return [];const ids=plan.documents.filter(d=>d.expected===null&&d.document.kind==='INCOME'&&d.document.active&&['REALIZADO','PREVISTO'].includes(d.document.status)).map(d=>d.document.id);if(ids.length){latest=at;origins.push({message_id:row.id,confirmed_at:row.created_at,income_ids:[...new Set(ids)]});}}catch{return [];}
  }
  return origins;
 }
