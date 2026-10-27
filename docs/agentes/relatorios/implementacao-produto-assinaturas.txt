@@ -136,3 +136,49 @@ Cartão recorrente real, gateway, produtos de loja e política de renovação/tr
 Arquivos autorizados de implementação: os três componentes, lib/plan-navigation.ts, tests/plan-navigation.test.ts e tests/plan-components.test.ts. Este relatório é o único documento de implementação da frente. Sem push, merge/main, deploy, SQL remoto, cobrança, mensagem real ou build de nuvem.
 Commit funcional: 9259c1376fa09c687400d02d4debe49582347ed4 — fix: preserve plan choice through signup login and checkout.
 Este relatório segue em commit documental separado; o SHA será informado na entrega da conversa. A cópia temporária deve ser preservada até a integração/revisão do orquestrador.
+
+9. INCREMENTO PA-B / PA-10 — MÉTRICAS DA GESTÃO (27/10/2026)
+
+Escopo: lib/commerce.ts somente funções/tipos de métricas; components/Management.tsx somente apuração exibida, cartões, rótulos e explicações; novo tests/management-metrics.test.ts. O orquestrador autorizou adicionalmente um ajuste mínimo de relógio no teste de relatório/campanha de tests/commerce-growth.test.ts. Sem mudança de preço, plano, checkout, autorização, licença, SQL ou consulta real de clientes. Orquestrador aprovou explicitamente preservar contadores de status e exibir acesso efetivo como não apurado quando o dado autoritativo não existe nesta consulta.
+
+Baseline reproduzido antes da alteração, em stdin JavaScript importando a função atual: now = 2026-10-27T15:00:00Z; uma assinatura ATIVA de 4.990 centavos com validade 2026-10-26. commerceMetrics retornava active=1 e mrr_cents=4990. Esses valores apareciam sob “ASSINANTES PAGOS ATIVOS” e “RECEITA MENSAL PREVISTA”. Esperado para a base vigente: 0 mensalidades no prazo e previsão de R$ 0,00. A alteração mantém o status cadastrado, mas corrige o significado do número apresentado.
+
+Critérios de acesso comparados ANTES de implementar:
+- lib/subscription-access.ts: isManager e configuração de exigência; em produção consulta rpc/anota_access_allowed.
+- database/household-billing.sql: implementação de origem.
+- supabase/migrations/20261015153237_subscriber_resend_deactivation.sql: substituição vigente de anota_private.access_allowed, considerando exempt, disabled_at, enforce_access, ATIVA/TESTE com validade inclusiva em São Paulo, e Pix aprovado ligado à mesma validade.
+- ManagementData/management(): fornece Customer, assinatura e perfil comercial, Pix e convites; não fornece o resultado autoritativo completo da licença ou isenções/bloqueios de todas as contas.
+
+Não repliquei a RPC no front-end nem criei uma segunda autorização. “Mensalidades no prazo” é apenas uma classificação comercial baseada em status ATIVA, valor maior que zero e validade real igual ou posterior ao dia brasileiro. Não prova pagamento ou acesso. Teste é contado separadamente; uma conta isenta sem assinatura não é inventada como pagante nem considerada sem acesso.
+
+Contrato compatível:
+- registered, active, mrr_cents, trials, past_due, canceled e feedbacks foram preservados. active/mrr_cents antigos continuam representando apenas status ATIVA com valor, incluindo vencidos/sem data; comentário no código explicita esse contrato legado. Não são a base da previsão exibida.
+- Novos subscriptions_registered, paid_current, current_mrr_cents, paid_expired, paid_missing_expiry, trials_current, as_of e effective_access=null distinguem cadastro, prazo e informação ausente. “Assinaturas cadastradas” exclui SEM_ASSINATURA e inclui teste/canceladas, explicitamente informado.
+- effective_access=null significa desconhecido, nunca zero nem liberação. A UI informa “não apurados neste painel” e por quê.
+- commerceReports e campaignResults mantêm os campos públicos existentes, mas usam a base vigente para previsão mensal/anual, ticket médio e distribuição. Contadores de campanhas representam mensalidades no prazo, não usuários efetivamente autorizados. Parâmetros opcionais now permitem avaliação determinística.
+- commercePaymentMetrics(undefined) retorna null; lista vazia retorna zeros. Só APROVADO entra no total aprovado. PENDENTE tem contagem/valor próprios; REJEITADO tem contagem própria. Nenhuma operação é alterada.
+- Pix é histórico de validação administrativa carregado, sem recorte mensal. created_at é a criação da solicitação; não é data de recebimento. O tipo disponível não contém reviewed_at. Não há conciliação bancária ou recebimento de cartão/boleto nesta apuração. Aprovação administrativa nunca é denominada receita bancária recebida no mês.
+- A UI usa as métricas recebidas do servidor; não decide validade pelo relógio do navegador. As regras de autorização não usam nenhuma destas métricas.
+
+Validação executada nesta etapa:
+node --experimental-strip-types --test --test-isolation=none tests/management-metrics.test.ts tests/commerce.test.ts tests/commerce-growth.test.ts
+Resultado inicial: 27 testes, 27 aprovados, 0 falhas, 0 ignorados; 12.796,7063 ms. Reexecução após o ajuste temporal autorizado: 27/27 aprovados em 7.849,776 ms. Dez testes novos e dezessete regressões existentes. Dados sintéticos; SQLite em memória nas regressões existentes; zero chamadas de IA/WhatsApp/serviço remoto.
+
+node node_modules/typescript/bin/tsc --noEmit --incremental false
+Resultado: exit 0, sem diagnóstico. git diff --check também passou. Logs locais ignorados em .data/management-metrics-tests.log e .data/management-metrics-typecheck.log.
+
+Matriz de evidência (esperado e observado coincidem):
+- ATIVA vencida: permanece no status histórico; 0 na base vigente e na previsão.
+- ATIVA no prazo e vencendo hoje: compõem base vigente, inclusive até 23:59:59 em São Paulo; saem na meia-noite seguinte.
+- ATIVA sem data/data inválida: fora da previsão; registrada como validade ausente/inválida.
+- TESTE no prazo/vencido, CANCELADA, ATRASADA e valor zero: fora da previsão paga; teste no prazo é identificado separadamente.
+- Pix pendente com ATIVA no prazo: valor cadastrado pode compor previsão; aprovação continua zero e acesso desconhecido. Esse caso prova a separação, sem simular liberação.
+- Pix APROVADO antigo e recente: ambos no histórico administrativo; PENDENTE/REJEITADO não somam ao aprovado; nenhum caixa mensal é inferido.
+- Relatórios/campanhas: totais por plano e origem batem com a mesma base vigente.
+- Fonte congelada: assinatura, valores, datas e pagamentos permanecem intactos.
+
+Limitações e entrega:
+- Não houve navegador/aparelho, build completo, integração de produção, consulta real de licenças, banco remoto, cobrança, envio WhatsApp, push ou deploy. O orquestrador executará o build de integração.
+- Não existe aqui teste de autorização/RPC real; acesso efetivo permanece pendente de contrato autoritativo do Backend.
+- O teste antigo commerce-growth de relatório/campanha usava validade fixa 2026-11-10 com relógio real e falharia depois dessa data. Após autorização específica do orquestrador, passou a fornecer now explícito 2026-10-27T15:00:00Z a commerceReports e campaignResults. A intenção foi preservada e a suíte foi reexecutada com aprovação.
+- Commit funcional PA-B: 8362bbd36caa7fdcbfe30b6f7cb9ecda804440b0 — fix: separate subscription forecasts from status and payment approval. Este incremento documental segue em commit separado.
