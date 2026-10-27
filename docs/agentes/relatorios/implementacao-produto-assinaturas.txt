@@ -1,0 +1,138 @@
+ANOTEI — IMPLEMENTAÇÃO PA-A / ORQ-05
+Frente: Produto e Assinaturas
+Data: 27/10/2026 — America/Sao_Paulo
+
+1. ESCOPO E ISOLAMENTO
+
+Tarefas: PA-01 e IM-07 — continuidade de seleção do plano e navegação de login/cadastro/checkout. PA-02 está especificada abaixo, sem implementação de backend.
+Base comum: 5ba5048da7703663431db273ba6f25bbb14e92cd.
+Worktree autorizado pelo orquestrador: C:\Users\BRUNOL~1\AppData\Local\Temp\anotei-hardening-TWxG2B\produto
+Branch local: codex/produto-plan-flow.
+O worktree gerenciado inicialmente solicitado não forneceu caminho final; não foi usado. A cópia Git temporária foi criada e verificada pelo orquestrador, que autorizou explicitamente o caminho acima. Todos os comandos de implementação/validação usaram esse workdir. Não houve alteração do checkout original, de main, produção ou outros worktrees por esta frente.
+
+Não foram copiados .env, .data, bancos, credenciais ou node_modules do original. Dependências do lockfile foram instaladas no worktree por pnpm install --frozen-lockfile --ignore-scripts. A instalação reutilizou o armazenamento de pacotes do gerenciador, não uma cópia de node_modules do projeto original. Package e lockfile não foram alterados. A base contém a versão antiga do Next; a atualização de segurança pertence à frente Qualidade e será integrada pelo orquestrador.
+
+2. REPRODUÇÃO ANTES DA ALTERAÇÃO
+
+Código conferido na base 5ba5048, antes de editar os componentes:
+- SalesPage gerava o mesmo href /?cadastro=1 nos botões Básico e Ilimitado. A URL não tinha parâmetro de plano.
+- A expressão original de destino do Login foi extraída do componente e avaliada com location.search sintético. Para ?next=assinatura, tanto login como cadastro retornavam /painel. O destino esperado era /assinatura.
+- SubscriptionPayment inicializava o plano a partir de pedido pendente/assinatura ou BASICO, sem ler a escolha da oferta.
+
+Resultado observado da reprodução controlada:
+sales_plan_href: /?cadastro=1
+sales_plan_parameter: null
+login_next_assinatura: /painel
+registration_next_assinatura: /painel
+expected_target: /assinatura
+
+Essa reprodução é de expressões e fluxo de código, não uma navegação em navegador/aparelho real.
+
+3. IMPLEMENTAÇÃO
+
+components/SalesPage.tsx
+- Os botões de cada plano agora usam planRegistrationHref(plan.code).
+- A URL carrega somente a seleção validada, cadastro=1 e next=assinatura.
+- Eventos, preços, benefícios, layout e conteúdo comercial foram preservados.
+
+components/Login.tsx
+- Reconhece intenção de checkout e plano validado.
+- next aceita exclusivamente painel, gestao e assinatura. Valores externos, caminhos não listados, parâmetros de destino ambíguos e valores herdados de prototype são descartados para /painel.
+- Login comum continua indo ao painel; login de gestão continua indo à gestão. Cadastro novo não é redirecionado para gestão, preservando a regra anterior.
+- Login/cadastro com intenção de assinatura vão a /assinatura, conservando plano válido.
+- Alternar entre cadastro e login mantém o contexto e atualiza a URL sem enviar formulário automaticamente.
+- Quando o servidor exige confirmação de e-mail, a tela passa a oferecer login e mantém a orientação. Não repete o cadastro automaticamente.
+- Um guard por referência impede dois POSTs de autenticação simultâneos antes do próximo render.
+- O formulário continua enviando apenas seus dados de autenticação/cadastro; plano, preço, pagamento e direito de acesso não são anexados ao payload de sessão por esta mudança.
+
+components/SubscriptionPayment.tsx
+- A escolha válida da URL prevalece na seleção inicial, exceto quando há pagamento pendente do servidor.
+- Pagamento pendente mantém seu próprio plano, mesmo se a URL indicar outro. Esta mudança não substitui/cancela/cria um pedido pendente.
+- Ao receber 401, volta ao login com next=assinatura e plano preservado; usa replace para evitar manter o checkout expirado como etapa de retorno imediato.
+- Mudança de plano atualiza estado e URL. Recarregar/voltar entre etapas mantém a escolha.
+- Retomar, ler a assinatura, mudar etapa e trocar seleção não fazem POST de pagamento. O envio de Pix continua no formulário explícito existente.
+- Sair para usar outra conta encerra a sessão somente pelo botão e preserva a intenção de checkout na URL de login.
+
+lib/plan-navigation.ts — helper novo, sem import de servidor
+- Valida identificadores pelo catálogo existente, sem alterar lib/subscription-*.
+- Constrói URLs internas canônicas, sem transportar valor, acesso ou confirmação de pagamento.
+- Parâmetro plano inválido ou repetido não é usado como escolha. Prioridade no checkout: pedido pendente válido > escolha válida da URL > plano atual válido do servidor > preferência temporária válida quando não houve plano explícito > BASICO.
+- Uma preferência local guarda somente o código de plano e expiração de até 24 horas. Não contém identidade, telefone, e-mail, senha, sessão, valores financeiros ou recibos. Ajuda a retomar uma confirmação de e-mail no mesmo navegador/origem, inclusive em outra aba.
+- A preferência é consumida/limpa ao concluir autenticação ou carregar checkout autenticado. Assim não continua desviando um login comum futuro. A própria URL mantém a seleção do checkout.
+- Armazenamento bloqueado/corrompido não interrompe o fluxo por URL. Preferência expirada ou inválida não é reaproveitada. Isso é uma conveniência de navegação, não autorização.
+
+tests/plan-navigation.test.ts
+- Casos puros do contrato: dois planos; login/cadastro; sessão expirada; destinos permitidos/hostis; parâmetros inválidos/duplicados; preferência e expiração; servidor pendente; ida e volta sem dados de concessão.
+
+tests/plan-components.test.ts
+- Transpila os três componentes TSX e executa os handlers reais com hooks, elementos, histórico, armazenamento e fetch sintéticos.
+- Confere o wiring dos CTAs, destino após login/cadastro, guard de envio, confirmação de e-mail, GET 401 do checkout, pendência prevalecendo e ida/volta entre etapas.
+- Não é teste DOM, de acessibilidade, de browser real, de cookies/Supabase, de SMTP ou de pagamento real. Não importa transporte de produção nem faz chamadas reais.
+
+4. MATRIZ DE ACEITE E EVIDÊNCIAS
+
+Cenário | Resultado verificado | Tipo de evidência
+Escolher Básico/Ilimitado na oferta | Cada CTA real produz código e destino corretos | Componente simulado + helper
+Conta existente com next=assinatura | Vai ao checkout com o plano solicitado; payload de login sem preço/acesso | Handler real, fetch sintético
+Cadastro com autenticação imediata | Vai ao checkout com Ilimitado; preferência consumida | Handler real, resposta sintética
+Cadastro exige confirmação de e-mail | Passa para login, conserva plano, não repete cadastro, não navega sem sessão | Handler real, resposta sintética
+Dois envios simultâneos de cadastro | Um único POST no cenário controlado | Handler real, resposta adiada
+Sessão expirada no checkout | GET 401 gera URL interna de login com plano, sem POST de pagamento | Handler real, fetch sintético
+Login comum/gestão | Painel e gestão preservados; cadastro não vai à gestão | Helper e handler
+Destino externo ou ambíguo | Nunca retorna origem externa; fallback /painel | Helper + handler para destino externo
+Plano inválido/duplicado | Não substitui plano/pedido do servidor; não reaproveita preferência indevida | Helper
+URL tenta mudar pagamento pendente | Pedido pendente continua com o plano do servidor | Helper + componente simulado
+Selecionar, avançar e voltar | Mantém o plano e checked correto; só GET de leitura | Componente simulado
+Retomada com preferência temporária | Seleção chega à URL e preferência é consumida após autenticação | Helper + componentes simulados
+Armazenamento bloqueado/corrompido/expirado | URL válida segue funcionando; preferência inválida é ignorada | Helper
+
+Nenhum teste acima comprova liberação de plano por backend: essa lógica não foi alterada. Os identificadores de URL nunca representam prova de pagamento ou licença.
+
+5. COMANDOS E VALIDAÇÃO
+
+Executados no worktree exclusivo:
+pnpm install --frozen-lockfile --ignore-scripts
+node --experimental-strip-types --test --test-isolation=none tests/plan-navigation.test.ts tests/plan-components.test.ts
+node node_modules/typescript/bin/tsc --noEmit --incremental false
+git diff --check
+
+Testes finais direcionados: 17 aprovados, 0 falhas. São 9 testes puros e 8 testes com componentes/handlers simulados. Saída local ignorada: .data/plan-tests.log.
+Typecheck: aprovado, exit 0, inclusive a repetição final após o ajuste de consumo da preferência. A primeira execução também passou.
+Logs finais: .data/plan-typecheck.log.
+Build completo não executado nesta frente, conforme a coordenação. A integração e o build ficam com o orquestrador. Nenhum teste em navegador/aparelho, Supabase real, SMTP, Pix, cartão ou WhatsApp real foi executado.
+
+6. CONTRATO E DEPENDÊNCIAS DE PA-02 — NÃO IMPLEMENTADO NESTE PATCH
+
+6.1 Intenção comercial versus fatos autorizados
+O cliente pode transportar apenas um código de plano como preferência. O servidor continua resolvendo catálogo/preço, titular autenticado, assinatura, pedido de pagamento e vínculo de telefone. Não usar plano, next, paid, amount, phone ou user_id da URL como prova desses fatos. Não vincular telefone à primeira conta que coincidir com um dado editável.
+
+6.2 Jornada completa a especificar com Backend
+- Conta nova pública: criar/confirmar identidade, autenticar e preservar intenção comercial sem conceder licença.
+- Conta existente: entrar; não criar outra identidade para o mesmo e-mail. Recuperação e retorno após confirmação de e-mail precisam usar destinos internos aprovados pelo servidor.
+- Telefone principal: vincular por convite existente ou método de verificação aprovado; recusar conflito com outra assinatura e registrar resultado idempotente. URL não comprova posse do número.
+- Conta do casal: segundo número compartilha a mesma conta e franquia, com autorização própria; terceiro recusado. Não criar duas assinaturas/financeiros independentes por engano.
+- Pagamento/ativação: derivar acesso de aprovação administrativa ou evento/recibo oficial verificado; não do estado visual do checkout. Pagamento pendente não ativa.
+- WhatsApp pronto: derivar do vínculo autorizado, assinatura válida e disponibilidade da integração. Não inferir prontidão de um link aceito pelo provedor.
+
+6.3 Estados a apresentar sem confundir
+Cadastro concluído/pendente; assinatura e validade; pagamento informado/em análise/aprovado/recusado; número vinculado/autorizado; integração WhatsApp disponível/indisponível; estado de envio do convite. A resposta atual de assinatura já fornece parte dessas informações. Backend deve definir um resumo derivado de ativação, com campos mínimos e fonte autorizada, antes de expor nova API/contrato. Não foram adicionados campos ou endpoints neste patch.
+
+6.4 Critérios para a próxima atribuição de PA-02
+- Pessoa que entra por venda pública e pessoa convidada terminam em conta/telefone corretos, sem novo cadastro automático por retorno de página.
+- Repetir o mesmo callback/registro não duplica conta, telefone, convite ou pagamento.
+- Conta já cadastrada, número já vinculado, casal e e-mail ainda não confirmado recebem orientação precisa sem revelar dados de outra pessoa.
+- A conta paga pode ser identificada como “WhatsApp pendente de configuração” até o vínculo estar pronto, com instrução real para completar a ativação.
+- Testar confirmação de e-mail em outra aba do mesmo navegador, navegador diferente, preferência expirada e armazenamento bloqueado. A preferência deste patch não garante retorno entre dispositivos; Backend precisa preservar retorno aprovado no fluxo de e-mail/ativação, se isso fizer parte da jornada oficial.
+- Testar aquisição/ativação em ambiente sintético de ponta a ponta antes de divulgação pública. Atualizar manual/UX somente segundo o contrato aprovado.
+
+Responsáveis: Produto define a jornada com Bruno/orquestrador; Backend define identidade/vínculo/retorno seguro e estados; Interface apresenta; QA testa as matrizes. Nenhuma mudança de banco, telefone ou permissão foi feita por esta frente.
+
+7. DECISÕES QUE PERMANECEM PENDENTES
+
+Cartão recorrente real, gateway, produtos de loja e política de renovação/troca antecipada de plano não foram ativados nem alterados. A seleção visual de outro plano continua uma intenção; o comportamento comercial de upgrade/downgrade precisa de decisão de Bruno e implementação coordenada no servidor. Preços e franquias foram preservados.
+
+8. ENTREGA
+
+Arquivos autorizados de implementação: os três componentes, lib/plan-navigation.ts, tests/plan-navigation.test.ts e tests/plan-components.test.ts. Este relatório é o único documento de implementação da frente. Sem push, merge/main, deploy, SQL remoto, cobrança, mensagem real ou build de nuvem.
+Commit funcional: 9259c1376fa09c687400d02d4debe49582347ed4 — fix: preserve plan choice through signup login and checkout.
+Este relatório segue em commit documental separado; o SHA será informado na entrega da conversa. A cópia temporária deve ser preservada até a integração/revisão do orquestrador.
