@@ -92,12 +92,16 @@
       "intro": "Aqui você configura sua renda e o ponto de partida do seu caixa. Depois, registra as entradas quando o dinheiro realmente chega.",
       "steps": [
         {
-          "title": "Configure ou revise",
-          "text": "Abra Meu dinheiro e toque em Configurar renda e saldo ou Editar renda e saldo."
+          "title": "Cadastre ou revise os valores iniciais",
+          "text": "Abra Meu dinheiro. No primeiro acesso, toque em Cadastrar renda e saldo inicial. Para rever os valores de partida, use Editar renda e saldo inicial."
         },
         {
           "title": "Preencha salário e saldo inicial",
           "text": "Informe salário previsto, dia habitual de recebimento, saldo inicial e data desse saldo. Há campos para renda extra, cheque especial e margem de segurança."
+        },
+        {
+          "title": "Ajuste o saldo de hoje sem apagar o histórico",
+          "text": "Na Visão geral ou em Meu dinheiro, use Ajustar saldo atual no cartão Saldo na conta. Informe o saldo correto e toque em Conferir ajuste. Leia o resumo e confirme. O ajuste não é ganho nem despesa e mantém o saldo inicial e os registros anteriores."
         },
         {
           "title": "Registre o salário recebido",
