@@ -88,3 +88,15 @@ test('IW-D: comissão como nome e ligação relativa depois da descrição não 
  const user=account(),commission=add(user,'Comissão',55000,'2026-10-25'),rent=add(user,'Aluguel recebido',80000,'2026-10-26');for(const [text,id]of [['Tira a comissão que recebi no dia 25.',commission.documents[0].document.id],['Cancele a entrada do aluguel que teve dia 26.',rent.documents[0].document.id],['cancela a entrada que caiu na minha conta ontem',rent.documents[0].document.id]]){const d=await interpret(text,localFinanceState(user));assert.equal(d.intent,'COMMAND',d.question);assert.equal((d.command as {target_id:string}).target_id,id);}
  const unsupported=await interpret('cancela a entrada que foi depositada ontem',localFinanceState(user));assert.equal(unsupported.intent,'CLARIFY');assert.doesNotMatch(unsupported.question,/Confira a data|Informe.*data/);assert.match(unsupported.question,/26\/10\/2026/);
 });
+
+
+test('IW-D: ambiguidade pede só discriminador ausente; idênticos vão ao aplicativo',async()=>{
+ const a=account();add(a,'Uber',10000,'2026-10-20');add(a,'Uber',10000,'2026-10-21');const byDate=await interpret('cancela a entrada de 100 reais do Uber',localFinanceState(a));assert.equal(byDate.intent,'CLARIFY');assert.match(byDate.question,/Qual é a data/);assert.doesNotMatch(byDate.question,/Qual é o valor|1.*Confirmar/);
+ const b=account();add(b,'Uber',10000,'2026-10-20');add(b,'Uber',20000,'2026-10-20');const byAmount=await interpret('cancela a entrada do Uber dia 20',localFinanceState(b));assert.equal(byAmount.intent,'CLARIFY');assert.match(byAmount.question,/Qual é o valor/);assert.doesNotMatch(byAmount.question,/Qual é a data/);
+ const c=account();add(c,'Uber',10000,'2026-10-20');add(c,'Uber',10000,'2026-10-20');const identical=await interpret('cancela a entrada do Uber dia 20 de 100 reais',localFinanceState(c));assert.equal(identical.intent,'CLARIFY');assert.match(identical.question,/mesmos dados.*aplicativo/);
+ const d=account();for(let i=0;i<6;i++)add(d,'Origem '+String.fromCharCode(65+i),10000,'2026-10-20');const many=await interpret('cancela a entrada dia 20 de 100 reais',localFinanceState(d));assert.equal(many.intent,'CLARIFY');assert.match(many.question,/De onde veio o dinheiro/);assert.equal((many.question.match(/• /g)||[]).length,4);assert.match(many.question,/outras 2 entradas/);
+});
+
+test('IW-D: novo pedido limpa diálogo mas preserva prova de autoria assinada fornecida',()=>{
+ const user=account(),p=add(user,'Comissão própria',9000,'2026-10-20'),saved=row(user,p),normal=whatsappConversationContext([saved],user,sender,key,now),reset=whatsappConversationContext([saved],user,sender,key,now,true);assert.ok(normal.focus);assert.equal(normal.turns.length,1);assert.equal(reset.focus,undefined);assert.equal(reset.query,undefined);assert.deepEqual(reset.turns,[]);assert.deepEqual(reset.incomplete,[]);assert.equal(reset.income_origins.length,1);assert.deepEqual(reset.income_origins,normal.income_origins);
+});

@@ -1,0 +1,52 @@
+ANOTEI — IW-D: CANCELAMENTO DE ENTRADAS POR TEXTO E ÁUDIO
+27/10/2026 — implementação local para integração do orquestrador
+
+VERSÕES E ESCOPO
+Base IW-D: 6e8bae1e316a2f9fdeffd509c750710c91c5f220.
+Corretivo funcional: 236d4856883da116a0d0fcf8079e797e8de98d70.
+Dependência de apresentação: Produto db9febf7199e3f56481065116050475d67a81dfa (local a7aad30), já integrada pelo orquestrador. Não reapresentar como mudança desta frente.
+Worktree isolado: C:\Users\BRUNOL~1\AppData\Local\Temp\anotei-hardening-TWxG2B\ia; branch codex/ia-whatsapp-rules.
+Este relatório acompanha dois testes adicionais; o SHA desse pacote está no histórico Git e na comunicação ao orquestrador.
+Sem push, deploy, SQL remoto, dados reais, WhatsApp real ou chamadas pagas. Suite completa e build pertencem à janela final do orquestrador.
+
+RESULTADO E CAMADAS CAUSAIS
+1. Interpretação: cancelamento de entrada por data/descrição/valor reutiliza document_archive. Receita realizada é mantida no histórico como inativa; só após confirmação sua contribuição sai do caixa. Prevista futura deixa a projeção e não retira dinheiro que ainda não entrou. Negação, múltiplos alvos, alvo inativo e tipo divergente não geram gravação automática.
+2. Contexto: última entrada que enviei exige origem derivada de criação INCOME assinada, confirmada e vinculada ao mesmo titular e remetente. expected:null distingue criação de update. Não se escolhe a última linha manual ou a entrada do parceiro. Empate, múltiplas criações ou lacuna recente não permitem escolha arbitrária; reset invalida a origem anterior. Assinatura antiga é verificada na data da confirmação original somente para autoria; uma exclusão recebe nova assinatura vigente.
+3. Worker: independentFinanceRequest esvaziava recent antes de whatsappConversationContext, eliminando a origem mesmo quando o helper a reconhecia. A chamada agora passa recent e resetDialogue separado: apaga foco/consulta/turnos/complementos, preserva apenas a prova de origem já disponível. Nenhuma leitura adicional nem extensão do foco geral de 15 minutos.
+4. Validação: sourceWithVerifiedTarget aceitava UUID fornecido pelo próprio modelo como se fosse evidência do usuário. Agora somente o objeto original de um resolvedor local recebe prova privada WeakMap, vinculada à fonte NFC, alvo, ação, reserva e snapshot canônico do registro. Clone JSON, fonte trocada, mutações desses campos, alvo alterado no estado e UUID inventado não criam essa evidência. O caminho já existente assistantTurn.resolved.target foi preservado. Isso não substitui assinatura, validação financeira, autorização ou CAS; também não é lease nem armazenamento durável.
+5. Edição: quickEditedPlan convertia archive/restore INCOME seguido de valor100/dia25 em income_upsert. A guarda impede essa conversão; a mensagem de 2 editar pede reidentificação da entrada. Um comando independente completo mantém sua interpretação própria. O ramo autoritativo de prefixo pode descartar um draft anterior e produzir outro comando local: não significa reutilizar seu alvo.
+6. Apresentação: whatsappPlanReply mantém assinatura/export e delega ao helper puro já entregue por Produto. Resumo, 1 confirmar e 2 editar permanecem. Candidatos ambíguos são bullets com nome/data/valor, sem números reservados à confirmação. Pergunta-se o discriminador ausente; entradas indistinguíveis exigem seleção no aplicativo; listas maiores que quatro avisam quantas outras existem.
+
+LINGUAGEM E LIMITES
+Cobrem-se entrada/receita/recebimento/renda/grana/crédito/comissão, ligações iniciais como que eu recebi ontem e cláusula gramatical após descrição, como aluguel que teve dia26. Pontuação final não vira nome. Palavras relativas dentro de uma descrição real, como Comissão que entrou depois, continuam seletoras.
+Não é um inventário completo da linguagem. Exemplo ainda deliberadamente esclarecido: cancela a entrada que foi depositada ontem. A resposta preserva a data reconhecida e pede valor/nome, sem perguntar a data já dita nem alegar ausência de todos os registros. A revisão de regras locais não prova compreensão de modelo real.
+O worker fornece histórico recente recortado; não há garantia de localizar a última criação fora das linhas carregadas. Nesse caso pede identificação. Não houve nova consulta remota de histórico, migração ou aumento de janela geral.
+
+EVIDÊNCIAS ANTES/DEPOIS
+Baseline de cinco cenários dirigidos localmente: 1/5 antes, 5/5 após o primeiro suporte. Conjunto pequeno e selecionado; não é taxa geral de compreensão.
+Validação adversarial de alvo, com arquivo próprio de três testes: 1/3 antes, 3/3 após; falhas eram autoevidência do UUID e clone. O controle local válido foi mantido. Sem escrita antes de confirmar.
+Worker real em SQLite local, transportes e transcrição substituídos: 0/2 antes da correção de resetDialogue; 2/2 depois. Helpers isolados passavam e o worker falhava, demonstrando a necessidade da integração. Texto chama ASR zero vezes; áudio usa seis transcrições fixas. Nenhum intérprete remoto nem provedor real foi chamado. Quatro operações financeiras locais por cenário, renda do parceiro e de outro titular preservadas; replay não acrescenta operação.
+Baseline isolada de quickEditedPlan original: archive e restore vezes valor100 e dia25 geravam Registrar recebimento com valor/data alterados. Com guarda retornam null, sem alterar o registro.
+QA independente mantém seu arquivo congelado de oito testes e matriz de 14 frases. A repetição e classificação finais são responsabilidade de QA; não contei casos de fallback como acertos de modelo real.
+
+VALIDAÇÃO EXECUTADA
+node --import ./scripts/offline-validation.mjs --experimental-strip-types --test --test-isolation=none tests/income-archive.test.ts tests/verified-finance-target.test.ts tests/whatsapp-income-archive.test.ts
+23/23 em 6,791 s. Inclui autoria, datas/valores, previstas, negação, edição, replay, dois números, alvo forjado e reset de diálogo.
+
+node --import ./scripts/offline-validation.mjs --experimental-strip-types --test --test-isolation=none tests/whatsapp-worker.test.ts tests/assistant-conversation.test.ts tests/natural-language-matrix.test.ts tests/whatsapp-plan-copy.test.ts
+60/60 em 19,186 s; a matriz informa 141 mensagens. Não foi necessário alterar asserções dos testes existentes. O comando capturado também nomeava whatsapp-context.test.ts, que não existe e não foi executado; o arquivo correto abaixo foi executado separadamente.
+
+node --import ./scripts/offline-validation.mjs --experimental-strip-types --test --test-isolation=none tests/whatsapp-context-integrity.test.ts
+2/2 em 1,455 s. Assinatura/titular/remetente/foco e leitura de agenda preservados.
+
+node node_modules/typescript/bin/tsc --noEmit
+Exit 0 no corretivo funcional; depois só dois testes adicionais e este relatório, sem mudança funcional.
+git diff --check: aprovado.
+
+Logs locais ignorados: .data/iw-d-before.log; iw-d-target-proof-before.log; iw-d-worker.log; iw-d-proof-worker-final.log; iw-d-directed-final.log; iw-d-legacy-regression.log; iw-d-context-final.log. Não expor dados ou segredos ao empacotar logs.
+
+INTERPRETAÇÃO DOS NÚMEROS
+As durações acima são da execução local das suites, não latência por comando em produção. As suítes usam regras locais, respostas de modelo substituídas para ataques e ASR/transportes substituídos. Custo externo destas validações: zero; tokens/modelo real e custo por comando de produção não foram medidos. Não é possível inferir qualidade acústica, taxa de entendimento geral, entrega em aparelho nem escalabilidade por esses resultados. Testes de produção ou modelo pago dependem de autorização/ambiente próprios.
+
+PENDÊNCIAS
+Repetição independente por QA/Backend, integração controlada, types/suite completa/build do orquestrador. REQUEST/CAS/outbox e recuperação de entrega permanecem em seus contratos/frentes; este pacote não os refatora nem declara esses riscos resolvidos. Nenhuma publicação autorizada por este relatório.
