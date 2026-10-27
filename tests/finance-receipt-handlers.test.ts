@@ -42,7 +42,8 @@ const voice=await import('../app/api/assistant/finance/route.ts');
 hooks.deregister();
 
 function reset(receipt:unknown){fixture.receipt=receipt;fixture.applyCalls=0;fixture.stateCalls=0;fixture.contextCalls=0;fixture.contextFails=false;fixture.writeFails=false;}
-const request=(token=confirmation)=>new Request('http://receipt.test/api/finance',{method:'POST',headers:{'Content-Type':'application/json',Origin:'http://receipt.test'},body:JSON.stringify({confirmation:token,id:'synthetic-voice-session'})});
+const requestOrigin=new URL(process.env.APP_URL||'http://receipt.test').origin;
+const request=(token=confirmation)=>new Request(requestOrigin+'/api/finance',{method:'POST',headers:{'Content-Type':'application/json',Origin:requestOrigin},body:JSON.stringify({confirmation:token,id:'synthetic-voice-session'})});
 const invalidReceipts:[string,unknown][]=[
  ['null',null],['vazio',{}],['saved falso',{ok:true,saved:false,operation_id:plan.id}],
  ['ok falso',{ok:false,saved:true,operation_id:plan.id}],['ID ausente',{ok:true,saved:true}],
