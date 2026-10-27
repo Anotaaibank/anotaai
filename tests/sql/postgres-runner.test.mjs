@@ -43,3 +43,19 @@ test('fixture falha ou deixa resíduo: não aprova Postgres e encerra backend', 
   const backend = {start: async () => {}, query: async () => ++n === 1 ? run.marker : n === 5 ? '1' : '', stop: async () => {stopped = true;}};
   await assert.rejects(() => runChecks(backend, run, 'select 1;', [{file: 'synthetic.sql', sql: 'select 1;'}]), /resíduos/); assert.equal(stopped, true);
 });
+
+test('falha conserva stdout de casos, fixture responsável e aprovações anteriores sem aprovar a falha', async () => {
+  const run = createRun(); let n = 0, stopped = false;
+  const failure = Object.assign(Error('EXPECTED_ASSERTION'), {stdout: '20|7|13\nmissing status|f|t\n', stderr: 'FINANCE_VALIDATION_REGRESSION'});
+  const backend = {start: async () => {}, query: async () => {
+    n++; if (n === 1) return run.marker; if (n === 5) return '0'; if (n === 6) throw failure; return '';
+  }, stop: async () => {stopped = true;}};
+  await assert.rejects(() => runChecks(backend, run, 'select 1;', [
+    {file: 'first.sql', sql: 'select 1;'}, {file: 'regression.sql', sql: 'select 2;'}
+  ]), error => {
+    assert.equal(error.fixture, 'regression.sql'); assert.equal(error.stdout, failure.stdout);
+    assert.equal(error.stderr, failure.stderr);
+    assert.deepEqual(error.completed_checks, [{file: 'first.sql', passed: true, rolled_back: true}]); return true;
+  });
+  assert.equal(stopped, true);
+});

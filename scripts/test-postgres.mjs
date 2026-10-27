@@ -14,7 +14,13 @@ const markerSql = "select current_setting('anotei.test_run',true);";
 function execute(command, args, {input, env = freshEnvironment(), timeout = 60000, capture = true} = {}) {
   const result = spawnSync(command, args, {input, env, stdio: capture ? 'pipe' : 'ignore', encoding: 'utf8', windowsHide: true, shell: false, timeout, maxBuffer: 8 * 1024 * 1024});
   if (result.error) throw Error('Falha ao executar ' + basename(command) + ': ' + result.error.code);
-  if (result.status !== 0) throw Error(basename(command) + ' falhou: ' + String(result.stderr || result.stdout).slice(-5000));
+  if (result.status !== 0) {
+    const error = Error(basename(command) + ' falhou: ' + String(result.stderr || result.stdout).slice(-5000));
+    // Synthetic disposable SQL only. Preserve both streams: stderr alone loses
+    // the case-by-case SELECT results printed before an expected assertion.
+    error.stdout = result.stdout ?? ''; error.stderr = result.stderr ?? '';
+    throw error;
+  }
   return result.stdout ?? '';
 }
 function databaseName(name, run) {if (name !== 'postgres' && name !== run.database) throw Error('Banco fora do teste.'); return name;}
@@ -108,9 +114,11 @@ export async function runChecks(backend, run, bootstrap, fixtures) {
     await backend.query('BEGIN;\n' + bootstrap + '\nCOMMIT;');
     const checks = [];
     for (const {file, sql} of fixtures) {
-      await backend.query(fixtureTransaction(sql));
-      const leftover = await backend.query('select count(*) from auth.users;');
-      if (leftover.trim() !== '0') throw Error('Fixture deixou resíduos: ' + file);
+      try {
+        await backend.query(fixtureTransaction(sql));
+        const leftover = await backend.query('select count(*) from auth.users;');
+        if (leftover.trim() !== '0') throw Error('Fixture deixou resíduos: ' + file);
+      } catch (error) {error.fixture = file; error.completed_checks = [...checks]; throw error;}
       checks.push({file, passed: true, rolled_back: true});
     }
     return checks;
@@ -126,7 +134,17 @@ async function main() {
   const backend = options.mode === 'portable' ? await portableBackend(options.bin, run, manifest) : await dockerBackend(run, manifest);
   const start = Date.now(), evidence = {at: new Date().toISOString(), ...backend.metadata, bootstrap_sha256: createHash('sha256').update(bootstrap).digest('hex'), production_access: false, supabase_auth_service_tested: false, checks: []};
   try {evidence.checks = await runChecks(backend, run, bootstrap, fixtures); evidence.passed = true; console.log('Postgres descartável: ' + evidence.checks.length + ' fixtures passaram, com rollback.');}
-  catch (error) {evidence.passed = false; evidence.error = error.message; throw error;}
+  catch (error) {
+    evidence.passed = false; evidence.error = error.message;
+    evidence.checks = error.completed_checks ?? [];
+    evidence.failure_fixture = error.fixture ?? null;
+    mkdirSync(resolve(root, '.data'), {recursive: true});
+    for (const stream of ['stdout', 'stderr']) if (typeof error[stream] === 'string') {
+      const artifact = '.data/postgres-test-failure.' + stream + '.log';
+      writeFileSync(resolve(root, artifact), error[stream]); evidence[stream + '_artifact'] = artifact;
+    }
+    throw error;
+  }
   finally {evidence.duration_ms = Date.now() - start; mkdirSync(resolve(root, '.data'), {recursive: true}); writeFileSync(resolve(root, '.data/postgres-test-results.json'), JSON.stringify(evidence, null, 2) + '\n');}
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch(error => {console.error(error.message); process.exitCode = 1;});
