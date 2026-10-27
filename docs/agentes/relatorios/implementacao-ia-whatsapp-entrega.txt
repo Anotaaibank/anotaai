@@ -1,0 +1,48 @@
+ANOTEI — IW-C / ORQ-03 — ETAPA 1: POLÍTICA PURA E CONTRATO PARA REVISÃO
+2026-10-27. Sem recuperação ou retry ligados ao runtime.
+Worktree C:\Users\BRUNOL~1\AppData\Local\Temp\anotei-hardening-TWxG2B\ia; branch codex/ia-whatsapp-rules.
+Backend aprovado incorporado: 56c9f23 -> b03e56f; e9b9df3 -> 5a7783e. Esses commits não são entregas desta frente. Novo commit: somente módulo, testes e este contrato.
+
+IMPLEMENTADO, AINDA INATIVO
+lib/whatsapp-delivery-policy.ts é puro: sem imports, rede, banco, timers, relógio ambiente ou sorteio. Recebe snapshot, evento normalizado, autorização/fence, now e jitter injetados. Retorna novo snapshot, motivo e NONE / CLAIM_SEND / RECONCILE. CLAIM_SEND exige CAS persistido antes do HTTP; não é autorização isolada. Nenhum código de runtime importa o módulo.
+A lacuna atual continua até a etapa 2: pendingReplies não recupera ENVIANDO abandonado. Esta entrega não publica uma correção operacional nem compara uma taxa de acerto anterior inexistente para este helper.
+
+INVARIANTES
+- ENVIANDO abandonado/lease desconhecido -> INCERTO, inclusive após prazo vencido. Nunca volta automaticamente à fila.
+- Apenas 429 com rejeição antes do aceite comprovada pelo adaptador permite AGUARDANDO_RETRY. Status HTTP isolado não basta. Timeout, 409, 5xx (inclusive 503 + Retry-After), ACK incompleto ou IDs contraditórios -> INCERTO. Rejeição permanente comprovada -> FALHOU.
+- Defaults inativos para revisão: máximo 3 HTTPs físicos por versão lógica; backoff 1/2 s entre tentativas, jitter positivo até 25%, lease de 60s e orçamento de request de 25s. Nonce novo a cada HTTP, histórico persistido e contador anterior ao envio. Reset de status não apaga tentativa/ID conhecido.
+- Retry-After em segundos ou HTTP-date estrito pelo relógio injetado. Nunca antecipar a espera; header inválido exige revisão. Prazo insuficiente -> EXPIRADO. expires_at deve ser o mínimo entre validade da confirmação assinada, lembrete e TTL da resposta; não renovar a autorização financeira.
+- Cooldown por instância/token precisa ser persistido pelo scheduler e compartilhado entre contas da mesma conexão. O helper respeita instance_not_before; não implementa rate limiter distribuído.
+- ACEITO != ENTREGUE. Só recibo autenticado/correlacionado ao ID original, instância e destinatário prova entrega. Read também prova entrega. Recibo antigo não regride o estado; busca vazia/Not Found não prova não envio.
+- Fence: titular, ID da saída, instância, destinatário, reply_version, delivery_version, lease (null literal), attempt_nonce e hash do payload. Perda de qualquer parte não muda o snapshot nem autoriza envio.
+- Desativação/revogação cancela claims/retries. CANCELLED_POSSIBLY_SENT cancela a permissão, sem afirmar que um HTTP em voo foi desfeito; guardar o motivo e fatos para revisão. Aceite/entrega históricos são preservados. Não há garantia de exactly-once externo.
+
+PERSISTÊNCIA / MIGRAÇÃO PROPOSTAS, NÃO EXECUTADAS
+Preservar inbox e sua chave de evento recebido: provider_id atual é de ENTRADA. Recomendação: metadados privados versionados de saída por (user_id,source_inbox_id,reply_version,payload_hash), com ID próprio estável. Isso retém a tentativa incerta da versão anterior quando a inbox muda. Não criar outro provedor/fila externa. Uma implementação só com colunas na inbox também precisaria preservar o histórico por versão.
+Campos: identidade acima; reply_status; delivery_version; lease; attempt_count/attempt_nonce; histórico limitado de tentativas/nonces; expires_at; send_started_at/send_lease_until/next_attempt_at; provider_record_id/provider_message_id; temporary_rejection; delivery_reason e timestamps de aceite/entrega. Cada tentativa retém HTTP status, Retry-After, resultado/prova e IDs. Não duplicar tokens/transcrições. SQL usa timestamptz; adaptador converte para ms do helper.
+Índices: identidade lógica única, (reply_status,next_attempt_at), (reply_status,send_lease_until), correlação (user_id,instance_id,sender,provider_message_id). Watchdog em lotes limitados; reconciliação ativa terá orçamento próprio antes de ser habilitada.
+RPC interna do worker deve validar também a inbox atual, mapa da conexão/destinatário, permissões e revisão/hash/lease; persistir CAS, nonce e contador ANTES do HTTP. Preservar replyClaim(row):Promise<boolean>; CAS=false não envia nem modifica objeto local. Resultado exige o mesmo fence. Decisão/proof nunca vêm de parâmetro público do cliente. Grants mínimos/RLS, sem escrita operacional por anon/authenticated; consultar status somente do titular. Validar SQL em banco descartável.
+Migração futura aditiva, sem reexecutar baseline: ENVIANDO legado -> INCERTO; ACEITO legado sem prova de entrega; FALHOU legado não vira rejeição temporária por suposição; LIMPO permanece fora da fila. Sem prazo/nonce/evidência confiável, não inventar backfill que libere retry. Pausa/inventário, migração e habilitação dependerão de atribuição/aprovação próprias. Nenhum SQL foi gerado/aplicado.
+
+NORMALIZAÇÃO / RECONCILIAÇÃO
+Separar id interno Uazapi (provider_record_id) de messageid original (provider_message_id). Aceite comprovado com ID interno pode ser ACEITO; esse ID não satisfaz um recibo MessageIDs do WhatsApp. track_id admite duplicados: serve para localizar, não garante idempotência. Confirmar schema/versão da instância antes de implementar consulta por ID; nenhum acesso autenticado ao provedor foi feito.
+messages_update precisa de caminho autenticado antes do intérprete, correlação de conexão efetiva, destinatário, IsFromMe, tipo/IDs e tentativa. Não confiar em user_id do payload. Persistir/deduplicar prova e promover por CAS; nunca criar nova mensagem financeira, chamar IA ou reaplicar lançamento. Timestamp de recibo usa segundos; normalizar unidades e tolerar ordem invertida.
+ACK anterior à gravação ou callback antigo exige journal seguro e reconciliação com fence atual; não permite reenvio. Sem ID original, esta etapa não inventa associação. Menu->texto fallback existente exige decisão própria: cada HTTP conta separadamente e precisa de rejeição definitiva; não esconder dois POSTs num contador.
+Próxima fase recomendada, somente após revisão: watchdog ENVIANDO vencido -> INCERTO e status auditável, sem resend. Retry, ACK webhook e reconciliação ativa não estão ligados.
+
+UX PROPOSTA
+INCERTO: “Não foi possível confirmar o envio pelo WhatsApp. Confira o aplicativo antes de repetir.” Separar registro financeiro salvo de resposta enviada. ACEITO: “Aceito pelo serviço; entrega não confirmada.” Mostrar horário/tentativas de retry e expiração. INCERTO não terá reenvio automático; revisão/novo envio explícito devem preservar linhagem e risco de duplicação. Logs: correlation ID, tenant interno, revisão/nonce, estado/motivo, status/duração e CAS recusado; sem tokens ou conteúdo sensível.
+
+EVIDÊNCIAS
+Testes novos: tests/whatsapp-delivery-policy.test.ts. Primeiro draft 15/17: testes detectaram reset de status indevido e hash frouxo, corrigidos. Suite final ampliada 20/20, incluindo 18 combinações de espera/jitter, abandono antes/depois do HTTP, 429, timeout/5xx, nonce/revisão antigos, prazo/revogação, dois IDs, ACK tardio e recibos fora de ordem. Clock/sorteio ambiente são proibidos em um teste de determinismo.
+Regressão após Backend: 85/85 em policy + reply-cas + worker + IW-regression + voice-locale, 59.219 s. Após acrescentar a distinção de IDs e refinar ID contraditório, suite pura final repetida: 20/20, 0.992 s. Typecheck --noEmit e diff --check aprovados. Cloud é stub; sem Postgres real, microfone, WhatsApp real, modelo pago ou build completo. Sem push/deploy. Os testes da política não provam sua integração operacional.
+Comandos: node --import ./scripts/offline-validation.mjs --experimental-strip-types --test --test-isolation=none tests/whatsapp-delivery-policy.test.ts [na regressão também: tests/whatsapp-reply-cas.test.ts tests/whatsapp-worker.test.ts tests/whatsapp-iw-regression.test.ts tests/assistant-voice-locale.test.ts]; node node_modules/typescript/bin/tsc --noEmit; git diff --check.
+Logs ignorados: .data/iw-c-policy-first.log; iw-c-policy-after.log; iw-c-policy-final.log; iw-c-regression.log.
+
+FONTES OFICIAIS ABERTAS
+https://docs.uazapi.com/docs/errors-and-retries
+https://docs.uazapi.com/endpoint/post/send~text
+https://docs.uazapi.com/webhook/messages_update
+https://supabase.com/changelog (índice .md indisponível; HTML consultado)
+https://supabase.com/docs/guides/database/postgres/row-level-security
+A proposta de persistência é desenho do projeto; não representa alteração Supabase ou garantia de idempotência do provedor.
