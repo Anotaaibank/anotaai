@@ -33,8 +33,8 @@ const hooks=registerHooks({resolve(s,c,next){
  return next(s,c);
 }});
 const route=await import('../app/api/whatsapp/route.ts');hooks.deregister();
-function reset(manager=false,shared=false){fixture.manager=manager;fixture.unauthenticated=false;fixture.settings=makeBot(viewer,shared?master:undefined);fixture.bot=makeBot(viewer,shared?master:undefined);fixture.providerConnection={...providerConnection};fixture.reads=fixture.statusCalls=fixture.saveCalls=fixture.connectCalls=0;}
-const request=(action='save',extra={})=>{const origin=new URL(process.env.APP_URL||'http://whatsapp-public.test').origin;return new Request(origin+'/api/whatsapp',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({action,...extra})});};
+function reset(manager=false,shared=false){fixture.viewer=viewer;fixture.manager=manager;fixture.unauthenticated=false;fixture.settings=makeBot(viewer,shared?master:undefined);fixture.bot=makeBot(viewer,shared?master:undefined);fixture.providerConnection={...providerConnection};fixture.reads=fixture.statusCalls=fixture.saveCalls=fixture.connectCalls=0;}
+const request=(action='save',extra={},query='')=>{const origin=new URL(process.env.APP_URL||'http://whatsapp-public.test').origin;return new Request(origin+'/api/whatsapp'+query,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({action,...extra})});};
 function assertPrivate(data:{connection:Record<string,unknown>}){assert.deepEqual(Object.keys(data.connection).sort(),['configured','connected','message']);assert.equal(data.connection.qr,undefined);assert.equal(data.connection.paircode,undefined);assert.equal(data.connection.owner,undefined);assert.equal(data.connection.token,undefined);assert.equal(data.connection.configured,true);assert.equal(data.connection.connected,false);}
 
 test('PRIV-B baseline GET: assinante não recebe material de pareamento nem extras',async()=>{
@@ -55,6 +55,7 @@ for(const method of ['GET','POST'] as const){
  test(`${method}: sem sessão não consulta armazenamento nem provedor`,async()=>{
   reset();fixture.unauthenticated=true;const response=method==='GET'?await route.GET():await route.POST(request());
   assert.equal(response.status,401);assert.equal(fixture.reads,0);assert.equal(fixture.statusCalls,0);assert.equal(fixture.connectCalls,0);assert.equal(fixture.saveCalls,0);
+  assert.equal((await response.json()).viewer_id,undefined);
  });
 }
 for(const [label,manager,shared]of [['assinante independente',false,false],['gestor compartilhado',true,true]] as const)test(`GET: ${label} recebe só status e mensagem segura`,async()=>{
@@ -95,4 +96,24 @@ test('DTO: código malformado/QR externo nunca entram na allowlist',()=>{
 test('DTO: sessão conectada não republica material antigo de pareamento',()=>{
  const dto=publicWhatsappConnection({...providerConnection,connected:true},{viewerId:viewer,manager:true,settings:makeBot(),effective:makeBot()})!;
  assert.equal(dto.connected,true);assert.equal(dto.qr,undefined);assert.equal(dto.paircode,undefined);
+});
+for(const method of ['GET','POST'] as const)test(`PRIV-B2 ${method}: viewer_id vem da sessão, nunca de query/body/provedor`,async()=>{
+ reset(true);fixture.providerConnection.viewer_id=master;fixture.providerConnection.user_id=master;
+ const post=request('save',{viewer_id:master,user_id:master,viewerId:master,manager:true},'?viewer_id='+master+'&user_id='+master);
+ const req=method==='GET'?new Request(post.url,{headers:post.headers}):post;
+ req.headers.set('x-viewer-id',master);
+ const response:Response=method==='GET'?await Reflect.apply(route.GET,undefined,[req]):await route.POST(req);
+ const data=await response.json();assert.equal(response.status,200);assert.equal(data.viewer_id,viewer);
+ assert.notEqual(data.viewer_id,master);assert.equal(fixture.statusCalls,1);
+});
+test('PRIV-B2 POST connect: resultado live mantém viewer_id da sessão',async()=>{
+ reset(true);fixture.providerConnection.viewer_id=master;
+ const response=await route.POST(request('connect',{viewer_id:master}));const data=await response.json();
+ assert.equal(response.status,200);assert.equal(data.viewer_id,viewer);assert.equal(fixture.statusCalls,0);assert.equal(fixture.connectCalls,1);
+});
+test('PRIV-B2 GET: troca de sessão muda viewer_id mesmo com o mesmo provedor compartilhado',async()=>{
+ reset(false,true);const first=await(await route.GET()).json();
+ const nextViewer=randomUUID();fixture.viewer=nextViewer;fixture.settings=makeBot(nextViewer,master);fixture.bot=makeBot(nextViewer,master);
+ const second=await(await route.GET()).json();assert.equal(first.viewer_id,viewer);assert.equal(second.viewer_id,nextViewer);
+ assertPrivate(second);assert.equal(fixture.statusCalls,2);
 });
