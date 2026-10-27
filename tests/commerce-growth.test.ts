@@ -65,7 +65,7 @@ test('alertas usam o dia brasileiro, não contam canceladas como atraso e não d
 test('relatórios por plano e campanha não tratam cadastro ou cancelamento como receita recebida',()=>manager(id=>{
  const c=saveLocalCampaign(id,campaign()),ref={campaign_id:c.id,captured_at:new Date().toISOString(),expires:Date.now()+30*86400000};
  const a=account();attributeLocalRegistration(a,ref);updateLocalSubscription(id,subscriptionInput({user_id:a,status:'ATIVA',plan:'Mensal',monthly_cents:4990,renewal_date:'2026-11-10',expected:null}));
- const customers=localCommerce(id).customers.filter(u=>u.id===a),r=commerceReports(customers),result=campaignResults([c],customers,'https://anotei.example')[0];
+ const evaluation=new Date('2026-10-27T15:00:00Z'),customers=localCommerce(id).customers.filter(u=>u.id===a),r=commerceReports(customers,evaluation),result=campaignResults([c],customers,'https://anotei.example',undefined,evaluation)[0];
  assert.equal(r.average_ticket_cents,4990);assert.equal(r.annual_forecast_cents,59880);assert.equal(r.plans[0].active,1);assert.equal(result.registered,1);assert.equal(result.active_subscribers,1);assert.equal(result.mrr_cents,4990);assert.equal(result.test_link,false);
  assert.equal(campaignLink(c.code,undefined).test_link,true);assert.equal(campaignLink(c.code,'http://localhost:3100').test_link,true);assert.equal(campaignLink(c.code,'https://127.0.0.1').test_link,true);assert.equal(campaignLink(c.code,'https://user:pass@example.com').link.includes('pass'),false);
 }));

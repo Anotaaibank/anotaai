@@ -47,9 +47,40 @@ export function subscriptionInput(raw:unknown):Omit<Subscription,'updated_at'>&{
  if(commercial&&b.status==='CANCELADA'&&!commercial.cancellation_reason)throw new AppError('Informe o motivo do cancelamento para acompanhar a retenção.');
  return {user_id:b.user_id,status:b.status as SubscriptionStatus,plan:text(b.plan,0,80,'o nome do plano'),monthly_cents:Number(b.monthly_cents),renewal_date:b.renewal_date as string|null,expected:b.expected as string|null,...(commercial?{commercial}:{})};
 }
+// Reporting only. A date/status is not proof of access: the server also checks
+// exemptions, disabled accounts, enforcement and approved Pix for that validity.
+function subscriptionWithinTerm(subscription:Subscription|null,today:string){
+ return !!subscription&&['ATIVA','TESTE'].includes(subscription.status)&&!!subscription.renewal_date&&realDate(subscription.renewal_date)&&subscription.renewal_date>=today;
+}
+function paidSubscriptionsWithinTerm(customers:Customer[],today:string){
+ return customers.filter(c=>c.subscription?.status==='ATIVA'&&c.subscription.monthly_cents>0&&subscriptionWithinTerm(c.subscription,today));
+}
 export function commerceMetrics(customers:Customer[],feedbacks:Feedback[],now=new Date()){
- const active=customers.filter(c=>c.subscription?.status==='ATIVA'&&c.subscription.monthly_cents>0),month=brazilDay(now).slice(0,7);
- return {registered:customers.length,active:active.length,trials:customers.filter(c=>c.subscription?.status==='TESTE').length,past_due:customers.filter(c=>c.subscription?.status==='ATRASADA').length,canceled:customers.filter(c=>c.subscription?.status==='CANCELADA').length,new_this_month:customers.filter(c=>brazilDay(new Date(c.created_at)).startsWith(month)).length,mrr_cents:active.reduce((n,c)=>n+c.subscription!.monthly_cents,0),feedback_total:feedbacks.length,feedback_open:feedbacks.filter(f=>f.status!=='RESOLVIDO').length};
+ const today=brazilDay(now),month=today.slice(0,7),active=customers.filter(c=>c.subscription?.status==='ATIVA'&&c.subscription.monthly_cents>0),current=paidSubscriptionsWithinTerm(customers,today);
+ return {
+  registered:customers.length,
+  // Compatibility: these two legacy counters describe the recorded ATIVA status,
+  // including expired/missing dates. Use paid_current/current_mrr_cents for forecasts.
+  active:active.length,mrr_cents:active.reduce((n,c)=>n+c.subscription!.monthly_cents,0),
+  subscriptions_registered:customers.filter(c=>c.subscription&&c.subscription.status!=='SEM_ASSINATURA').length,
+  paid_current:current.length,current_mrr_cents:current.reduce((n,c)=>n+c.subscription!.monthly_cents,0),
+  paid_expired:active.filter(c=>!!c.subscription!.renewal_date&&realDate(c.subscription!.renewal_date)&&c.subscription!.renewal_date<today).length,
+  paid_missing_expiry:active.filter(c=>!c.subscription!.renewal_date||!realDate(c.subscription!.renewal_date)).length,
+  trials:customers.filter(c=>c.subscription?.status==='TESTE').length,
+  trials_current:customers.filter(c=>c.subscription?.status==='TESTE'&&subscriptionWithinTerm(c.subscription,today)).length,
+  // No authoritative access result is included in ManagementData. Unknown != zero.
+  effective_access:null,
+  past_due:customers.filter(c=>c.subscription?.status==='ATRASADA').length,canceled:customers.filter(c=>c.subscription?.status==='CANCELADA').length,
+  new_this_month:customers.filter(c=>brazilDay(new Date(c.created_at)).startsWith(month)).length,
+  feedback_total:feedbacks.length,feedback_open:feedbacks.filter(f=>f.status!=='RESOLVIDO').length,as_of:today
+ };
+}
+// Historical administrative approvals, not bank reconciliation or card revenue.
+// Omitted data stays unknown; created_at is a request date, not a receipt date.
+export function commercePaymentMetrics(payments?:ReadonlyArray<PixPayment>){
+ if(payments===undefined)return null;
+ const approved=payments.filter(p=>p.status==='APROVADO'),pending=payments.filter(p=>p.status==='PENDENTE');
+ return {approved_count:approved.length,approved_cents:approved.reduce((sum,p)=>sum+p.amount_cents,0),pending_count:pending.length,pending_cents:pending.reduce((sum,p)=>sum+p.amount_cents,0),rejected_count:payments.filter(p=>p.status==='REJEITADO').length};
 }
 
 function expectedVersion(value:unknown){if(value!==null&&(typeof value!=='string'||!Number.isFinite(Date.parse(value))))throw new AppError('Atualize a página antes de salvar.');return value as string|null;}
@@ -81,12 +112,12 @@ export function commerceAttention(customers:Customer[],feedbacks:Feedback[],now=
   pending_feedback:feedbacks.filter(f=>f.status!=='RESOLVIDO'&&!f.response&&Date.parse(f.created_at)<=now.getTime()-3*86400000).map(f=>f.id)
  };
 }
-export function commerceReports(customers:Customer[]){
- const m=commerceMetrics(customers,[]),plans=new Map<string,{plan:string;active:number;mrr_cents:number}>();
- for(const c of customers){const s=c.subscription;if(!s||s.status!=='ATIVA'||s.monthly_cents<=0)continue;const key=s.plan||'Sem nome de plano',p=plans.get(key)||{plan:key,active:0,mrr_cents:0};p.active++;p.mrr_cents+=s.monthly_cents;plans.set(key,p);}
- return {average_ticket_cents:m.active?Math.round(m.mrr_cents/m.active):0,annual_forecast_cents:m.mrr_cents*12,plans:[...plans.values()].sort((a,b)=>b.mrr_cents-a.mrr_cents||a.plan.localeCompare(b.plan)),card_subscribers:customers.filter(c=>c.subscription?.status==='ATIVA'&&c.profile?.payment_method==='CARTAO').length,boleto_subscribers:customers.filter(c=>c.subscription?.status==='ATIVA'&&c.profile?.payment_method==='BOLETO').length};
+export function commerceReports(customers:Customer[],now=new Date()){
+ const today=brazilDay(now),current=paidSubscriptionsWithinTerm(customers,today),m=commerceMetrics(customers,[],now),plans=new Map<string,{plan:string;active:number;mrr_cents:number}>();
+ for(const c of current){const s=c.subscription!,key=s.plan||'Sem nome de plano',p=plans.get(key)||{plan:key,active:0,mrr_cents:0};p.active++;p.mrr_cents+=s.monthly_cents;plans.set(key,p);}
+ return {average_ticket_cents:m.paid_current?Math.round(m.current_mrr_cents/m.paid_current):0,annual_forecast_cents:m.current_mrr_cents*12,plans:[...plans.values()].sort((a,b)=>b.mrr_cents-a.mrr_cents||a.plan.localeCompare(b.plan)),card_subscribers:current.filter(c=>c.profile?.payment_method==='CARTAO').length,boleto_subscribers:current.filter(c=>c.profile?.payment_method==='BOLETO').length};
 }
-export function campaignResults(campaigns:Campaign[],customers:Customer[],configured:string|undefined,fallback?:string){return campaigns.map(c=>{const attributed=customers.filter(u=>u.acquisition?.campaign_id===c.id),m=commerceMetrics(attributed,[]);return {...c,...campaignLink(c.code,configured,fallback),registered:attributed.length,active_subscribers:m.active,mrr_cents:m.mrr_cents};});}
+export function campaignResults(campaigns:Campaign[],customers:Customer[],configured:string|undefined,fallback?:string,now=new Date()){return campaigns.map(c=>{const attributed=customers.filter(u=>u.acquisition?.campaign_id===c.id),m=commerceMetrics(attributed,[],now);return {...c,...campaignLink(c.code,configured,fallback),registered:attributed.length,active_subscribers:m.paid_current,mrr_cents:m.current_mrr_cents};});}
 // Text cells are quoted and neutralize spreadsheet formulas, including leading whitespace.
 export function commerceCsv(rows:(string|number|null)[][]){return '\uFEFF'+rows.map(row=>row.map(value=>{let cell=String(value??'');if(/^[\s\uFEFF]*[=+@-]/.test(cell)||/^[\t\r\n]/.test(cell))cell="'"+cell;return '"'+cell.replaceAll('"','""')+'"';}).join(';')).join('\r\n')+'\r\n';}
 
