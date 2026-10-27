@@ -184,7 +184,7 @@ As páginas técnicas Meta de migração/coexistência não puderam ser totalmen
 consultadas por restrição/429. Por isso não foi prometida elegibilidade, duração
 do corte, retenção específica Meta ou preço por conversa para este número.
 
-VALIDAÇÃO CONJUNTA FINAL — FONTE 142147491f6c6b74c75c2853e424fd5a647cee99
+VALIDAÇÃO DO PRIMEIRO FECHAMENTO — FONTE 142147491f6c6b74c75c2853e424fd5a647cee99
 
 Tipos: saída 0, 85,445 s. Suíte integrada: 517/517, zero falhas ou testes pulados,
 85,852 s de processo (85,340 s informados pelo runner). Build Next 16.4.3: saída 0,
@@ -205,3 +205,13 @@ Os tempos acima são de testes/build, não de atendimento em produção. Custo p
 desta execução: zero; custo por comando real e latência ponta a ponta não
 medidos. Não foram enviados pedidos a clientes. Não foi feita publicação,
 migração remota ou desconexão do WhatsApp.
+
+ADENDO DE REVISÃO — SITUAÇÃO DA ENTRADA
+
+A revisão cruzada do Backend encontrou uma falha que os 517 testes anteriores não cobriam: a forma abreviada de dia podia tratar “prevista/recebida” como parte da descrição e selecionar um registro de situação oposta. O incremento ainda não havia sido publicado. O risco demonstrado foi de proposta indevida dentro da mesma conta; não de gravação automática nem de acesso a outro titular.
+
+Correção na fonte bb4ac7c22238351bc9a16ff14c43b7e6734ccbb1: os caminhos de data abreviada e explícita agora compartilham o mesmo parser de qualificador e o filtro de registros elegíveis. “Comissão prevista” usada como descrição completa continua sendo descrição; “entrada prevista” usada como situação restringe a PREVISTO. O caso inverso, ausência de candidato, ordem dos registros, linkages vou receber/recebi, inativas e realizadas com data futura receberam regressões. Assinatura, prova local de alvo, recibos e SQL não foram alterados.
+
+O mesmo arquivo novo de seis grupos, congelado antes da correção, passou de 1/6 para 6/6 dentro da bateria dirigida de 45/45. SHA256: 7260d2d9a15d7439af0362e83024bd54e739755da381db32249c32f9156bc874. Backend e um revisor independente de Qualidade deram parecer favorável por leitura, sem atribuir a si a execução dos testes. A sessão anterior de QA não retomou pelo app; foi usada uma revisão pontual de apoio, sem criar outro chat na lateral. A suíte completa foi repetida após a correção: 523/523, zero falhas ou testes pulados; tipos e build aprovados; sete verificações HTTP aprovadas novamente. Tempos e evidências estão em rodada-02b-validacao.json; as métricas acima da fonte 1421474 permanecem históricas, sem substituição silenciosa.
+
+Continuam sem nova avaliação por modelo, ASR e WhatsApp reais os cenários indicados na validação anterior; seis fallbacks da matriz independente não equivalem a acertos de linguagem. Zero chamadas pagas e alterações em produção. A migração para Cloud API, retenção e as prioridades de recuperação durável permanecem pendentes.

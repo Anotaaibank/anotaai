@@ -1,0 +1,157 @@
+{
+  "date": "2026-10-27",
+  "source_commit": "bb4ac7c22238351bc9a16ff14c43b7e6734ccbb1",
+  "branch": "codex/hardening-20261027",
+  "publication": "not published",
+  "prior_validation": "docs/agentes/relatorios/rodada-02-validacao.json",
+  "paid_calls": 0,
+  "production_writes": 0,
+  "finding": {
+    "discovered_by": "Anotei — Backend e Supabase, independent static review of 765711d",
+    "stage": "interpretation / local target selection, before confirmation",
+    "scope": "within current authenticated state; no automatic write or cross-tenant event established",
+    "problem": "Abbreviated date path skipped the status qualifier: requested PREVISTO could select a similarly named REALIZADO, and vice versa",
+    "fix": "Both paths use the same extracted grammatical status selector and common eligible-income predicate; words inside an explicitly introduced description are preserved",
+    "changed_paths": [
+      "lib/income-archive-language.ts",
+      "tests/income-archive-status-selector.test.ts"
+    ],
+    "unchanged_boundaries": [
+      "WeakMap proof",
+      "finance-ai target validation",
+      "signed confirmation and expected snapshot",
+      "persistence receipt",
+      "SQL",
+      "authentication"
+    ]
+  },
+  "regression": {
+    "frozen_test_sha256": "7260d2d9a15d7439af0362e83024bd54e739755da381db32249c32f9156bc874",
+    "before_source": "afd0581",
+    "before": {
+      "passed_groups": 1,
+      "total_groups": 6,
+      "exit": 1,
+      "duration_ms": 1525.314,
+      "evidence": ".data/hardening-evidence/core02-status-selector/before.log"
+    },
+    "after": {
+      "passed_groups": 6,
+      "total_groups": 6,
+      "part_of_directed_suite": {
+        "passed": 45,
+        "total": 45,
+        "exit": 0,
+        "duration_ms": 15145.1878,
+        "evidence": ".data/hardening-evidence/core02-status-selector/directed-after.log"
+      }
+    },
+    "note": "Six groups include loops for several forms and row ordering. Before may stop at the first failing assertion in each group; do not convert these counts into per-utterance accuracy. Targeted suite uses local rules, substituted transport/ASR/model boundaries and synthetic local persistence only."
+  },
+  "independent_review": {
+    "backend": {
+      "kind": "static only",
+      "source_commit": "bb4ac7c22238351bc9a16ff14c43b7e6734ccbb1",
+      "result": "favorable for full gate; status qualifier defect closed in examined diff",
+      "executed_tests": false
+    },
+    "quality_peer": {
+      "reviewer": "/root/qa_status_review",
+      "kind": "static only",
+      "source_commit": "bb4ac7c22238351bc9a16ff14c43b7e6734ccbb1",
+      "result": "accepted in examined diff, no concrete findings; status versus description, eligibility, latest provenance and target validation traced",
+      "executed_tests": false,
+      "limits": "Not a new audit of signature/confirmation internals or production. The previous QA chat could not resume through the app; this was a focused independent peer review, not a new sidebar chat."
+    },
+    "qa_matrix": "frozen independent QA matrix also ran as part of the root integrated suite; no separate new execution attributed to the QA chat"
+  },
+  "web": {
+    "at": "2026-10-27T18:21:23.334Z",
+    "isolated": true,
+    "paid_calls": 0,
+    "production_writes": 0,
+    "results": [
+      {
+        "name": "typecheck",
+        "exit": 0,
+        "duration_ms": 14429
+      },
+      {
+        "name": "tests",
+        "exit": 0,
+        "duration_ms": 58964
+      },
+      {
+        "name": "build",
+        "exit": 0,
+        "duration_ms": 194521
+      }
+    ],
+    "tests": {
+      "total": 523,
+      "passed": 523,
+      "failed": 0,
+      "skipped": 0
+    },
+    "evidence": ".data/hardening-evidence/core02-status-selector"
+  },
+  "http": {
+    "command": "node scripts/smoke-mobile-api.mjs",
+    "at": "2026-10-27T18:22:06.296Z",
+    "duration_ms": 26010,
+    "checks": [
+      {
+        "name": "WhatsApp view identity comes from the authenticated cookie, not the query",
+        "passed": true
+      },
+      {
+        "name": "anonymous WhatsApp view returns no viewer identity or history",
+        "passed": true
+      },
+      {
+        "name": "existing-account login through native HTTP gateway",
+        "passed": true
+      },
+      {
+        "name": "prepare does not mutate balance",
+        "passed": true
+      },
+      {
+        "name": "income, expense, future payable, appointment and replay persist exactly once",
+        "passed": true
+      },
+      {
+        "name": "owner spoofing is rejected over HTTP",
+        "passed": true
+      },
+      {
+        "name": "logout revokes native HTTP session",
+        "passed": true
+      }
+    ],
+    "synthetic": true,
+    "paid_calls": 0,
+    "production_writes": 0
+  },
+  "real_model": "not exercised",
+  "real_asr": "not exercised",
+  "real_whatsapp": "not exercised",
+  "cost_per_real_command": "not measured",
+  "end_to_end_whatsapp_latency": "not measured",
+  "unchanged_open_priorities": [
+    "durable REQUEST acceptance/recovery",
+    "uncertain WhatsApp delivery reconciliation",
+    "production configuration/RLS/backups verification",
+    "shared state and load evaluation",
+    "actual business-number Cloud API eligibility and migration",
+    "retention policy and support access",
+    "native Expo configuration/bundles/device release gates"
+  ],
+  "independent_matrix": {
+    "adequate": 8,
+    "incorrect": 0,
+    "model_fallback_unevaluated": 6,
+    "evidence": ".data/hardening-evidence/core02-status-selector/independent-root-diagnostic.json",
+    "note": "Root integrated full-suite diagnostic; raw default before label is not a baseline. Six model fallbacks remain unevaluated by a real model."
+  }
+}

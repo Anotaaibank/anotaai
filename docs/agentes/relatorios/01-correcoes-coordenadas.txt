@@ -60,3 +60,7 @@ privacidade e limites. A seção anterior “em andamento” registra o estado a
 fechar CORE01, não o estado final deste incremento. Nenhuma publicação ou
 migração remota foi executada. As prioridades arquiteturais abertas continuam
 abertas.
+
+REVISÃO POSTERIOR DO SEGUNDO CONJUNTO
+
+O Backend encontrou um bypass de situação da entrada na forma abreviada de data. A fonte bb4ac7c22238351bc9a16ff14c43b7e6734ccbb1 corrigiu o caso e recebeu nova validação completa: tipos, 523 testes, build e 7 verificações HTTP aprovados. O registro atual é rodada-02b-validacao.json; o registro anterior de 517 testes continua histórico. O relatório 02-whatsapp-conversacao-e-privacidade.txt explica o achado, reprodução antes/depois e limitações. Nenhuma publicação ocorreu.

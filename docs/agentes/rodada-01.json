@@ -150,7 +150,7 @@
     "native Expo configuration/bundles/device release gates"
   ],
   "updated_on": "2026-10-27",
-  "integration_commit": "142147491f6c6b74c75c2853e424fd5a647cee99",
+  "integration_commit": "bb4ac7c22238351bc9a16ff14c43b7e6734ccbb1",
   "followups": [
     {
       "id": "BS-B",
@@ -240,6 +240,12 @@
       "id": "WhatsApp Cloud API",
       "owner": "QA + Backend + Orquestrador",
       "status": "researched recommendation; no migration/disconnection/account creation. Number eligibility, pricing, cutover and retention require verification"
+    },
+    {
+      "id": "IW-D-status",
+      "owner": "Orquestrador + independent Backend review",
+      "status": "fixed status qualifier bypass in abbreviated dates; same six frozen regression groups 1/6 → 6/6; final types, 523 tests, build and HTTP 7/7 passed",
+      "source_commit": "bb4ac7c22238351bc9a16ff14c43b7e6734ccbb1"
     }
   ],
   "verified_evidence": {
@@ -379,6 +385,14 @@
       "types": 0,
       "build": 0,
       "http": "7/7; isolated loopback synthetic; no production writes"
+    },
+    "core02_status_selector": {
+      "source_commit": "bb4ac7c22238351bc9a16ff14c43b7e6734ccbb1",
+      "tests": "523/523",
+      "typecheck": 0,
+      "build": 0,
+      "http": "7/7",
+      "report": "docs/agentes/relatorios/rodada-02b-validacao.json"
     }
   },
   "not_completed": [
@@ -395,5 +409,6 @@
     "docs/agentes/relatorios/01-correcoes-coordenadas.txt",
     "docs/agentes/relatorios/rodada-01-validacao.json",
     "docs/agentes/relatorios/seguranca-privacidade-whatsapp.txt"
-  ]
+  ],
+  "current_validation": "docs/agentes/relatorios/rodada-02b-validacao.json"
 }
