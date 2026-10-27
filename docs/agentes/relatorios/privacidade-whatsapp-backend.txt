@@ -1,0 +1,238 @@
+ANOTEI — PRIVACIDADE WHATSAPP / BACKEND
+27/10/2026, America/Sao_Paulo. Frente Backend/Supabase.
+
+ESCOPO, VERSÃO E LIMITES
+Auditoria por leitura de fontes, sem abrir .env, SQLite, contas, registros reais,
+console do provedor ou Supabase de produção. Nenhuma chamada paga/provedor, exclusão,
+desconexão ou migração. Versão inicialmente auditada: 1b6ffd655430088996de4d9df8c37b20e342639c.
+Depois, autorização PRIV-B específica permitiu somente novo DTO público, projeção
+em /api/whatsapp e testes locais. Correção funcional: 292d41e0fe0cc5d781c5527a35a37c808ceb9ab8.
+Nenhuma implantação foi feita por esta frente. O build/integrado ficam com o root.
+
+Comparei hashes normalizados de 9 fontes com a cópia original de integração:
+8 eram iguais; whatsapp-worker diferia apenas na exigência de retorno true de
+patchMessage no ramo expenseStatusQuestion, linha80. Revisei esse diff por leitura;
+ele não altera as conclusões de armazenamento/privacidade abaixo. Não verifiquei
+qual revisão está publicada. Documentação de Meta/Uazapi e arquitetura do provedor
+ficaram com a QA; cliente/interface ficou com a frente Interface.
+
+O QUE É CONSTATADO E O QUE NÃO É
+- Constatado no código: texto/transcrição/resposta ficam no banco do servidor;
+  a API devolve os últimos50 da conta; áudio passa por arquivo temporário no servidor.
+- Constatado em respostas SIMULADAS de GET/POST: a projeção anterior podia repassar
+  QR/código a um assinante/shared se statusBot devolvesse esses campos. Corrigido
+  localmente no servidor por allowlist e identidade do dono da conexão.
+- NÃO constatado: QR real exposto, acesso entre assinantes distintos, mídia residual
+  concreta, logs de produção com segredos, ou retenção efetiva do provedor/OpenAI.
+  Não exportei dados nem fiz inspeção de contas. Riscos abaixo não são prova de incidente.
+
+FLUXO DE DADOS OBSERVADO
+WhatsApp → provedor → webhook autenticado → roteamento para titular → inbox →
+download de áudio → ffprobe temporário → transcrição OpenAI → transcrição persistida
+→ interpretação/consulta → proposta assinada → confirmação financeira → reply/outbox.
+
+1. Entrada: app/api/whatsapp/webhook/route.ts:8 verifica UUID da conexão, chave,
+   bot independente ativo/PRONTO e allowlist. Usa personalRecipient antes do enqueue.
+2. Parser: lib/whatsapp-expenses.ts:15-37 rejeita grupos, fromMe, mensagens da API,
+   eventos editados/reactions; verifica owner/número, chat/sender, ID e janela de
+   tempo de10min passados/1min futuro. Normaliza texto/botão/áudio; não persiste
+   o payload bruto nem uma URL de mídia recebida no webhook. Áudio entra com texto vazio.
+3. Inbox: lib/whatsapp-store.ts:11,19-26 e database/schema.sql:43-56 persistem
+   user_id, provider_id, sender, tipo, texto, transcrição, reply, status e datas.
+   Campos posteriores incluem confirmação assinada e context_reset_at.
+4. Mídia: lib/whatsapp-worker.ts:42 consulta /message/download usando credencial
+   da conexão, download_quoted=false/transcribe=false, limita formato e tamanho
+   (binário até5MB). Não solicita download do histórico inteiro de conversas.
+5. Arquivo temporário: lib/audio-duration.ts:7 grava tmpdir/anotei-audio-*/input,
+   executa ffprobe e remove a pasta no finally. Em execução normal há limpeza;
+   crash/kill antes do finally pode deixar resíduo. Não inspecionei nenhum tmpdir.
+6. OpenAI: lib/whatsapp-ai.ts:6-12 envia o áudio à transcrição e recebe texto;
+   não tem garantia de retenção remota no código. lib/finance-ai.ts:46 usa Responses
+   store:false; isso não é prova de ausência de logs/retencão de todos os serviços.
+   assistantRecordContext (lib/assistant-record-context.ts:5-8) limita a60 registros
+   relevantes por tipo, mas envia registros selecionados completos, não anonimizados.
+7. Após transcrição, worker:66-69 grava transcript. Edições/continuações podem somar
+   fonte original+correção em transcript (worker:86-95). Assim, há cópias de contexto.
+
+ONDE FICA CADA COISA
+- Banco servidor: texto/transcript/reply e sender são legíveis pela aplicação.
+  Postgres usa colunas text; SQLite usa inbox.data JSON, sem cifragem de conteúdo
+  nessa camada (database/schema.sql:45-48; lib/local-db.ts:11-24).
+- Confirmação: signFinance (lib/finance.ts:108-110) assina JSON/base64url com prazo;
+  assinatura protege integridade/ator, NÃO torna o plano secreto. A inbox pode
+  conter plano/incomplete e outras cópias de fonte nos tokens de edição.
+- Histórico financeiro/auditoria: registros e recibos próprios continuam após reset;
+  apagar transcript não equivale a apagar despesa/agenda. anota_usage_events.result
+  pode guardar resposta de interpret web/mobile; o worker atual liquida REQUEST
+  sem result. Levantar cada cópia antes de definir uma eliminação de conteúdo.
+- Áudio: buffers e arquivo TEMP no servidor, sem coluna de mídia permanente na inbox
+  auditada. Limpeza normal não é apagamento forense nem prova de ausência em backups.
+- Navegador: components/Whatsapp.tsx:10-14 mantém a resposta em estado React e faz
+  fetch no-store; não achei persistência local de transcript nesse componente.
+  lib/server.ts:21 aplica private,no-store. Isso não controla capturas/estado do SO.
+- App Expo: session-storage.ts:4-7 usa SecureStore para TOKEN no nativo e memória
+  para web; não é um arquivo de conversas do WhatsApp. Não ativei API mobile.
+- WhatsApp do usuário/número da IA, dispositivos vinculados, provedor e OpenAI são
+  camadas externas. O backend não apaga suas cópias por reset e não consegue provar
+  quem leu o chat em um aparelho. Acesso físico ou do painel do provedor é distinto
+  de permissão na API Anotei; inventário real depende da inspeção autorizada/QA.
+
+CONTROLES JÁ EXISTENTES
+A. Identidade web: authorize deriva auth.user.id de sessão e valida acesso/assinatura
+   (lib/server.ts:14-15). GET não recebe user_id arbitrário. POST também verifica
+   sameOrigin (server:19). Cookie é httpOnly/sameSite strict (session/route.ts:34).
+B. RLS e grants declarados: inbox/bots têm RLS habilitada e acesso direto revogado de
+   anon/authenticated; service_role tem privilégio amplo (schema.sql:53-56).
+   Portanto filtros no servidor são indispensáveis; RLS não filtra service_role.
+   Não revalidei políticas/grants aplicados no banco de produção nesta auditoria.
+C. Roteamento: database/household-billing.sql:60-70 valida master, número autorizado,
+   vínculo household→titular, convite ativo, bot do assinante, máximo2 números e
+   access_allowed. Sem destinatário válido o webhook ignora o evento.
+D. getBot (whatsapp-members.ts:18-25) produz transporte efetivo do assinante, emprestando
+   token_cipher do master APENAS no servidor; connection_user_id permite AAD correto.
+   rawBot consulta configuração por user_id; nenhum dos dois helpers autentica
+   sozinho o chamador. Não podem virar endpoints públicos de consulta por ID.
+E. Credenciais: secret-box.ts:2-4 usa AES-256-GCM, IV aleatório e AAD por contexto;
+   whatsapp-server.ts:11-14 deriva segredo no servidor e abre token/hook por dono.
+   Isso não cifra transcript/reply. Em SQLite local, localSecret fica na MESMA base
+   settings (local-db.ts:52); cópia integral da base compromete essa separação local.
+F. Segredos não são expostos em settings/participants/access_links da API: projeções
+   explícitas em route.ts:15, whatsapp-members.ts:48-50 e access-links.ts:32-35.
+   Token/cipher/hash de convite não são parte dos DTOs listados.
+G. Contexto WhatsApp: history(user,sender) aplica os dois filtros antes do LIMIT;
+   worker:75 e whatsapp-context.ts:9 respeitam sender e context_reset_at. Confirmações
+   usam ator da conta+remetente. CAS de inbox/reply impede outra fence publicar.
+H. Logs encontrados: assistant-timing.ts:1-2 escreve requestID, estágio, tempo e ok;
+   scripts/whatsapp-worker.mjs:27-28 escreve tarefa/status/erro genérico, sem corpo.
+   runWhatsappTick retorna contagens (worker:108-110). Não achei log de áudio/base64
+   ou transcript bruto nos fluxos examinados; isso não audita proxy/APM/infra.
+
+LIMITES POR PAPEL / CONTRAEXEMPLOS SEM CONTAS REAIS
+1. Assinante A não escolhe B no GET: o servidor usa a sessão A e history(A). Não
+   encontrei uma rota de gestão que leia history(B) por parâmetro livre nessa API.
+2. Dois telefones de um casal pertencem ao MESMO titular financeiro. Consultas e
+   lembretes são compartilhados; history(user) da UI NÃO filtra sender e mostra os
+   dois. Exemplo: A envia consulta privada; B abre o mesmo painel e vê transcript/reply.
+   Isso é a política atual de conta conjunta, não vazamento comprovado entre contas.
+   Se o produto prometer conversa individual por telefone, falta ACL/modelo próprio.
+3. Gestor M com convidados: history(M) não agrega history de todos os assinantes.
+   A gestão autorizada consulta nomes/e-mails/perfil/CPF/endereço/assinatura/feedback
+   e números por finalidade administrativa (commerce-server.ts:31-37), não a inbox
+   global nesse fluxo. Feedback escrito pelo assinante pode conter dados sensíveis.
+4. isManager exige UUID em configuração de servidor (commerce.ts:27-31), não nome,
+   e-mail ou metadata editável. Porém não há nessa leitura um audit trail de leitura
+   de inbox/gestão; service_role e operadores de infraestrutura podem consultar
+   mais dados do que o painel permite. RBAC/segregação operacional requer inventário.
+
+ACHADOS E LACUNAS PRIORIZADOS
+PRIV-B / P1 CONDICIONAL — PAREAMENTO NO DTO (CORRIGIDO LOCALMENTE)
+Antes, result() devolvia Connection de statusBot sem redução por papel. statusBot
+usa a credencial master também para assinante shared, e connection() pode extrair
+qr/paircode de /instance/status. Se esse endpoint devolver pareamento, assinante
+recebia esses campos. O teste simula essa possibilidade; não consultou um endpoint
+real e não demonstra que o provedor retorna QR nessa condição.
+O parser connection() já montava Connection e não espalhava token bruto do provedor;
+extras token/owner/instance/actions injetados no teste são defesa contra propagação
+futura, NÃO evidência de que tokens reais já eram devolvidos pelo código antigo.
+
+Correção292d41e: lib/whatsapp-public-connection.ts e projeção route.ts:15.
+- Só gestor + raw/effective user_id iguais à sessão + independentes + dono de
+  transporte ausente/igual podem receber QR/paircode. Shared, inclusive gestor,
+  recebe EXATAMENTE configured/connected/message segura, sem message interno.
+- Allowlist nunca espalha Connection. Owner legítimo preserva connecting/wrongNumber/
+  phone/message e material validado; conectado não republica QR/código antigo.
+- Vale em GET e POST/live, sem consulta adicional ao provider nem nova ação.
+- Não mudou save/connect/disconnect, convites, números, SQL, financeiro ou envio.
+- Outer settings/history continuam disponíveis conforme política atual; esse patch
+  NÃO é mecanismo de retenção, exclusão de transcript ou privacidade entre casal.
+
+P2 / RETENÇÃO — LIMIT50 NÃO É PRAZO DE GUARDA
+history limita leitura, não quantidade persistida. Não encontrei política automática
+de retenção/expurgo para inbox/confirmations nesta revisão. LIMPO só tem filtro de
+leitura no store; não localizei um endpoint atual de redação que aplique essa marca.
+O DELETE encontrado em scripts/audit-whatsapp-flow.mjs:43 limpa fixture sintética,
+não é rotina de privacidade de assinante. Definir prazo/finalidade para conteúdo,
+dedupe, resultados, auditoria, backups e provedores antes de escrever qualquer purge.
+
+P2 / RESET — REINICIAR NÃO ELIMINA
+subscriber-reset.ts:10-14 e migration20261020165114:19-23 mantêm text/transcript e
+reply final, limpam confirmações/cancelam pendentes e marcam context_reset_at.
+history(user) continua retornando o conteúdo antigo; worker o exclui do contexto.
+Reset é administrativo, com revisão e auditoria de contagem/data; não remove agenda,
+despesas, quota, conta ou chat no telefone/provedor. Não confundir com pedido de
+eliminação. Novo contrato deve separar reiniciar conversa, redigir conteúdo e
+eliminar conta, preservando tombstones de idempotência e requisitos financeiros.
+
+P2 / MÍDIA TEMPORÁRIA E TEXTO DA INTERFACE
+ffprobe grava input temporário; crash pode impedir finally. Não há janitor de
+resíduo evidente nesse caminho. Avaliar volume temporário privado/ACL, política
+de prazo e tratamento de crash com autorização, sem varrer/apagar arquivos agora.
+components/Whatsapp.tsx:42 diz que o app não guarda arquivo de áudio. Recomendada
+distinção: não manter como histórico de áudio, mas processar arquivo temporário.
+
+P2 / CHAVE NA URL E OPERAÇÃO DO PROVEDOR
+connectBot em whatsapp-server.ts:21 registra webhook com account/key na query.
+Webhook aceita alternativa por headers; ponte local troca query por headers ao
+encaminhar (scripts/whatsapp-webhook-bridge.mjs:18-35), sem cookies/sessão no upstream.
+URL externa ainda pode constar em painel/access logs. Não inspecionei esses logs.
+Revisar máscara de query e mecanismo de assinatura do provedor com a QA; não rotacionei
+chaves nem alterei autenticação. Ter a credencial da sessão/master não equivale a
+isolamento entre chats no provedor/aparelho; revisar acessos operacionais reais.
+
+P2 / CONTEÚDO LEGÍVEL E CÓPIAS
+AES das credenciais não é cifragem ponta a ponta do conteúdo dentro do Anotei.
+Banco/backup/operadores autorizados e processadores precisam controle próprio.
+Não verifiquei cifra de disco, região, backups, logs de infra, acesso de suporte,
+prazo no provedor nem termo/consentimento do casal. docs/SEGURANCA.md:7-9 também
+registra pendências de retenção/logs/backups; não trate o documento como prova
+das configurações aplicadas. Falta plano verificável de minimização e remoção.
+
+ADAPTADOR CLOUD / UAZAPI — PROPOSTA, NÃO IMPLEMENTADA
+Separar plano administrativo do transporte de mensagens. Interface interna mínima:
+- verifyWebhook(rawBytes,headers,connectionRef) → VerifiedEvent[] normalizado;
+  validar assinatura/segredo conforme provedor ANTES de confiar em owner/sender.
+- readMedia(verifiedEvent,connectionRef,limits) → bytes+mime, sem URL arbitrária.
+- send(connectionRef,destination,content,idempotency) → accepted/failed/uncertain
+  + providerMessageId; delivered/read só por evidência apropriada, não por HTTP200.
+- status(connectionRef) → estado interno; publicWhatsappConnection faz a projeção
+  por papel, não o adaptador. Pairing/controlPlane são capacidades opcionais.
+ConnectionRef é identificador opaco mapeado no servidor para provider/credencial/
+dono. Nenhuma credencial em catálogo/DTO cliente. Recursos suportados (pareamento,
+templates, botões, mídia, callbacks) dependem da verificação da QA, não de suposição
+de que trocar URL mantém a semântica dos dois produtos.
+
+Preservar fora do adapter: auth/titular, allowlist/recipient, quotas, signedconfirm,
+idempotência, inbox/reply fences, reset e finalidade do dado. Evento normalizado deve
+ter provider+connection+eventID+sender+timestamp+kind+texto ou media handle mínimo.
+Hoje a dedupe usa user_id+provider_id; um segundo provedor exige namespace e revisão
+de chave/rollout antes de convivência, sem misturar eventos de conexões diferentes.
+Não salvar webhook bruto nem mídia por padrão. Não fazer shadow-send de mensagem
+ou reenvio automático em INCERTO. Mapear também invitations/communications, que usam
+sendText/credentials (whatsapp-invitations.ts:13/22, communications-worker.ts:18).
+Planejar migração/reconciliação e consentimento; não desconectar, criar conta,
+trocar número, aplicar SQL ou ativar Cloud nesta entrega.
+
+EVIDÊNCIA PRIV-B / VALIDAÇÃO
+tests/whatsapp-public-connection.test.ts usa GET/POST reais e helper real; auth,
+storage e Connection do provedor são simulados. Mensagens/tokens sintéticos somente.
+Antes: mesmos2 casos de privacidade0/2. Depois: os2 passaram; matriz ampliada19/19.
+Cobertura: assinante independente/shared, gestor independente/shared, dono raw/
+efetivo/transporte divergente, sem sessão, flags falsas do cliente, extras arbitrários,
+POSTlive semstatus extra, origem inválida, material inválido/obsoleto e histórico
+restante preservado. Erros auth/store/provider não são teste de Supabase real.
+Regressão dirigida43/43, zero falhas,3,498s: public-connection, connection,
+reply-cas, subscriber-reset, whatsapp-contacts. APP_URLlocalhost3100.
+Typecheck local exit0; diff--check passou. Nenhum fullsuite/build concorrente.
+Logs ignorados: .data-priv-b-before.log, .data-priv-b-after.log,
+.data-priv-b-regression.log, .data-priv-b-typecheck.log.
+SHA256 before:771957b50fadf7dee5262ba10728bceb5e090b28ae45758d20ee103bedbcd040.
+SHA256 after19:4a677d1efd533b6c9f4681ab849f3c8c3cdb767c5dcca5f17c41272da573bd58.
+SHA256 regression43:d4cb1c3b80baa6bf46d0625cd97d9b1c35739fb36476e01351aa3bb2ed1aa908.
+
+PRÓXIMAS DECISÕES (SEM IMPLEMENTAÇÃO AUTOMÁTICA)
+1. Coordenação/Interface revisar DTO e divulgação de temporário/conta conjunta;
+   QA validar providers, acessos operacionais e termos antes de prometer privacidade.
+2. Definir retenção por classe, acesso de suporte e trilha de leitura, com casos
+   de redação/revogação/backup e tombstones; só então autorizar schema/job.
+3. Aprovar arquitetura provider, assinaturas e namespace/delivery states em rodada
+   própria. BS-01/contexto durável continua aberto; privacidade do DTO não o resolve.
