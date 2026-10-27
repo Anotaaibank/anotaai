@@ -1,0 +1,41 @@
+ANOTEI — IW-B / IW-05 — IDIOMA DA RESPOSTA CURTA DE VOZ
+Data: 2026-10-27. Frente IA/WhatsApp, sob coordenação do orquestrador.
+Worktree: C:\Users\BRUNOL~1\AppData\Local\Temp\anotei-hardening-TWxG2B\ia
+Branch: codex/ia-whatsapp-rules. Base incremental: 5d9004f90a7ace9b7b24917e6595050228577a70.
+
+CAUSA REPRODUZIDA
+voiceSession(..., en-US) já selecionava inglês americano. answerVoiceTools, quando havia uma única resposta pronta (answer ou message de proposta ainda não salva), emitia response.create com instructions fixas: Fale português brasileiro. Assim, o adaptador do navegador substituía a preferência da sessão nessa resposta. Não era falha de transcrição, validação financeira ou persistência.
+Referência oficial lida: https://developers.openai.com/api/reference/resources/realtime/client-events — response.create: instructions e tools presentes substituem a configuração da sessão somente para aquela resposta.
+
+ALTERAÇÃO
+Apenas lib/assistant-client.ts foi alterado na implementação. VoiceResources captura a preferência com localeFromCookie, o mesmo detector usado por /api/assistant, ao iniciar o recurso. Mantém o idioma estável durante uma ferramenta pendente, inclusive se outra aba trocar o cookie; uma nova conversa usa a nova preferência. Cookie ausente/inválido conserva pt-BR. Nenhuma alteração no componente, endpoint, persona, modelo ou transcrição.
+A fala direta seleciona instruções en-US ou as mesmas instruções pt-BR anteriores. Em inglês pode traduzir somente o texto retornado; mantém nomes, quantias, moeda BRL, datas e opções de confirmação. Payload da ferramenta e argumentos não são traduzidos nem modificados.
+Mantém tools vazio, tool_choice none, sem saudações/repetições/recalcular valores e sem afirmar gravação quando saved=false. Erros e respostas não diretas continuam sem override de instruções, usando o comportamento existente da sessão. Deduplicação, abort/close e bloqueio de canal fechado permanecem iguais.
+
+REPRODUÇÃO ANTES / DEPOIS
+Arquivo novo: tests/assistant-voice-locale.test.ts.
+Antes de alterar implementação: 9/12 grupos passaram; 3 falharam mostrando a instrução pt-BR em uma conversa en-US (resposta pronta, resumo pendente e preferência da conversa preservada durante request).
+Depois: os mesmos 12/12 passaram. Esses números medem contratos de código e eventos, não compreensão ou pronúncia de um modelo real.
+Regressão ampliada: 63/63 testes aprovados nos sete arquivos abaixo, em 20.302 s; inclui teste existente com espera sintética de 17 s. tsc --noEmit exit 0. git diff --check exit 0.
+
+CASOS VALIDADOS
+- Construtor sem parâmetros, como no componente real, com cookie pt-BR e en-US.
+- answer e message de resumo pendente; idioma da instrução, payload original, sem ferramentas adicionais e sem declaração de gravação.
+- Mesma chamada repetida: uma execução, um output e um response.create.
+- Request lança erro: retorno ok=false, sem retry e sem override que force português.
+- Encerrar/abortar com ferramenta em andamento e canal fechado: nenhum output ou response.create tardio, nos dois idiomas.
+- Troca de cookie durante request: conversa existente conserva sua preferência; próxima conversa lê a nova.
+- Preferência ausente, en-GB ou cookie não relacionado: padrão pt-BR.
+- Testes existentes de persona, relatórios, valores, confirmação assinada, idempotência, encerramento, localização e isolamento.
+
+COMANDOS
+node --import ./scripts/offline-validation.mjs --experimental-strip-types --test --test-isolation=none tests/assistant-voice-locale.test.ts
+node --import ./scripts/offline-validation.mjs --experimental-strip-types --test --test-isolation=none tests/assistant-voice-locale.test.ts tests/assistant-fast.test.ts tests/assistant-persona.test.ts tests/assistant-request.test.ts tests/immediate-expense.test.ts tests/localization.test.ts tests/personal.test.ts
+node node_modules/typescript/bin/tsc --noEmit
+git diff --check
+Logs locais ignorados: .data/iw-b-before.log, .data/iw-b-after.log, .data/iw-b-regression.log.
+
+LIMITES E INTEGRAÇÃO
+Handler de ferramenta, canal de dados e document.cookie foram simulados. Não houve microfone, WebRTC em navegador/aparelho, áudio sintetizado, chamadas pagas ou avaliação auditiva. Custo API: zero. Não se mediu latência/custo de uma conversa real.
+A preferência local é capturada na criação do recurso; negociação real com troca de idioma durante a conexão depende do teste integrado de navegador. A seleção do servidor/persona não foi modificada nesta tarefa.
+Não houve build completo, push, deploy, SQL, mudança de dependências, migração de modelo ou recuperação de outbox. Build e regressão conjunta ficam com o orquestrador. Entregar somente o novo SHA deste commit incremental; os anteriores já foram integrados.
