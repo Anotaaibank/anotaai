@@ -77,11 +77,14 @@ criptografia de disco/backup do servico hospedado, cuja configuracao nao foi lid
 Finance_confirmation pode carregar proposta assinada com dados financeiros:
 assinatura assegura integridade/ator/prazo, nao confidencialidade do payload.
 
-F5 - Audio passa por outros processadores.
+F5 - Audio passa por arquivo temporario e outros processadores.
 lib/whatsapp-worker.ts:42 baixa base64 do provedor, valida formato/limite de 5 MB e
-mantem buffers de processamento. Nao foi achada gravacao de audio em arquivo nessa
-funcao; isso nao prova apagamento fisico de RAM, ausencia de dumps ou retencao
-no provedor. lib/whatsapp-ai.ts:6-12 envia audio a /v1/audio/transcriptions da
+mantem buffers. O caminho completo inclui audioDurationSeconds, chamado na linha66
+do worker em modo remoto. lib/audio-duration.ts:7 grava tmpdir/anotei-audio-*/input
+para ffprobe e remove a pasta no finally. Crash/kill pode impedir essa limpeza;
+nao se inspecionou tmpdir real nem se comprovou ausencia de residuos. Tampouco se
+provou apagamento fisico de RAM, ausencia de dumps ou retencao no provedor.
+lib/whatsapp-ai.ts:6-12 envia audio a /v1/audio/transcriptions da
 OpenAI. Texto/contexto podem ir a /v1/responses quando exigem interpretacao.
 Logo, 'so no banco Anotei' e uma descricao incorreta do processamento atual.
 
@@ -237,8 +240,11 @@ Privacidade no aplicativo, independente da troca de provedor:
 5. POLITICA DE RETENCAO PROPOSTA, NAO ATIVADA
 
 Proposta tecnica inicial para aprovacao do responsavel, nao prazo legal afirmado:
-- Audio bruto: nao persistir no Anotei apos transcricao; se futura funcionalidade
-  exigir arquivo, storage privado com TTL curto explicitamente aprovado.
+- Audio bruto: nao manter como historico apos processamento. O arquivo temporario
+  atual do ffprobe exige diretorio/volume privado, ACL e limpeza de residuos por
+  prazo com tratamento de crash. Essa manutencao precisa de tarefa autorizada;
+  nao varrer/apagar temporarios agora. Se futura funcionalidade exigir arquivo
+  persistente, usar storage privado com TTL curto explicitamente aprovado.
 - Conteudo conversacional: janela operacional sugerida de 7 dias, configuravel somente
   pelo responsavel, com excecao justificada de suporte. Esse prazo e uma proposta,
   nao uma inferencia de obrigacao nem copia automatica do prazo Uazapi.
