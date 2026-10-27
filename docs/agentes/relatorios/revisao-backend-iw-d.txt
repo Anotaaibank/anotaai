@@ -1,0 +1,115 @@
+ANOTEI — REVISÃO INDEPENDENTE BACKEND DO LIMITE DE CONFIANÇA IW-D
+27/10/2026. Somente revisão e este relatório; nenhum produto foi editado.
+
+ARTEFATOS E ESCOPO
+Correção funcional examinada:236d4856883da116a0d0fcf8079e797e8de98d70.
+Base funcional IA:6e8bae1e316a2f9fdeffd509c750710c91c5f220.
+Dependência de copy Produto:db9febf (na cópia IA:a7aad30); não é outra mudança IA.
+Complemento:a3797d4ccf36c802969790e486b3263a346779ce altera somente testes e relatório;
+conferi que não há diff em lib/app/database/supabase entre236 e a379.
+Leitura: Temp/anotei-hardening-TWxG2B/ia, branch codex/ia-whatsapp-rules.
+Relatório salvo na cópia Backend, sem modificar a árvore da IA.
+
+PARECER
+Não encontrei novo bloqueio P1/P2 no mecanismo de prova de alvo examinado em236.
+O bypass específico de elevar UUID escolhido pelo modelo a evidência do usuário
+foi fechado no caminho revisado. Parecer favorável à integração técnica desse
+incremental, sujeito à reprodução independente QA e aos gates do orquestrador.
+Não é aprovação de deploy, auditoria completa ou garantia de compreensão de toda
+linguagem. Não há evidência de vazamento/cross-tenant: o risco avaliado era escolher
+um registro indevido dentro da própria conta, antes da confirmação.
+
+PROBLEMA ANTERIOR
+sourceWithVerifiedTarget anexava command.target_id ao source quando target_excerpt
+era igual ao UUID. Um draft do modelo podia preencher os dois campos e, com isso,
+criar o próprio literal que o guard procurava. Existência do registro na conta não
+comprova que o usuário escolheu aquele registro. Assinar o plano depois não corrige
+essa falta de proveniência semântica.
+
+O QUE CONFERI NA CORREÇÃO
+1. lib/verified-finance-target.ts:5-17 usa WeakMap por identidade de objeto, não
+   propriedade JSON. Guarda source NFC/trim, target_id, action, reserve_id e snapshot
+   canônico do registro alvo. Não guarda lease de quota nem concede permissão ACL.
+2. Os emissores encontrados são resolvedores locais: naturalFinanceTurn em
+   conversation-language.ts:132 e incomeArchiveDraft em income-archive-language.ts:55.
+   O retorno JSON do modelo não passa a ter identidade no WeakMap por devolver
+   flags/campos/UUID. Clones e JSON roundtrips não herdam a prova.
+3. sourceWithVerifiedTarget (conversation-language.ts:133) só acrescenta o UUID
+   quando a prova confere. verifiedFinanceTarget não aprova outra fonte; admite
+   somente a fonte original ou o sufixo interno exato anexado àquela mesma fonte.
+4. draftCommand (finance-ai.ts:65) revalida a prova e o snapshot contra state antes
+   de montar o plano. Um objeto marcado mutado em target/action/reserve ou uma
+   cópia reutilizando o sufixo falha. O helper de source não recebe state, mas essa
+   checagem posterior obrigatória impede que um alvo alterado ganhe um plano válido.
+5. O guard de target literal/existência/ambiguidade continua em finance-ai.ts:123.
+   Não foi substituído por uma flag. O comando limpo continua sujeito a campos
+   permitidos, valores/datas literais e às validações do builder para tipo de registro.
+6. Listas mantêm source por item e rejeição de alterações direcionadas indevidas;
+   um spread de draft/item não passa a herdar WeakMap. Não há nova exceção de JSON
+   do cliente para dispensar o guard. O API manual existente tem seu contrato próprio;
+   não confundir isso com a proveniência do intérprete de linguagem.
+7. prefixedCommand tem retorno anterior à checagem de marca, como antes. Nesse ramo,
+   a fonte explícita é interpretada localmente como novo comando sem reaproveitar
+   o target/prova do draft anterior. Isso é diferente de autorizar o draft marcado
+   para outra fonte. Não o classifiquei como bypass do alvo antigo ou bloqueio novo.
+
+CONTEXTO, ASSINATURA E PERSISTÊNCIA
+8. assistantTurn não foi editado no236. resolved.target é conferido no comando
+   (assistant-turn.ts:40) e nos IDs finais do plano (:45). O resolvedor de contexto
+   cria sua fonte com o ID previamente identificado, não com um UUID escolhido
+   livremente pelo modelo. As checagens próprias continuam necessárias.
+9. Novo plano continua seguindo prepareFinanceDraft/prepareFinanceProposal →
+   buildFinancePlan → signFinance. readFinance verifica assinatura, ator e prazo;
+   no WhatsApp o ator inclui titular/remetente. Uma marca WeakMap nunca é aceita
+   como substituto da confirmação, assinatura ou recibo.
+10. expected/updated_at, propriedade do registro e verificações de tipo continuam
+    nos writers locais/SQL existentes. Nem SQL nem quota foram relaxados no236.
+    A nova prova impede seleção sem proveniência antes da assinatura; os controles
+    de banco continuam cobrindo atualização concorrente/propriedade na gravação.
+11. whatsappConversationContext agora limpa focus/query/turns/incomplete para novo
+    diálogo, mas extrai income_origins das linhas originais. A extração continua
+    vinculada a titular/remetente, estado LANCADO, confirmação usada e assinatura
+    histórica; a assinatura antiga é prova de origem, não confirmação reutilizada.
+    O novo archive recebe assinatura nova. Reset e descontinuidade mais recente
+    impedem inventar que uma criação antiga foi a última. Registro PREVISTO não
+    muda caixa pago; só plano/projeção até a confirmação aplicável.
+12. No ramo2/editar, archive/restore de INCOME pede reidentificação da entrada;
+    não oferece correção de valor/data que converta archive em income_upsert.
+    A copy final delega o helper Produto já integrado. Não há chamada bancária.
+
+EVIDÊNCIA INDEPENDENTE E LIMITES DO RUN
+Antes do aviso posterior do orquestrador para não abrir novas suítes, executei:
+node --import ./scripts/offline-validation.mjs --experimental-strip-types --test --test-isolation=none tests/verified-finance-target.test.ts tests/income-archive.test.ts tests/whatsapp-income-archive.test.ts
+Com ANOTA_STORAGE=local, ANOTA_DATABASE_PATH=:memory:, ANOTA_RUN_WORKER=0,
+ANOTA_REQUIRE_SUBSCRIPTION=0 e ANOTA_ASSISTANT_ENABLED=false.
+Resultado:23/23, zero falhas/skipped,4,323s. Rede externa bloqueada pelo import
+offline; transporte do modelo/provedor e ASR substituídos; SQLite real em memória.
+Nenhum WhatsApp, modelo pago, Supabase, SQL remoto ou áudio real foi acessado.
+O teste de modelo adversarial é transport stub, não prova de avaliação com modelo real.
+
+Ao verificar o run, tests/income-archive.test.ts tinha2 casos extras ainda não
+commitados. Não atribuí23 ao arquivo original de236 (21 reportados pela IA).
+Depois a IA fechou a379; conferi os3 arquivos executados contra esse complemento,
+normalizando LF/CRLF: todos iguais. Não houve diff funcional236→a379 e não rerodei
+suíte/tipos/build após a orientação do orquestrador. Log local preservado em
+Temp/ia/.data-iwd-backend-review-tests.log, com diagnóstico dos stubs.
+Hashes SHA256 normalizados dos arquivos conferidos contraa379:
+verified-finance-target.test.ts ff968b5efcd908c979f266092ba1767198940d04dc234c62a4bacda281a9e831
+income-archive.test.ts 94c516bfef982c6203308f5e7e8a51e7608c2525334a69b6ac9c123ef3131296
+whatsapp-income-archive.test.ts 6b8a4af7757bc213442db5f5f22787a6b26eae2c7095e0dd167163446a92ab01
+
+RESTAM FORA DESTE ACEITE
+- O WeakMap é propositalmente efêmero. Não prova conversa durável entre réplicas,
+  nem resolve REQUEST/epoch/outbox ou o BS-01, que permanece aberto.
+- A marca depende de emissores locais confiáveis; se um futuro chamador passar
+  draft arbitrário do cliente/modelo ao emissor de marca, esse boundary precisa
+  de nova revisão. A função não é assinatura criptográfica nem fronteira de processo.
+- O snapshot vincula o alvo, não toda a conversa. Estado/ordem global e publicação
+  continuam sujeitos à implementação coordenada BS-C; não prometo exactly-once.
+- Última entrada depende da janela de histórico carregada pelo worker (15min).
+  Falta de origem/ambiguidade pede dados ou seleção no aplicativo; não permite
+  inferir criação fora da janela ou de outro telefone do casal.
+- Não executei a reprodução independente cafe0c4 da QA nem alterei suas frases.
+  Resultado dela, tipos/build do conjunto e publicação são gates da coordenação.
+- Não alterei runtime, testes, quota, SQL, prompts ou credenciais de qualquer frente;
+  a única mudança desta revisão é este relatório.
