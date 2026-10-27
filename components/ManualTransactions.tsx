@@ -12,6 +12,8 @@ export default function ManualTransactions({onClose,onSaved}:{onClose:()=>void;o
   document.body.style.overflow='hidden';
   function keyboard(e:KeyboardEvent){
    const root=scope.current;if(!root)return;
+   // Native child dialogs own Escape/Tab, including confirmation → editor.
+   if(root.querySelector('dialog[open]'))return;
    if(e.key==='Escape'&&!root.querySelector('fieldset[disabled],.finance-confirm button:disabled')){e.preventDefault();onClose();}
    if(e.key!=='Tab')return;
    const fields=Array.from(root.querySelectorAll<HTMLElement>('button,input,select,textarea,a[href],[tabindex="0"]')).filter(el=>!el.matches(':disabled')&&el.getClientRects().length>0),first=fields[0],last=fields.at(-1);
