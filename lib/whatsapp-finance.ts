@@ -1,3 +1,4 @@
+import type {IncomeOrigin} from './income-archive-language.ts';
 import {readFinance,signFinance,type FinancePlan} from './finance.ts';
 import {AppError} from './model.ts';
 import {feedbackTokenPrefix,readFeedback} from './whatsapp-feedback.ts';
@@ -53,4 +54,19 @@ export function whatsappConfirmationHint(text:string,rows:{user_id:string;sender
  if(valid.length===1)return 'Toque em Confirmar ou responda 1 para salvar a proposta. Responda 2 para editar.\n\nVocê também pode enviar CONFIRMAR '+valid[0].confirmation_code+'. Ainda não foi salvo.';
  if(valid.length>1)return 'Há mais de uma proposta aguardando confirmação. Responda CONFIRMAR seguido do código da proposta que deseja salvar.';
  return candidates.length?'A proposta expirou ou perdeu a validade. Repita o pedido financeiro para receber uma nova confirmação. Nenhuma alteração foi salva.':'Não há proposta aguardando confirmação para este número. Confira o histórico ou envie um novo pedido financeiro.';
+}
+
+// A past signature proves authorship only at its original confirmation time.
+// It never authorizes a new write. A new, current confirmation is still required.
+export function whatsappIncomeOrigins(rows:{id:string;user_id:string;sender:string;status:string;created_at:string;reply_status?:string;context_reset_at?:string|null;finance_confirmation?:string;confirmation_code?:string;confirmation_used?:boolean}[],user:string,sender:string,key:string,now=Date.now()):IncomeOrigin[]{
+ const own=rows.filter(r=>r.user_id===user&&r.sender===sender),origins:IncomeOrigin[]=[],seen=new Set<string>();
+ if(own.some(r=>r.status==='LANCADO'&&(!Number.isFinite(Date.parse(r.created_at))||Date.parse(r.created_at)>now)))return [];
+ const ordered=[...own].sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at));let latest:number|undefined;
+ for(const row of ordered){const at=Date.parse(row.created_at);if(seen.has(row.id))continue;seen.add(row.id);if(latest!==undefined&&at<latest)break;
+  if(row.context_reset_at||row.reply_status==='LIMPO')break;
+  if(row.status!=='LANCADO')continue;
+  if(!row.confirmation_used||!row.finance_confirmation)return []; // Unknown newer outcome cannot prove an older creation was last.
+  try{const plan=readFinance(row.finance_confirmation,whatsappActor(user,sender),key,at);if(row.confirmation_code!==plan.id.replaceAll('-','').slice(0,10).toUpperCase())return [];const ids=plan.documents.filter(d=>d.expected===null&&d.document.kind==='INCOME'&&d.document.active&&d.document.status==='REALIZADO').map(d=>d.document.id);if(ids.length){latest=at;origins.push({message_id:row.id,confirmed_at:row.created_at,income_ids:[...new Set(ids)]});}}catch{return [];}
+ }
+ return origins;
 }

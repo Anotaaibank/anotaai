@@ -18,6 +18,8 @@ export function readWhatsappEdit(token:string,user:string,sender:string,key:stri
 // Simple corrections reuse only verified signed fields. Complex corrections retain the structured interpreter.
 export function quickEditedPlan(edit:Editing,text:string,state:FinanceState,user:string,id:string,today:string):FinancePlan|null{
  if(edit.plan.title.startsWith("Conferir "))return null;
+ const income=edit.plan.documents.length===1&&edit.plan.expenses.length===0&&edit.plan.documents[0].document.kind==='INCOME'?edit.plan.documents[0]:null;
+ if(income&&income.expected!==null&&(income.document.active===false||state.documents.find(d=>d.id===income.document.id)?.active!==income.document.active||/^(?:Arquivar|Restaurar) registro$/.test(edit.plan.title)))return null; // An activation toggle is never an income value/date edit.
  const s=fold(text).replace(/^na verdade[, ]+/,''),amounts=monetaryLiterals(text);let c:FinanceCommand;
  const adjustment=edit.plan.documents.length===1&&edit.plan.documents[0].document.kind==='BALANCE_ADJUSTMENT'?edit.plan.documents[0]:null;
  if(adjustment&&amounts.length<=1){const literal=text.trim().replace(/^(?:(?:o |a )?(?:saldo|valor) (?:correto |certo )?(?:é |e )?|na verdade[, ]+|para |pra )/i,'').replace(/[.!]+$/,'');if(new RegExp('^(?:menos\\s+|-)?'+spokenNumber+'(?:\\s+reais?)?$','iu').test(literal))return buildFinancePlan({action:'balance_adjust',balance_cents:signedBalanceMoney(literal)},state,user,id,today);}

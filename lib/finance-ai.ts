@@ -1,3 +1,4 @@
+import {incomeArchiveDraft,isIncomeArchiveRequest,latestIncomeArchiveRequest,type IncomeOrigin} from './income-archive-language.ts';
 import {financeCommand,buildFinancePlan,financeActions,stableId,type FinanceCommand,type FinanceState,type FinancePlan} from './finance.ts';
 import {financeDate,fold,literalMoney,monetaryLiterals} from './finance-date.ts';
 import {AppError,brazilDay} from './model.ts';
@@ -60,6 +61,9 @@ export function draftCommand(d:FinanceDraft,text:string,state:FinanceState,today
  if(prefixed?.intent==='COMMAND'&&prefixed.command)return financeCommand(prefixed.command);
  if(prefixed?.intent==='CLARIFY')throw new AppError(prefixed.question);
  let c:FinanceCommand;try{c=financeCommand(clean(typeof d.command==='string'?JSON.parse(d.command):d.command));}catch{throw new AppError('Não consegui entender o comando. Informe os dados novamente.');}
+ const archive=incomeArchiveDraft(text,state,today);
+ if(archive?.intent==='HELP')throw new AppError(archive.question);
+ if(isIncomeArchiveRequest(text)){const target=state.documents.find(doc=>doc.id===c.target_id);if(c.action!=='document_archive'||!target||target.kind!=='INCOME'||!target.active||target.status!=='REALIZADO'||target.date>today||!latestIncomeArchiveRequest(text)&&(archive?.intent!=='COMMAND'||(archive.command as FinanceCommand).target_id!==c.target_id))throw new AppError(archive?.question||'Identifique a entrada realizada que deseja cancelar.');}
  const actionFields:Record<string,string[]>={balance_adjust:['balance_cents'],extra_activity:['description','activity','date','amount_cents','cost_cents','status','category','details'],profile_upsert:['profile'],expense_create:['description','date','amount_cents','status','category','details'],expense_update:['target_id','description','date','amount_cents','status','category','details'],expense_schedule:['description','date','amount_cents','category','details','dates','count','amount_mode','schedule_type','recurring','due_day'],expense_pay:['target_id','date','amount_cents'],expense_archive:['target_id'],expense_restore:['target_id'],income_upsert:['target_id','description','date','amount_cents','status','salary','activity'],income_receive:['target_id','date','amount_cents'],reserve_upsert:['target_id','description','date','amount_cents','rate_percent','rate_period'],reserve_transfer:['reserve_id','date','amount_cents','direction'],appointment_upsert:['target_id','description','date','time','location','done'],document_archive:['target_id'],document_restore:['target_id']};
  if(currentBalanceIntent(text)&&c.action!=='balance_adjust')throw new AppError('Para corrigir o saldo atual, informe o valor final desejado. Não vou alterar o saldo inicial nem registrar uma receita.');
  if(c.action==='balance_adjust'){
@@ -117,7 +121,7 @@ export function draftCommand(d:FinanceDraft,text:string,state:FinanceState,today
  if(['expense_create','income_upsert'].includes(c.action)&&!c.target_id&&c.date&&c.date>today&&statedFinancialStatus(text)!=='REALIZADO')c.status='PREVISTO';
  if(['expense_create','income_upsert','expense_pay','income_receive'].includes(c.action)&&c.date&&c.date>today&&statedFinancialStatus(text)==='REALIZADO')throw new AppError('Esse valor já foi pago ou recebido, ou é uma previsão para essa data?');
  if(c.action==='expense_create'&&/\b(?:vou pagar|a pagar|nao paguei|despesa futura|pagamento futuro|mes que vem|proximo mes)\b/.test(fold(text)))c.status='PREVISTO';if(c.status==='PREVISTO'&&!c.date&&!c.dates)throw new AppError('Qual é a data de vencimento?');
- const target=c.target_id||c.reserve_id;if(target){const rows=c.action.startsWith('expense_')?state.expenses:state.documents.filter(r=>c.action==='document_archive'&&/recorr|todo mes|mensal/.test(sourceText)?r.kind==='BILL_RULE':true),found=rows.find(r=>r.id===target),excerpt=fold(d.target_excerpt||'');if(!found||excerpt.length<2||!fold(text).includes(excerpt)||!fold(found.description).includes(excerpt)&&!excerpt.includes(target))throw new AppError('Diga o nome exato do registro que deseja alterar.');if(!excerpt.includes(target)&&rows.filter(r=>fold(r.description).includes(excerpt)).length!==1)throw new AppError('Há mais de um registro com esse nome. Informe o vencimento ou selecione no painel.');}return c;
+ const target=c.target_id||c.reserve_id;if(target){const rows=c.action.startsWith('expense_')?state.expenses:state.documents.filter(r=>isIncomeArchiveRequest(text)?r.kind==='INCOME':c.action==='document_archive'&&/recorr|todo mes|mensal/.test(sourceText)?r.kind==='BILL_RULE':true),found=rows.find(r=>r.id===target),excerpt=fold(d.target_excerpt||'');if(!found||excerpt.length<2||!fold(text).includes(excerpt)||!fold(found.description).includes(excerpt)&&!excerpt.includes(target))throw new AppError('Diga o nome exato do registro que deseja alterar.');if(!excerpt.includes(target)&&rows.filter(r=>fold(r.description).includes(excerpt)).length!==1)throw new AppError('Há mais de um registro com esse nome. Informe o vencimento ou selecione no painel.');}return c;
 }
 export function quickFinanceList(text:string,today:string):FinanceDraft|null{
  const separator=new RegExp(';|\\n|\\s+e\\s+(?=(?:eu\\s+)?(?:pago|pagar|agenda|agende|marca|marque|lança|lanca|anota|registra)\\b)|,\\s+(?='+spokenNumber+'\\s+(?:de|do|da|com|no|na)\\b)','i'),parts=text.split(separator).map(s=>s.trim()).filter(Boolean);
@@ -145,7 +149,7 @@ export function quickFinanceDraft(text:string,today:string):FinanceDraft|null{
 // not a whitelist of first words. Dates and polite openings may precede a verb.
 // A short answer without its own operation still belongs to the pending turn.
 export function independentFinanceRequest(text:string,today:string){
- if(commandPrefix(text))return true;
+ if(commandPrefix(text)||isIncomeArchiveRequest(text))return true;
  // An explicit repair can restate the event while omitting an already supplied
  // time. Keep that legitimate continuation distinct from a new standalone turn.
  if(/^(?:nao[,!]?\s+(?:eu\s+)?(?:quero|quis|falei|disse|pedi)|na verdade|quer dizer|corrigindo|o (?:valor|horario) certo)\b/.test(fold(text)))return false;
@@ -178,6 +182,7 @@ export function prepareFinanceDraft(d:FinanceDraft,text:string,state:FinanceStat
 // A partial local parser is not an authoritative rejection of a complete request.
 export function localFinanceInterpretation(text:string,state:FinanceState,today:string,context:unknown=undefined):FinanceDraft|null{
  const raw=context&&typeof context==='object'?context as Record<string,unknown>:{},focus=raw.focus as Partial<FinancePlan>|undefined;
+ const archive=incomeArchiveDraft(text,state,today,{income_origins:raw.channel==='whatsapp'&&Array.isArray(raw.income_origins)?raw.income_origins as IncomeOrigin[]:[]});if(archive)return archive;
  // App conversation metadata identifies a record; WhatsApp may supply a plan.
  // Only a genuine plan has the arrays consumed by the deterministic parser.
  const naturalContext:import('./conversation-language.ts').NaturalContext={...(typeof raw.query==='string'?{query:raw.query}:{}),...(focus&&Array.isArray(focus.documents)&&Array.isArray(focus.expenses)?{focus:focus as FinancePlan}:{})};

@@ -1,3 +1,4 @@
+import {incomeArchiveDraft,type IncomeOrigin} from './income-archive-language.ts';
 import {fold,literalMoney,financeDate,spokenNumber,moneyNumber} from './finance-date.ts';
 import {personalCategory} from './personal-expenses.ts';
 import {appointmentFacts} from './appointment-language.ts';
@@ -48,7 +49,7 @@ function targetWords(value:string){return fold(value).replace(/\b(?:o|a|os|as|me
 function matches(name:string,request:string){const words=targetWords(request),candidate=fold(name);return words.length>0&&words.every(word=>candidate.includes(word));}
 function choose<T extends {description:string}>(rows:T[],text:string){return rows.filter(row=>matches(row.description,text));}
 const options=(rows:{description:string;date?:string;entry_date?:string}[])=>rows.slice(0,4).map(r=>r.description+' · '+(r.date||r.entry_date||'').split('-').reverse().join('/')).join('; ');
-export type NaturalContext={query?:string;focus?:FinancePlan};
+export type NaturalContext={query?:string;focus?:FinancePlan;income_origins?:IncomeOrigin[]};
 export function naturalReadQuery(text:string,today:string):string|null{
  const s=fold(text),query=(raw:Record<string,unknown>)=>JSON.stringify(raw);
  const paidSearch=s.match(/^quanto (?:eu )?paguei (?:de|do|da|com|no|na) (.+?)[?!. ]*$/);
@@ -74,6 +75,7 @@ export function naturalReadQuery(text:string,today:string):string|null{
 }
 export function naturalFinanceTurn(text:string,state:FinanceState,today:string,context:NaturalContext={}):FinanceDraft|null{
  const s=fold(text),guard=languageGuard(text);if(guard)return guard;
+ const archive=incomeArchiveDraft(text,state,today,context);if(archive)return archive;
  const prefixed=prefixedCommand(text,today);if(prefixed)return prefixed;
  const balance=currentBalanceDraft(text);if(balance)return balance;
  if(/[;\n]/.test(text)||financialAmountFragments(text).length>1||/\be\s+(?:tambem\s+)?(?:marca|marque|agende|anota|lanca|lança|registra|pago|pagar|paguei)\b/.test(s))return null;
