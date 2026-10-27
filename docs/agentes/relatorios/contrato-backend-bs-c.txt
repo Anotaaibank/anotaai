@@ -1,6 +1,14 @@
 BS-C — CONTRATO PROPOSTO PARA REQUEST, NÃO IMPLEMENTADO
 27/10/2026. Backend/Supabase. Requer revisão do orquestrador antes de código.
 
+STATUS DA RODADA
+BS-01 permanece ABERTO até existir runtime completo e validado nos três canais,
+incluindo efeitos de contexto, resposta e consumo no worker. BS-C é somente base
+de desenho para a próxima implementação coordenada. Não há reserva nova, migração,
+protocolo parcial por canal ou fork permanente de REQUEST implementado nesta rodada.
+As correções BS-A/BS-B foram entregues para integração pela coordenação; isso não
+constitui fechamento de BS-01 nem aprovação de publicação.
+
 PROBLEMA E FRONTEIRAS
 REQUEST reserva uma unidade para interpretar/preparar uma proposta ou responder
 consulta. Não equivale à confirmação financeira: preparar/repetir/recuperar REQUEST
@@ -119,7 +127,8 @@ Se houver, encaminhar dependência ao orquestrador em vez de editar módulos for
 escopo ou alegar que todo efeito do intérprete ficou transacional.
 
 REPRODUÇÃO DETERMINÍSTICA ENTREGUE (AINDA NÃO EXECUTADA EM PG POR ESTA FRENTE)
-tests/sql/request-reservation-baseline.sql: guard do runner, usuários sintéticos,
+docs/agentes/relatorios/request-reservation-baseline.sql.txt: SQL documentado fora
+do inventário e manifesto de release; guard do runner, usuários sintéticos,
 BEGIN/ROLLBACK, sem sleep/rede/modelo/financeiro. Marca started_at antigo para
 simular crash e intercala A-release/B-take/A-settle para demonstrar a falta de fence.
 Seis observações, DUAS descrevem defeitos existentes. Exit0 comprova reprodução,
