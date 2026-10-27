@@ -1,0 +1,185 @@
+ANOTEI — CONVERSAÇÃO E PRIVACIDADE DO WHATSAPP
+Rodada local de 27/10/2026 — cinco frentes e integração pelo orquestrador
+
+PEDIDO E RESULTADO
+
+Melhorar a comunicação, cancelar entradas já registradas de maneira segura e
+avaliar uma operação sem o WhatsApp da IA aberto no celular. As alterações
+descritas aqui estão na branch codex/hardening-20261027. Não foram publicadas.
+As credenciais, integrações atuais e os históricos reais foram preservados.
+
+1. CANCELAR UMA ENTRADA NÃO É CANCELAR UMA PROPOSTA
+
+O comando de cancelamento de uma entrada salva prepara um arquivamento do
+registro INCOME. Não cria uma despesa para compensar a entrada, não altera o
+saldo inicial e não apaga o histórico. O saldo é recalculado quando o usuário
+confirma o arquivamento. Cancelar uma proposta ainda não salva continua sendo
+uma ação distinta e não muda o livro financeiro.
+
+Pedidos com data, descrição ou valor são comparados somente com os registros
+do titular autenticado. Havendo mais de um candidato, a resposta pede o dado
+que falta e apresenta opções legíveis. A identificação é revalidada no estado
+atual; não basta um UUID gerado pelo modelo. Uma proposta assinada, com prazo,
+fica vinculada ao titular e remetente. A gravação continua exigindo confirmação
+e idempotência. A confirmação antiga serve como contexto, não como autorização
+para uma nova ação.
+
+“Cancela a última entrada que enviei” exige origem comprovada por um plano
+assinado de CRIAÇÃO confirmado pelo mesmo remetente. Uma entrada de outro
+número do casal, uma atualização, um registro manual ou uma cópia JSON de um
+resultado não viram essa prova. Quando a evidência disponível não permite
+determinar o alvo, a resposta pede identificação. A janela recente do worker
+continua limitada; não se promete identificar a última entrada de todo o
+histórico a partir de uma janela parcial.
+
+O fluxo continua resumo → 1 confirmar / 2 editar, com CANCELAR e código quando
+aplicáveis. Editar cancelamento não pode transformar a operação em uma nova
+receita. A orientação para editar uma restauração indica o caminho Meu dinheiro
+→ Arquivadas → Restaurar, em vez de sugerir a ação oposta de cancelamento.
+
+2. FALHAS LOCALIZADAS, ALÉM DO PROMPT
+
+Foram localizadas duas falhas concretas antes do incremento:
+
+- O worker descartava toda a conversa recente ao classificar um pedido como
+  independente. Isso também removia a prova da última receita do remetente.
+  Agora limpar foco/diálogo e preservar origem confirmada são decisões separadas.
+- O modelo podia devolver um UUID sem indicação do usuário, e um helper
+  acrescentava esse mesmo UUID ao texto como se fosse evidência. Isso permitia
+  preparar um alvo indevido dentro da mesma conta. Não foi observada gravação
+  automática nem acesso entre titulares. A prova local agora usa vínculo em
+  memória com identidade do draft, fonte normalizada, ação, alvo e snapshot do
+  registro; não pode ser conferida por campos JSON, clones ou pelo próprio modelo.
+
+Essas correções atuam no contexto e na validação/preparação do comando. A
+transcrição real não foi reavaliada com pessoas nesta rodada. Os testes de áudio
+do worker substituem ASR e transporte; não demonstram precisão de áudio humano.
+
+3. MENSAGENS MAIS LEGÍVEIS
+
+O formatador comum organiza título, valor, descrição e data, com linhas curtas,
+e distingue proposta de alteração salva. Para planos complexos, preserva todas
+as linhas relevantes do plano em vez de resumir omitindo itens. Não inventa
+saldo, total ou sucesso de gravação. O código de confirmação é validado quando
+for fornecido. O formatador não é autorização: quem o chama deve validar o
+recibo de persistência antes de anunciar que algo foi salvo.
+
+Pedidos sem identificação suficiente devem receber uma orientação simples.
+Isso é diferente de prometer compreensão de qualquer frase. A avaliação
+independente inclui expressões inéditas e casos adversariais; resultados de
+fallback ainda não avaliados pelo modelo real continuam separados de acertos.
+
+4. PROTEÇÕES DA TELA E DO PAREAMENTO
+
+A API passa a projetar o estado de conexão por uma lista permitida de campos.
+Dados de QR/pairing não são repassados indiscriminadamente do provedor para
+assinantes ou acessos compartilhados. Pareamento depende de perfil de gestão
+e titularidade efetiva da conexão. O envelope informa viewer_id derivado da
+autorização do servidor; query/body/provider não definem essa identidade.
+
+A tela do WhatsApp vincula a sessão visual a essa identidade. 401/402/403,
+identidade ausente ou trocada, e resposta autorizada inválida bloqueiam/limpam
+o conteúdo. Respostas atrasadas não podem restaurar conversa de uma sessão
+revogada nem substituir uma resposta mais recente. Perder o foco oculta o
+conteúdo sensível e invalida solicitações. Um rascunho manual pode permanecer
+em memória, mas só reaparece após leitura autorizada da mesma identidade.
+Retomar a tela não envia alterações automaticamente.
+
+Esses controles não monitoram instantaneamente cookies em outra aba e não
+desfazem um POST já aceito pelo servidor. Autorização no servidor continua
+obrigatória. Casal que compartilha uma conta também compartilha os dados e as
+mensagens dessa conta; separar contexto por remetente não cria duas contas.
+
+5. O NÚMERO DA IA SEM CELULAR
+
+A integração atual é Uazapi com instância pareada por QR. Fechar ou desconectar
+o WhatsApp do celular não é uma migração para uma arquitetura exclusivamente
+API, nem prova que cópias anteriores foram eliminadas.
+
+A direção recomendada é a WhatsApp Cloud API oficial, com número empresarial
+registrado exclusivamente para API e uma caixa de atendimento privada no
+Anotei. Se o objetivo é eliminar a cópia no aplicativo do celular da IA, não
+se deve escolher coexistência com o aplicativo. A elegibilidade e o procedimento
+para ESTE número ainda precisam ser verificados. Não houve desconexão,
+registro de número, contratação, migração nem envio de mensagem nesta rodada.
+
+Mesmo com Cloud API, não é correto dizer “somente nosso banco guarda tudo”.
+O celular do cliente, Meta/provedores, processamento de IA e backups podem
+envolver cópias e políticas próprias. API elimina a necessidade do aplicativo
+do celular da IA no desenho proposto, não todos os demais pontos de tratamento.
+
+Antes de uma migração concreta: verificar conta empresarial e número, tarifas
+vigentes/contrato, requisitos e janela de indisponibilidade; implementar adapter
+e validação do webhook; mapear remetente ao titular; manter confirmação,
+deduplicação, quota e recibo; validar com conta de teste; aprovar corte e plano
+de retorno. Não interromper a integração atual como tentativa de privacidade.
+
+6. RETENÇÃO E ACESSO AINDA EXIGEM TRABALHO PRÓPRIO
+
+No código atual, inbox armazena texto/transcrição/resposta; não foi localizada
+uma política geral de expiração. Limitar a leitura às últimas mensagens não
+apaga dados. Reset de conversa não é eliminação de histórico. A detecção da
+duração do áudio pode criar arquivo temporário e removê-lo em finally; isso
+não garante ausência de resíduo após encerramento abrupto do processo.
+
+Permissões de banco, administradores de infraestrutura, backups, logs e
+segredos de webhook também importam. Nenhum incidente real foi comprovado e
+não foram lidas conversas de clientes para esta avaliação. O ambiente publicado,
+grants/RLS e retenção efetiva de provedores não foram atestados remotamente.
+
+Próximos controles: política explícita de retenção/exportação/eliminação de
+conversas separada do livro financeiro; acesso de suporte por necessidade e
+auditável; mínimos dados em cada resposta; gestão segura de temporários e
+redação de segredos em logs. Não apagar livros financeiros para “limpar IA”.
+
+Na documentação Uazapi consultada, history_days=0 significa máximo de histórico,
+não desativação. Não foi aplicado esse parâmetro. A documentação pública não
+substitui verificar versão/configuração, backups e contrato da instância real.
+
+7. EVIDÊNCIA E LIMITES
+
+As evidências da primeira rodada permanecem em rodada-01-validacao.json e no
+relatório 01-correcoes-coordenadas.txt. A validação conjunta deste segundo
+incremento é registrada separadamente em rodada-02-validacao.json, com commit,
+comandos, tempos e resultados. Não atribuir seus resultados à produção.
+
+A avaliação de cancelamento congelada antes da leitura do patch passou de
+4/8 para 6/8 grupos no primeiro incremento. Uma falha posterior era o avaliador
+exigindo chamada ao modelo quando a nova regra já devolvia esclarecimento
+seguro. O ajuste separado do avaliador preservou frases e asserções de segurança,
+exigindo CLARIFY, comando nulo e estado intacto quando não há chamada. Resultado
+intermediário classificado: 7/8. Esse arquivo não é mais idêntico ao original;
+os dois resultados e seus limites foram preservados. O caso dia/valor recebeu
+tratamento posterior, documentado na validação final.
+
+Na matriz independente de 14 frases, o primeiro incremento foi de 4 decisões
+locais adequadas, 2 inadequadas e 8 fallbacks não avaliados para 7 adequadas,
+1 inadequada e 6 fallbacks não avaliados. Não somar fallback a acerto nem usar
+quantidade de testes como compreensão geral. Não há nova medida de custo por
+comando real ou latência em WhatsApp real; chamadas pagas nesta rodada: zero.
+
+Seguem abertos REQUEST interrompido/aceite durável, recuperação de entrega
+incerta, escalabilidade de estado compartilhado e validação do ambiente real.
+Não há certificação de capacidade para 100 mil clientes. O gate nativo Expo
+também continua pendente; validações de hooks não substituem aparelho/browser.
+
+FONTES PRIMÁRIAS CONSULTADAS — 27/10/2026
+
+Meta, coleção oficial de Cloud API:
+https://www.postman.com/meta/whatsapp-business-platform/collection/wlk6lh4/whatsapp-cloud-api
+Meta, registro:
+https://www.postman.com/meta/whatsapp-business-platform/folder/zuoeksl/registration
+WhatsApp Business Platform:
+https://business.whatsapp.com/products/business-platform
+WhatsApp, proteção de dados:
+https://whatsappbusiness.com/privacy-protections/
+WhatsApp, preços e FAQ (não assumir tarifa gratuita; verificar tabela vigente):
+https://business.whatsapp.com/products/platform-pricing
+https://whatsappbusiness.com/resources/faq/
+Uazapi, conexão e histórico:
+https://docs.uazapi.com/reference/connectInstance.md
+https://docs.uazapi.com/docs/collections/message-history-retention.md
+
+As páginas técnicas Meta de migração/coexistência não puderam ser totalmente
+consultadas por restrição/429. Por isso não foi prometida elegibilidade, duração
+do corte, retenção específica Meta ou preço por conversa para este número.
