@@ -11,14 +11,18 @@ for(const file of ['.env.local','.env.server.local','.env.cloud.local','.env.dep
 Object.assign(env,{ANOTA_STORAGE:'local',ANOTA_DATABASE_PATH:':memory:',ANOTA_ASSISTANT_ENABLED:'false',ANOTA_RUN_WORKER:'0',ANOTA_REQUIRE_SUBSCRIPTION:'0',ANOTA_MOBILE_API_ENABLED:'1',APP_URL:origin,NEXT_TELEMETRY_DISABLED:'1',ANOTA_BUILD_CHECK:'mobile-http-smoke',NODE_OPTIONS:'--import='+pathToFileURL(resolve('scripts/offline-validation.mjs')).href});
 mkdirSync('.data',{recursive:true});const log=openSync('.data/mobile-http-smoke.log','w'),files=new Map(['tsconfig.json','next-env.d.ts'].map(f=>[f,readFileSync(f)]));
 const child=spawn(process.execPath,['node_modules/next/dist/bin/next','dev','--webpack','--port','3124','--hostname','127.0.0.1'],{env,stdio:['ignore',log,log],windowsHide:true}),checks=[],started=Date.now();
-async function post(path,input,token){const r=await fetch(origin+path,{method:'POST',headers:{'Content-Type':'application/json',Origin:origin,...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(input),signal:AbortSignal.timeout(30000)});return {status:r.status,data:await r.json(),cache:r.headers.get('cache-control')};}
+async function post(path,input,token){const r=await fetch(origin+path,{method:'POST',headers:{'Content-Type':'application/json',Origin:origin,...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(input),signal:AbortSignal.timeout(30000)});return {status:r.status,data:await r.json(),cache:r.headers.get('cache-control'),cookie:r.headers.get('set-cookie')};}
 const api=(input,token)=>post('/api/mobile/v1',input,token);
 function passed(name){checks.push({name,passed:true});console.log(name+': passed');}
 try{
  console.log('Starting isolated Next API on loopback; no production credentials.');
  let ready=false;for(let i=0;i<90;i++){try{const r=await fetch(origin+'/api/mobile/v1',{signal:AbortSignal.timeout(3000)});if(r.status===405){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert.ok(ready,'Next server did not become ready');
  const password='synthetic-smoke-'+randomUUID(),email='native-'+randomUUID()+'@example.test';
- assert.equal((await post('/api/session',{action:'register',email,password,password_confirmation:password,name:'Conta sintética nativa'})).status,200);
+ const registration=await post('/api/session',{action:'register',email,password,password_confirmation:password,name:'Conta sintética nativa'});assert.equal(registration.status,200);
+ const webCookie=registration.cookie?.split(';')[0];assert.ok(webCookie);
+ const whatsapp=await fetch(origin+'/api/whatsapp?viewer_id='+randomUUID(),{headers:{Cookie:webCookie},signal:AbortSignal.timeout(30000)}),whatsappData=await whatsapp.json();
+ assert.equal(whatsapp.status,200);assert.equal(whatsappData.viewer_id,registration.data.user.id);assert.deepEqual(whatsappData.history,[]);assert.equal(whatsappData.connection,null);assert.match(whatsapp.headers.get('cache-control'),/no-store/);passed('WhatsApp view identity comes from the authenticated cookie, not the query');
+ const anonymousWhatsapp=await fetch(origin+'/api/whatsapp',{signal:AbortSignal.timeout(30000)}),anonymousData=await anonymousWhatsapp.json();assert.equal(anonymousWhatsapp.status,401);assert.equal(anonymousData.viewer_id,undefined);passed('anonymous WhatsApp view returns no viewer identity or history');
  const a=await api({action:'login',email,password});assert.equal(a.status,200);assert.match(a.data.token,/^anm1\./);passed('existing-account login through native HTTP gateway');
  const token=a.data.token,today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
  const prepare=async command=>{const p=await api({action:'prepare',request_id:randomUUID(),command},token);assert.equal(p.status,200,JSON.stringify(p.data));return p.data.pending.confirmation;};
