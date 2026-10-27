@@ -24,19 +24,19 @@ export async function history(user:string,sender?:string){
  return service<Inbox[]>('anota_whatsapp_inbox?user_id=eq.'+encodeURIComponent(user)+(sender?'&sender=eq.'+encodeURIComponent(sender)+'&provider_id=not.like.anotei-reminder%3Av1%3A*':'')+'&reply_status=neq.LIMPO&order=created_at.desc&limit=50');
 }
 export async function enqueue(user:string,message:BotMessage){const row:Inbox={id:randomUUID(),user_id:user,provider_id:message.provider_id,sender:message.sender,type:message.type,text:message.text,transcript:message.text,status:'FILA',entry_id:null,reply:'',reply_status:'NAO_ENVIADO',created_at:new Date().toISOString(),lease:null,claimed_at:null};if(localMode()){try{localDb().prepare('INSERT INTO inbox VALUES(?,?,?,?)').run(row.id,user,row.provider_id,JSON.stringify(row));return row.id;}catch{return null;}}const rows=await service<Inbox[]>('anota_whatsapp_inbox?on_conflict=user_id,provider_id','POST',row);return rows[0]?.id||null;}
-export async function claimMessage(){if(localMode())return transaction(()=>{const rows=localDb().prepare("SELECT data FROM inbox WHERE json_extract(data,'$.status')='FILA' OR (json_extract(data,'$.status')='PROCESSANDO' AND json_extract(data,'$.claimed_at')<?) ORDER BY rowid LIMIT 1").all(new Date(Date.now()-600000).toISOString()) as {data:string}[];const row=rows[0]?JSON.parse(rows[0].data) as Inbox:null;if(!row)return null;row.status='PROCESSANDO';row.lease=randomUUID();row.claimed_at=new Date().toISOString();localDb().prepare('UPDATE inbox SET data=? WHERE id=?').run(JSON.stringify(row),row.id);return row;});return service<Inbox|null>('rpc/anota_claim_message','POST',{});}
-/** false means the fence was lost: neither the row object nor the stored reply changed. */
+export async function claimMessage(){if(localMode())return transaction(()=>{const rows=localDb().prepare("SELECT data FROM inbox WHERE json_extract(data,'$.status')='FILA' OR (json_extract(data,'$.status')='PROCESSANDO' AND json_extract(data,'$.claimed_at')<?) ORDER BY rowid LIMIT 1").all(new Date(Date.now()-600000).toISOString()) as {data:string}[];const row=rows[0]?JSON.parse(rows[0].data) as Inbox:null;if(!row)return null;const claimed=patchedReply(row,{status:'PROCESSANDO',lease:randomUUID(),claimed_at:new Date().toISOString()});localDb().prepare('UPDATE inbox SET data=? WHERE id=?').run(JSON.stringify(claimed),row.id);return claimed;});return service<Inbox|null>('rpc/anota_claim_message','POST',{});}
+/** false never grants permission to send and never changes the caller's row snapshot. */
 export async function patchMessage(row:Inbox,patch:Partial<Inbox>):Promise<boolean>{
  const version=replyVersion(row);
  // A response patch cannot reassign a message or manufacture its revision.
- if(version===null||['id','user_id','sender','provider_id','reply_version'].some(key=>key in patch))return false;
+ if(version===null||['id','user_id','sender','provider_id','lease','reply_version'].some(key=>key in patch))return false;
  if(localMode())return transaction(()=>{
   const stored=localDb().prepare('SELECT data FROM inbox WHERE id=?').get(row.id) as {data:string}|undefined;
   if(!stored)return false;const current=JSON.parse(stored.data) as Inbox;if(!sameReplyFence(current,row))return false;
   const next=patchedReply(current,patch);localDb().prepare('UPDATE inbox SET data=? WHERE id=?').run(JSON.stringify(next),row.id);Object.assign(row,next);return true;
  });
  const updated=await service<Inbox[]>('anota_whatsapp_inbox?id=eq.'+encodeURIComponent(row.id)+'&user_id=eq.'+encodeURIComponent(row.user_id)+'&sender=eq.'+encodeURIComponent(row.sender)+'&lease='+(row.lease?'eq.'+encodeURIComponent(row.lease):'is.null')+'&reply_version=eq.'+version,'PATCH',patch);
- if(updated.length!==1)return false;
+ if(updated.length!==1||!sameReplyFence(updated[0],patchedReply(row,patch)))return false;
  // The trigger owns reply_version; only a successful database receipt updates our snapshot.
  Object.assign(row,updated[0]);return true;
 }

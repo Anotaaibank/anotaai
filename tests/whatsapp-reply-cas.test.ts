@@ -16,12 +16,17 @@ async function context(mode:'local'|'cloud'){
  const names=['ANOTA_STORAGE','ANOTA_DATABASE_PATH','SUPABASE_URL','SUPABASE_ANON_KEY','SUPABASE_SERVICE_ROLE_KEY'] as const;
  const before=Object.fromEntries(names.map(k=>[k,process.env[k]])),fetch=globalThis.fetch;
  process.env.ANOTA_STORAGE=mode;process.env.ANOTA_DATABASE_PATH=':memory:';process.env.SUPABASE_URL='https://cas.example.invalid';process.env.SUPABASE_ANON_KEY='synthetic-anon';process.env.SUPABASE_SERVICE_ROLE_KEY='synthetic-service';
- return {api:await store(),close(){globalThis.fetch=fetch;for(const k of names){if(before[k]===undefined)delete process.env[k];else process.env[k]=before[k];}}};
+ const api=await store();if(mode==='local')localDb().exec('SAVEPOINT reply_cas_fixture');
+ return {api,close(){if(mode==='local')localDb().exec('ROLLBACK TO reply_cas_fixture; RELEASE reply_cas_fixture');globalThis.fetch=fetch;for(const k of names){if(before[k]===undefined)delete process.env[k];else process.env[k]=before[k];}}};
 }
 function cloud(initial:VersionedInbox){
  let saved=structuredClone(initial);const calls:{path:string;body:Record<string,unknown>}[]=[];
  globalThis.fetch=async(input,options)=>{
   const url=new URL(String(input)),body=JSON.parse(String(options?.body||'{}'));calls.push({path:url.pathname,body});
+  if(url.pathname==='/rest/v1/rpc/anota_claim_message'){
+   if(saved.status!=='FILA')return Response.json(null);
+   saved={...saved,status:'PROCESSANDO',lease:randomUUID(),claimed_at:new Date().toISOString(),reply_version:(saved.reply_version??0)+1};return Response.json(saved);
+  }
   if(url.pathname==='/rest/v1/rpc/anota_reply_claim'){
    // Old deployed signature deliberately models the unsafe ID-only claim, so the
    // regression fails before the implementation starts sending the CAS fields.
@@ -42,6 +47,12 @@ function cloud(initial:VersionedInbox){
 }
 
 for(const mode of ['local','cloud'] as const){
+ test(mode+': claim inicial e preparação avançam as mesmas versões da resposta',async()=>{
+  const c=await context(mode);try{const queued=message({status:'FILA',reply:'',lease:null});if(mode==='local'){localDb().exec('DELETE FROM inbox');persist(queued);}else cloud(queued);
+   const current=await c.api.claimMessage();assert.ok(current);assert.equal(current.id,queued.id);assert.equal(current.reply_version,1);
+   assert.equal(await c.api.patchMessage(current,{status:'RESOLVIDO',reply:'Resposta preparada'}),true);assert.equal(current.reply_version,2);
+  }finally{c.close();}
+ });
  test(mode+': processador A perde lease, B assume; A não reivindica a resposta de B',async()=>{
   const c=await context(mode);try{const a=message(),b={...a,lease:randomUUID(),reply:'Resposta de B',reply_version:2};let transport:ReturnType<typeof cloud>|undefined;if(mode==='local')persist(b);else transport=cloud(b);
    const before=structuredClone(a);assert.equal(await c.api.replyClaim(a),false);assert.deepEqual(a,before);assert.equal(mode==='local'?read(b.id).reply_status:transport!.saved.reply_status,'NAO_ENVIADO');
@@ -76,8 +87,20 @@ for(const mode of ['local','cloud'] as const){
   finally{c.close();}
  });
 }
+test('local: mudanças nos dados da confirmação invalidam a versão anterior',async()=>{
+ const c=await context('local');try{for(const patch of [{status:'ESCLARECER' as const},{finance_confirmation:'signed-synthetic'},{confirmation_code:'abcdefghij'},{confirmation_used:true},{context_reset_at:new Date().toISOString()}]){
+  const current=message(),stale=structuredClone(current);persist(current);assert.equal(await c.api.patchMessage(current,patch),true);assert.equal(current.reply_version,1);assert.equal(await c.api.replyClaim(stale),false);assert.equal(await c.api.replyClaim(current),true);
+ }}finally{c.close();}
+});
 test('cloud: contrato RPC inclui a versão e recusa resultado diferente de boolean true',async()=>{
  const c=await context('cloud');try{const current=message({reply_version:3}),transport=cloud(current);assert.equal(await c.api.replyClaim(current),true);assert.deepEqual(transport.calls[0].body,{p_id:current.id,p_user:current.user_id,p_sender:current.sender,p_lease:current.lease,p_reply_version:3});
   globalThis.fetch=async()=>Response.json('true');const before=structuredClone(current);assert.equal(await c.api.replyClaim(current),false);assert.deepEqual(current,before);
  }finally{c.close();}
+});
+test('cloud: recibo PATCH incompatível não contamina o snapshot do processador',async()=>{
+ const c=await context('cloud');try{for(const changed of [{user_id:randomUUID()},{sender:'5511888888888'},{lease:randomUUID()},{reply_version:0}]){
+  const current=message(),before=structuredClone(current);
+  globalThis.fetch=async()=>Response.json([{...current,reply:'Texto novo',reply_version:1,...changed}]);
+  assert.equal(await c.api.patchMessage(current,{reply:'Texto novo'}),false);assert.deepEqual(current,before);
+ }}finally{c.close();}
 });
