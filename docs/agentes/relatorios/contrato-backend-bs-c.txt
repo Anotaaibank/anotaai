@@ -1,0 +1,137 @@
+BS-C — CONTRATO PROPOSTO PARA REQUEST, NÃO IMPLEMENTADO
+27/10/2026. Backend/Supabase. Requer revisão do orquestrador antes de código.
+
+PROBLEMA E FRONTEIRAS
+REQUEST reserva uma unidade para interpretar/preparar uma proposta ou responder
+consulta. Não equivale à confirmação financeira: preparar/repetir/recuperar REQUEST
+nunca deve chamar applyFinance automaticamente. Confirmação assinada, recibo e
+idempotência financeira continuam em sua etapa própria.
+
+Hoje anota_usage_take devolve duplicate=true/result=null eternamente se o processo
+morrer antes do settle: REQUEST não recebe expires_at. O outro defeito é ausência de
+identidade da tentativa: depois de settle0 e retake, um settle atrasado da tentativa
+antiga pode liquidar a linha nova. settleUsage descarta o retorno booleano da RPC.
+Não é resolvido com memória de processo nem buscando o lease atual antes do settle.
+
+Três consumidores: app/api/finance/interpret/route.ts, lib/mobile-api.ts (interpret)
+e lib/whatsapp-worker.ts. Este último é da frente IA; adaptação será coordenada.
+Contrato escolhido pela coordenação: global, sem protocolo REQUEST legacy permanente.
+Kinds WHATSAPP/VOICE, isManager e bypass local mantêm comportamento atual.
+
+INTERFACE TS PROPOSTA (NOMES SUJEITOS À REVISÃO)
+RequestContext = {version:1; channel:'web'|'mobile'|'whatsapp';
+  scope:string; conversation_id:string|null; section:string|null; view:unknown;
+  text:string};
+RequestClaim =
+  | {state:'ACQUIRED';id:string;lease:string;version:number;deadline:string;granted:1}
+  | {state:'REPLAY';id:string;result:unknown}
+  | {state:'BUSY';id:string;retry_after_ms:number};
+reserveRequest(user,id,context): Promise<RequestClaim>;
+settleRequest(user,claim,outcome): Promise<boolean>;
+outcome = {type:'COMPLETED';result:unknown} | {type:'FAILED'}.
+Somente ACQUIRED pode ser liquidado. TRUE literal obrigatório; false significa
+lease perdido/encerrado, nunca sucesso do handler. Erro de transporte significa
+resultado incerto: reler por event+fingerprint; não tentar FAILED de forma cega.
+Não retornar result local se a gravação da liquidação não foi comprovada.
+Claim/lease são internos ao servidor; não são credenciais entregues ao navegador.
+Resultado COMPLETED precisa de envelope JSON válido e tamanho limitado (preservar
+limite atual de 64KB). Comparação de replay usa serialização canônica/hash do
+resultado persistido, não identidade de objeto nem string JSON com ordem arbitrária.
+Formato de erro/failure já existente dos handlers será preservado.
+Bypass local/gestor usa claim explícito de bypass; não forja token de banco nem
+enfraquece validação dos claims remotos. Testes remotos usam transporte simulado/PG.
+
+IDENTIDADE, FINGERPRINT E REPLAY
+- Chave autoritativa: (titular autenticado, REQUEST, request_id). Nunca titular
+  fornecido livremente pelo cliente. Número autorizado deve resolver titular antes.
+- Fingerprint SHA256 de contexto canônico com versão, canal, escopo, conversa,
+  tela/view sanitizada e texto já transcrito/normalizado pelo pipeline comum.
+  Áudio e texto equivalentes do mesmo canal entram no mesmo estágio após transcrição.
+  Incluir apenas contexto realmente consumido pelo intérprete, em ordem canônica,
+  sem credenciais, números privados em logs ou campos arbitrários do cliente.
+- Mesmo titular/event com fingerprint diferente: REUSED/409, sem unidade adicional
+  nem exposição do resultado anterior. Canal diferente também é diferente contexto;
+  um ID acidentalmente reutilizado entre canais é rejeitado, não reexecutado.
+- Outro titular com o mesmo UUID tem registro separado e não lê resultado alheio.
+- Não incluir o saldo mutável consultado depois do claim no fingerprint de retry;
+  a confirmação financeira valida revisão/atualidade do plano independentemente.
+- COMPLETE é imutável. Resposta HTTP perdida depois do commit pode ser repetida
+  usando a MESMA chave e contexto, retornando o resultado cacheado sem nova unidade.
+  Proposta cacheada com assinatura expirada não será reassinada silenciosamente;
+  cliente pede nova proposta com novo request_id. Nenhuma gravação financeira automática.
+
+ESTADOS E FENCE PROPOSTOS
+Uma linha por chave, histórico de tentativas auditável sem conteúdo sensível em logs.
+Campos aditivos: request_lease UUID, request_version bigint com range seguro JS,
+request_deadline timestamptz; manter started_at original/period_start da unidade.
+Uma coluna de estado explícita (RUNNING/COMPLETED/FAILED) evita confundir is_open,
+valor zero e result null. Mapear registros antigos por migration/rollout revisados.
+RUNNING tem lease e deadline concretos; COMPLETED exige resultado e consome 1;
+FAILED consome 0, mas preserva identidade/fingerprint e versão anterior.
+
+Acquire transacional com trava por titular e linha, como hoje:
+1. Revalidar acesso/assinatura e limites, tipar argumentos sem SQL NULL tolerado.
+2. Nova chave: reservar uma unidade e emitir token aleatório/versão1/deadline.
+3. COMPLETED: replay imutável se fingerprint igual; não incrementar uso.
+4. RUNNING não expirado: BUSY, não executar intérprete.
+5. RUNNING expirado: CAS troca token e incrementa versão, mantém a MESMA unidade
+   e período de cobrança; nenhum segundo débito/reserva. Não executar financeiro.
+6. FAILED: nova tentativa só com mesma identidade/fingerprint, sujeito à quota atual;
+   reativar linha com token novo/versão maior, sem delete+reinsert que perca a fence.
+7. Mudança de ciclo durante retry deve manter um único débito associado ao event;
+   regra recomendada: RUNNING preserva período original; FAILED→RUNNING reserva no
+   período vigente uma única vez. Validar essa regra explicitamente no SQL e teste.
+
+Settle usa WHERE titular+event+REQUEST+lease+version+RUNNING e deadline vigente.
+Deadline vencida é perda de posse mesmo sem outro take. Não basta ID/user.
+Retorno false não muda linha nem concede direito de enviar resultado ao usuário.
+Settle repetido de COMPLETED só pode comprovar o MESMO recibo/result hash e fence;
+nunca reduzir amount nem sobrescrever result. FAILED com lease vencido/antigo é no-op.
+Se a resposta do settle se perder após commit, consultar replay e comprovar o hash
+da conclusão; não liberar a unidade por um catch genérico de HTTP.
+
+DEADLINE E TEMPOS — PROPOSTA PARA REVISÃO
+Deadline inicial de 90s para web/mobile com maxDuration60, baseado no orçamento
+de execução atual, sem afirmar que 90s serve para todos os áudios do WhatsApp.
+WhatsApp REQUEST é reservado depois da transcrição; não inclui tempo WHATSAPP.
+Medir p95/p99 antes da publicação. Alternativa de heartbeat deve renovar apenas
+antes da expiração com a mesma fence e limite máximo, sem ressuscitar posse perdida.
+Sem loop automático de retry de modelo: takeover só em retry autorizado do pedido.
+Fence garante uma unidade lógica e resultado aceito, não exatamente uma chamada
+paga ao provedor em caso de processo antigo ainda rodando. Medir tentativas/custo;
+nenhum teste desta proposta deve chamar modelo real.
+
+INTEGRAÇÃO COORDENADA E DEPENDÊNCIAS
+Backend: lib/subscription-usage.ts, novo SQL aditivo, consumidores interpret/mobile,
+novos testes. IA: apenas obter claim/passar lease/verificar CAS no worker quando
+design aprovado, sem mudar usage SQL. Não editar assistant/store nesta etapa.
+Não fechar RPC REQUEST antiga antes de os TRÊS consumidores estarem compatíveis.
+Plano preferido: pausar/drain de novos REQUEST, aplicar migração, atualizar os três
+consumidores de forma coordenada, confirmar cache PostgREST e reabrir. Nada remoto
+será executado por esta proposta. Não restaurar RPC sem fence em rollback.
+WHATSAPP/VOICE continuam nas RPC existentes; overload/guard REQUEST exige revisão
+de assinaturas/grants. Configuração de gestor permanece no servidor e intacta.
+
+assistantTurn tem contexto/conversa fora da reserva de quota. O contrato de lease
+da quota, isoladamente, não comprova fence desses efeitos auxiliares. A frente IA
+deve revisar se uma interpretação antiga pode escrever foco/pending antes do settle.
+Se houver, encaminhar dependência ao orquestrador em vez de editar módulos fora de
+escopo ou alegar que todo efeito do intérprete ficou transacional.
+
+REPRODUÇÃO DETERMINÍSTICA ENTREGUE (AINDA NÃO EXECUTADA EM PG POR ESTA FRENTE)
+tests/sql/request-reservation-baseline.sql: guard do runner, usuários sintéticos,
+BEGIN/ROLLBACK, sem sleep/rede/modelo/financeiro. Marca started_at antigo para
+simular crash e intercala A-release/B-take/A-settle para demonstrar a falta de fence.
+Seis observações, DUAS descrevem defeitos existentes. Exit0 comprova reprodução,
+não correção; NÃO incluir como teste verde de aceitação de release.
+Preserva evidências de replay, fingerprint, titular separado, uma unidade por event
+e nenhuma operação financeira. QA executará em PG17.11 descartável se a coordenação
+aprovar a rodada. Teste de concorrência real com duas conexões é tarefa posterior.
+
+MATRIZ DE ACEITAÇÃO PARA AUTORIZAR IMPLEMENTAÇÃO
+Crash antes de settle; término após settle e resposta perdida; tentativa antiga
+chegando antes/depois do takeover; deadline vencida sem takeover; FAILED e retry;
+conclusão já cacheada; fingerprint/contexto/canal divergentes; mesmo ID outro titular;
+fronteira do ciclo/quota cheia; gestor/local; quebra de transporte em take/settle;
+WHATSAPP/VOICE sem regressão; nenhuma confirmação/persistência financeira automática.
+Testes de modelo real e WhatsApp real não fazem parte desta proposta.
