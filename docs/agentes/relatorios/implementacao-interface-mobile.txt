@@ -17,8 +17,33 @@ node node_modules/eslint/bin/eslint.js src tests (workdir mobile): passou.
 Os testes incluem transição 410 sem retry automático, rede incerta, calendário, dedupe/epoch e retorno. O hook real é exercitado com adaptadores React/AppState simulados; a tela Conta real é renderizada em React server com componentes nativos substituídos por primitivas de teste para verificar mensagens/ações. Não são testes Android/iPhone nem prova de UX física.
 Nenhuma chamada paga, ambiente, credencial ou node_modules do original foi copiado. Instalações por lockfile usaram cache pnpm. Versões/lockfiles/config/bloqueios de release preservados. Nenhum build completo, EAS, push, deploy ou operação de produção.
 
-ETAPA WEB IM-02
-Em andamento em commit separado. Contrato, foco/inert/Escape/restauração e evidências serão acrescentados após validação.
+ETAPA WEB IM-02 — COMMIT SEPARADO
+Nova primitiva components/financial-dialog/FinancialDialog.tsx + lifecycle.ts + CSS específico. Usa HTMLDialogElement.showModal(), cujo top layer torna o fundo inerte e mantém a navegação por teclado no diálogo; não depende de apenas role/aria-modal. O callback de cancel previne fechamento durante busy. Cleanup fecha o diálogo e restaura o acionador conectado uma única vez, sem salto de rolagem. A exibição fechada é explicitamente oculta; bloqueio de rolagem é declarativo e não disputa estilos JS do ManualTransactions.
+Finance.tsx usa a primitiva na confirmação, no editor geral e no custo de atividade; ExpenseForm usa-a na despesa. O botão Fechar do custo agora respeita busy. Mantidos formulários, payloads, confirmação, valores, traduções e callbacks de salvamento. ManualTransactions, MobileMenu, VoiceAssistant e fluxos comerciais não foram editados.
+Reprodução estrutural da base: os três modais de Finance e o de ExpenseForm eram wrappers section role=dialog/aria-modal, sem showModal/ciclo próprio de foco; somente o caminho por ManualTransactions tinha um guard de teclado externo. A alteração preserva o wrapper ManualTransactions e migra os outros pontos para o protocolo modal nativo. Não alego ter executado a jornada autenticada anterior no navegador.
+
+TESTES WEB DIRECIONADOS
+node --experimental-strip-types --test --test-isolation=none components/financial-dialog/lifecycle.test.ts: 3 passaram. Cobre showModal, cleanup/restauração única, acionador removido e Escape durante busy/idle. Usa adaptadores DOM sintéticos; não comprova sozinho a implementação do navegador.
+Com ANOTA_STORAGE=local, banco :memory:, worker/IA desligados e scripts/offline-validation.mjs importado:
+- tests/manual-entry.test.ts, tests/finance.test.ts, tests/overview-calendar.test.ts e o teste lifecycle: 32 passaram.
+- tests/localization.test.ts e o mesmo teste lifecycle: 15 passaram.
+Os dois grupos sobrepõem os três testes de diálogo, portanto não equivalem a 47 casos únicos.
+node node_modules/typescript/bin/tsc --noEmit --incremental false (root): passou após a integração dos componentes.
+Uma fixture sintética do componente real, com Localize identidade e CSS de modal, foi compilada isoladamente com Webpack em .data/dialog-fixture (0 erros), para apoiar a próxima QA. Não foi iniciada em servidor/navegador nesta rodada. Isso não é build Next completo nem prova de UX. QA visual integrada ficou com o orquestrador, conforme sua orientação.
+
+COMMITS E ESCOPO
+Etapa nativa: ba001e50fb1d6508f2e96c9a1b6529db4f2d5352.
+Etapa web: commit incremental seguinte nesse ramo; consultar git log/final da entrega para o SHA.
+Teste lifecycle está colocalizado em components/financial-dialog/lifecycle.test.ts; precisa ser chamado explicitamente, pois o glob atual tests/*.test.ts não o inclui. Não alterei o pipeline de outra frente.
+Não alterados: Login, SalesPage, SubscriptionPayment, PersonalRegistration, backend, SQL, versões, lockfiles, mobile config, preços, modelos e release policy.
+
+FONTES DE COMPORTAMENTO
+https://docs.expo.dev/versions/v58.0.0/sdk/router/
+https://reactnative.dev/docs/appstate
+https://react.dev/reference/react/useEffect
+https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/
+https://developer.mozilla.org/en-US/docs/Web/API/HTMLDialogElement/showModal
+https://developer.mozilla.org/en-US/docs/Web/API/HTMLDialogElement/cancel_event
 
 PENDÊNCIAS
 QA em aparelho/simulador para ciclo real de AppState e UI nativa não executado. Integração completa e builds serão feitos pelo orquestrador. IM-03 e continuidade comercial não foram alterados.
