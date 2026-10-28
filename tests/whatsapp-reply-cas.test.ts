@@ -9,6 +9,7 @@ import type {Inbox} from '../lib/whatsapp-store.ts';
 type VersionedInbox=Inbox & {reply_version?:number};
 const headersModule='data:text/javascript,export async function cookies(){throw Error("No request cookies in CAS tests")}';
 async function store(){const hook=registerHooks({resolve(s,c,next){return next(s==='next/headers'?headersModule:s,c);}});try{return await import('../lib/whatsapp-store.ts');}finally{hook.deregister();}}
+async function worker(){const hook=registerHooks({resolve(s,c,next){return next(s==='next/headers'?headersModule:s,c);}});try{return await import('../lib/whatsapp-worker.ts');}finally{hook.deregister();}}
 function message(overrides:Partial<VersionedInbox>={}):VersionedInbox{return {id:randomUUID(),user_id:randomUUID(),provider_id:randomUUID(),sender:'5511999999999',type:'text',text:'teste',transcript:'teste',status:'RESOLVIDO',entry_id:null,reply:'Resposta atual',reply_status:'NAO_ENVIADO',created_at:new Date().toISOString(),lease:randomUUID(),claimed_at:new Date().toISOString(),reply_version:0,...overrides};}
 function read(id:string){const result=localDb().prepare('SELECT data FROM inbox WHERE id=?').get(id) as {data:string};return JSON.parse(result.data) as VersionedInbox;}
 function persist(row:VersionedInbox){localDb().prepare('INSERT OR REPLACE INTO inbox VALUES(?,?,?,?)').run(row.id,row.user_id,row.provider_id,JSON.stringify(row));}
@@ -103,4 +104,49 @@ test('cloud: recibo PATCH incompatível não contamina o snapshot do processador
   globalThis.fetch=async()=>Response.json([{...current,reply:'Texto novo',reply_version:1,...changed}]);
   assert.equal(await c.api.patchMessage(current,{reply:'Texto novo'}),false);assert.deepEqual(current,before);
  }}finally{c.close();}
+});
+test('cloud: processQueue encerra claim vazio sem consultar bot ou escrever',async()=>{
+ const c=await context('cloud');try{
+  const api=await worker(),empty=Object.fromEntries(Object.keys(message()).map(key=>[key,null]));
+  for(const payload of [null,[],[null],empty,[empty]]){
+   const calls:string[]=[];
+   globalThis.fetch=async(input,options)=>{
+    const url=new URL(String(input));assert.equal(url.origin,'https://cas.example.invalid');
+    calls.push(url.pathname);
+    if(url.pathname==='/rest/v1/anota_whatsapp_inbox'&&options?.method==='GET')return Response.json([]);
+    if(url.pathname==='/rest/v1/rpc/anota_claim_message'){
+     assert.equal(options?.method,'POST');return Response.json(payload);
+    }
+    assert.fail('Claim vazio iniciou uma consulta ou escrita inesperada: '+url.pathname);
+   };
+   assert.equal(await api.processQueue(),0);
+   assert.deepEqual(calls,['/rest/v1/anota_whatsapp_inbox','/rest/v1/rpc/anota_claim_message']);
+  }
+ }finally{c.close();}
+});
+test('cloud: processQueue desembrulha claim único e preserva titular, lease e revisão no CAS',async()=>{
+ const c=await context('cloud');try{
+  const api=await worker(),claimed=message({status:'PROCESSANDO',reply:'',reply_version:7}),before=structuredClone(claimed);
+  const calls:string[]=[];let patched=false;
+  globalThis.fetch=async(input,options)=>{
+   const url=new URL(String(input));assert.equal(url.origin,'https://cas.example.invalid');calls.push(url.pathname);
+   if(url.pathname==='/rest/v1/anota_whatsapp_inbox'&&options?.method==='GET')return Response.json([]);
+   if(url.pathname==='/rest/v1/rpc/anota_claim_message')return Response.json([claimed]);
+   if(url.pathname==='/rest/v1/anota_whatsapp_bots'){
+    assert.equal(url.searchParams.get('user_id'),'eq.'+claimed.user_id);
+    // No authorized bot: exercise the worker's guarded error path without a model or send.
+    return Response.json([]);
+   }
+   assert.equal(url.pathname,'/rest/v1/anota_whatsapp_inbox');assert.equal(options?.method,'PATCH');
+   const q=url.searchParams;
+   assert.equal(q.get('id'),'eq.'+claimed.id);assert.equal(q.get('user_id'),'eq.'+claimed.user_id);
+   assert.equal(q.get('sender'),'eq.'+claimed.sender);assert.equal(q.get('lease'),'eq.'+claimed.lease);
+   assert.equal(q.get('reply_version'),'eq.7');
+   const patch=JSON.parse(String(options?.body)) as Partial<Inbox>;
+   assert.equal(patch.status,'ERRO');assert.equal(patch.lease,undefined);assert.equal(patch.reply_version,undefined);
+   patched=true;return Response.json([{...claimed,...patch,reply_version:8}]);
+  };
+  assert.equal(await api.processQueue(1),1);assert.equal(patched,true);assert.deepEqual(claimed,before);
+  assert.deepEqual(calls,['/rest/v1/anota_whatsapp_inbox','/rest/v1/rpc/anota_claim_message','/rest/v1/anota_whatsapp_bots','/rest/v1/anota_whatsapp_inbox']);
+ }finally{c.close();}
 });
