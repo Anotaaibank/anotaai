@@ -16,6 +16,7 @@
 .anota-personal-app .dashboard-more-card strong{font-size:16px;line-height:1.3}
 .anota-personal-app .dashboard-more-card small{font-size:13px;line-height:1.5;color:#536f5f}
 .anota-personal-app .dashboard-more-card.featured{background:#e2f0e2;border-color:#91b8a0}
+.anota-personal-app .dashboard-more-card:last-child:nth-child(odd){grid-column:1/-1}
 .anota-personal-app .dashboard-back,.anota-personal-app .dashboard-sign-out{display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:10px 14px;border:1px solid #bfd3c2;border-radius:12px;background:#f8fbf5;color:#27573e;font-size:14px}
 .anota-personal-app .dashboard-back{margin:0 0 16px}
 .anota-personal-app .dashboard-sign-out{margin-bottom:16px}
