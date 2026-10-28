@@ -35,19 +35,19 @@
       "title": "2. Encontre cada ferramenta",
       "menu": "Mapa do aplicativo",
       "visual": "menu",
-      "intro": "O menu leva você às áreas do Anotei. Cada nome responde a uma pergunta simples.",
+      "intro": "São cinco opções principais: Início, Dinheiro, Contas, Agenda e Mais.",
       "steps": [
         {
           "title": "Abra o menu",
-          "text": "No computador, ele fica à esquerda. No celular, toque no botão de menu no alto da tela."
+          "text": "No celular, use os cinco botões fixos na barra inferior. No computador, as mesmas opções ficam à esquerda."
         },
         {
-          "title": "Veja seu dinheiro",
-          "text": "Visão geral mostra o resumo. Meu dinheiro guarda salário, saldo e reservas. Rendas complementares reúne o que você ganha além do salário."
+          "title": "Encontre o que precisa",
+          "text": "Início mostra seu resumo. Dinheiro reúne saldo, salário e renda extra. Contas reúne A pagar, Gastos, Fixas e Viagens. Agenda mostra seu calendário."
         },
         {
-          "title": "Organize o que sai e o que acontece",
-          "text": "Contas a pagar mostra pendências. Minhas despesas mostra os gastos. Despesas fixas reúne contas mensais. Agenda mostra pagamentos futuros e compromissos."
+          "title": "WhatsApp, sua conta e ajuda",
+          "text": "Toque em Mais para abrir WhatsApp, Meu uso, plano e pagamento, Como usar ou feedback. A administração também encontra Gestão de assinantes nessa área."
         },
         {
           "title": "Use os atalhos de ajuda",
@@ -205,7 +205,7 @@
       "steps": [
         {
           "title": "Cadastre pela tela",
-          "text": "Abra Despesas fixas no menu e toque em + Despesas fixas no alto. Escolha categoria, valor, primeiro vencimento e Repetir por. Identificação é opcional."
+          "text": "Abra Contas, toque em Fixas e depois em Cadastrar despesa fixa. Escolha categoria, valor, primeiro vencimento e Repetir por. Identificação é opcional."
         },
         {
           "title": "Escolha como vai pagar",

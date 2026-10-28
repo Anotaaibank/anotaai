@@ -4,6 +4,22 @@
 .anota-personal-app .bank-panel,.anota-personal-app .bank-card{min-width:0}
 .anota-personal-app .bank-table-wrap{max-width:100%;overscroll-behavior-x:contain}
 .anota-bottom-nav{display:none}
+.anota-personal-app .dashboard-section-tabs{display:flex;gap:4px;padding:5px;margin:0 0 22px;border:1px solid #c1d8c7;background:#e5efe5;border-radius:16px;max-width:620px;min-width:0}
+.anota-personal-app .dashboard-section-tabs button{flex:1;min-width:0;min-height:46px;padding:10px 12px;border:1px solid transparent;border-radius:11px;background:transparent;color:#466853;font-size:14px;font-weight:600;line-height:1.3}
+.anota-personal-app .dashboard-section-tabs button[aria-current=page]{background:#fffef7;border-color:#c4d8c6;color:#144a39;box-shadow:0 2px 6px #0e453d0d}
+.anota-personal-app .dashboard-more{max-width:960px}
+.anota-personal-app .dashboard-more-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:24px}
+.anota-personal-app .dashboard-more-card{display:flex;align-items:center;gap:14px;width:100%;min-width:0;min-height:98px;padding:20px;text-align:left;text-decoration:none;border:1px solid #c5d9c8;border-radius:18px;background:#fbfdf8;color:#184c3a;box-shadow:0 3px 9px #134b3505}
+.anota-personal-app .dashboard-more-card>svg{flex-shrink:0}
+.anota-personal-app .dashboard-more-card>svg:last-child{margin-left:auto;width:18px}
+.anota-personal-app .dashboard-more-card>span{min-width:0;display:grid;gap:7px}
+.anota-personal-app .dashboard-more-card strong{font-size:16px;line-height:1.3}
+.anota-personal-app .dashboard-more-card small{font-size:13px;line-height:1.5;color:#536f5f}
+.anota-personal-app .dashboard-more-card.featured{background:#e2f0e2;border-color:#91b8a0}
+.anota-personal-app .dashboard-back,.anota-personal-app .dashboard-sign-out{display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:10px 14px;border:1px solid #bfd3c2;border-radius:12px;background:#f8fbf5;color:#27573e;font-size:14px}
+.anota-personal-app .dashboard-back{margin:0 0 16px}
+.anota-personal-app .dashboard-sign-out{margin-bottom:16px}
+.anota-personal-app .dashboard-section-tabs button:focus-visible,.anota-personal-app .dashboard-more-card:focus-visible,.anota-bottom-nav button:focus-visible{outline:3px solid #29735a;outline-offset:3px}
 .anota-mobile-drawer:not([open]){display:none}
 .anota-mobile-drawer{position:fixed;inset:0 auto 0 0;margin:0;width:min(340px,calc(100% - 32px));height:100dvh;max-height:100dvh;max-width:none;border:0;border-radius:0 24px 24px 0;padding:24px 18px max(24px,env(safe-area-inset-bottom));background:#063c39;color:#f3f5e5;box-shadow:12px 0 50px #001e2b55;overflow:auto;overscroll-behavior:contain;color-scheme:dark}
 .anota-mobile-drawer::backdrop{background:#062e3270;backdrop-filter:blur(4px)}
@@ -19,6 +35,10 @@
 .anota-mobile-drawer .sidebar-bottom button{min-height:44px;color:#e4ddc2}
 @media(min-width:761px){.anota-mobile-drawer{display:none}}
 @media(max-width:760px){
+ .anota-personal-app .dashboard-more-grid{grid-template-columns:minmax(0,1fr);gap:10px;margin-bottom:20px}
+ .anota-personal-app .dashboard-more-card{min-height:88px;padding:16px;gap:12px}
+ .anota-personal-app .dashboard-section-tabs{width:100%;margin-bottom:20px;padding:4px;gap:2px;border-radius:14px}
+ .anota-personal-app .dashboard-section-tabs button{padding:10px 4px;min-height:46px;font-size:13px}
  html:has(.anota-personal-app),html:has(.subscription-checkout){scrollbar-gutter:stable;overscroll-behavior-x:none}
  body:has(.anota-personal-app),body:has(.subscription-checkout){overscroll-behavior-y:none}
  body:has(.anota-personal-app .anota-modal-backdrop){overflow:hidden}
@@ -61,7 +81,7 @@
  .anota-personal-app .anota-hero .hero-orb{width:54px;height:54px;flex-shrink:0}
  .anota-personal-app .anota-kpis{grid-template-columns:minmax(0,1fr)}
  .anota-personal-app .anota-bottom-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;inset:auto 0 0;z-index:50;min-height:72px;padding:6px max(6px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));background:#f8fcf8f5;border-top:1px solid #bdd3c1;box-shadow:0 -6px 30px #15452d0d;backdrop-filter:blur(18px)}
- .anota-bottom-nav button{position:relative;display:flex;flex-direction:column;gap:5px;min-height:54px;padding:7px 2px;border:0;border-radius:12px;background:transparent;color:#5c7564;font-size:10px;line-height:1.2}
+ .anota-bottom-nav button{position:relative;display:flex;flex-direction:column;gap:5px;min-height:54px;padding:7px 2px;border:0;border-radius:12px;background:transparent;color:#5c7564;font-size:12px;line-height:1.2}
  .anota-bottom-nav button[aria-current=page],.anota-bottom-nav button.is-current{background:#e0edde;color:#124e36;font-weight:700}
  .anota-nav-dot{position:absolute;top:4px;right:calc(50% - 18px);width:7px;height:7px;border-radius:50%;background:#b74234}
  .anota-personal-app .anota-modal-backdrop{padding:12px;overscroll-behavior:contain}
