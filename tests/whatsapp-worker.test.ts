@@ -145,7 +145,8 @@ test('lista parcial confirma só os itens completos e completa o que faltou sem 
   const list=await c.message('Anota 80 de mercado, 40 de gasolina e marca dentista amanhã às 15h');assert.equal(list.status,'ESCLARECER',list.reply);assert.match(list.reply,/3 registros/);assert.equal((await c.message('1')).status,'LANCADO');assert.equal(localFinanceState(c.user).expenses.length,15);assert.equal(localFinanceState(c.user).documents.filter(d=>d.kind==='APPOINTMENT').length,1);
  }finally{c.restore();}
 });
-test('áudio confirmado fica na mesma conta e no calendário: conta mensal, igreja e correção sem duplicar',async()=>{
+test('áudio confirmado fica na mesma conta e no calendário: conta mensal, igreja e correção sem duplicar',async t=>{
+ t.mock.timers.enable({apis:['Date'],now:new Date('2026-10-19T12:00:00Z')});
  const c=await context();try{
   process.env.OPENAI_API_KEY='synthetic-only';let transcript='Agenda pra mim, todo dia cinco eu pago a parcela de mil e quinhentos reais do meu carro, do meu BID. Todo dia cinco, agenda pra mim, por favor.';
   globalThis.fetch=async(url)=>{const path=String(url);if(path.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(path.endsWith('/audio/transcriptions'))return Response.json({text:transcript});assert.ok(/\/send\/(?:text|menu)$/.test(path),'Sem interpretação remota para pedido inequívoco');return Response.json({id:randomUUID()});};
@@ -251,7 +252,8 @@ test('gestor com convite próprio vinculado acessa a agenda pelo WhatsApp sem pe
  }finally{if(oldPublic===undefined)delete process.env.ANOTA_PUBLIC_URL;else process.env.ANOTA_PUBLIC_URL=oldPublic;c.restore();}
 });
 
-test('áudio real com dia 7 do 11 e 19 horas mostra resumo direto; repetição mantém a hora e 1 salva uma vez',async()=>{
+test('áudio real com dia 7 do 11 e 19 horas mostra resumo direto; repetição mantém a hora e 1 salva uma vez',async t=>{
+ t.mock.timers.enable({apis:['Date'],now:new Date('2026-10-19T12:00:00Z')});
  const c=await context();try{
   process.env.OPENAI_API_KEY='synthetic-only';let transcript='Agenda para mim um compromisso no próximo dia 7 do 11, 7 do mês que vem, um compromisso na igreja, às 19 horas, assistir o filme The Chosen, por favor.',transcriptions=0;
   globalThis.fetch=async(url,init)=>{const u=String(url);if(u.endsWith('/message/download'))return Response.json({mimetype:'audio/ogg',base64Data:Buffer.alloc(64).toString('base64')});if(u.endsWith('/audio/transcriptions')){transcriptions++;assert.match(String((init?.body as FormData).get('prompt')),/horários/);return Response.json({text:transcript});}assert.ok(/\/send\/(?:text|menu)$/.test(u),'Não deve chamar intérprete remoto: '+u);return Response.json({id:randomUUID()});};
