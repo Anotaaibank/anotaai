@@ -1,0 +1,1 @@
+{"name":"minha-frota","private":true,"type":"module","scripts":{"build":"node scripts/build.mjs","test":"node --test --test-isolation=none tests/*.test.mjs","dev":"node scripts/preview.mjs"}}
