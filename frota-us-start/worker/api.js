@@ -10,7 +10,7 @@ const notes=v=>typeof v==='string'?v.trim().slice(0,2000):'';
 export default {async fetch(request,env){
  const url=new URL(request.url),p=url.pathname;
  try{
-  if(!p.startsWith('/api/')){const asset=ASSETS[p];if(!asset)return new Response('Página não encontrada',{status:404});return new Response(asset.body,{headers:{'Content-Type':asset.type,'X-Content-Type-Options':'nosniff','Cache-Control':'no-cache','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'self'"}});}
+  if(!p.startsWith('/api/')){const asset=ASSETS[p];if(!asset)return new Response('Página não encontrada',{status:404});const body=asset.encoding==='base64'?Uint8Array.from(atob(asset.body),c=>c.charCodeAt(0)):asset.body;return new Response(request.method==='HEAD'?null:body,{headers:{'Content-Type':asset.type,'X-Content-Type-Options':'nosniff','Cache-Control':asset.encoding==='base64'?'public, max-age=86400':'no-cache','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'self'"}});}
   if(!request.headers.get('oai-authenticated-user-id')&&!env.LOCAL_PREVIEW)return json({error:'Entre com sua conta do ChatGPT para acessar o controle.'},401);
   if(request.method!=='GET'){
    const origin=request.headers.get('origin');if(origin&&origin!==url.origin)return json({error:'Origem não autorizada.'},403);
