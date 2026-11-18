@@ -1,0 +1,7 @@
+dist/
+.local/
+.openai/
+site.tar.gz
+*.sqlite*
+*.bak
+*.jpg

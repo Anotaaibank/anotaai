@@ -1,0 +1,7 @@
+[
+  {"name":"Manutenção e reparos","categories":["Peças","Mecânico / mão de obra","Troca de óleo","Filtros","Pneus","Alinhamento e balanceamento","Freios","Suspensão e direção","Bateria e elétrica","Ar-condicionado","Funilaria e pintura","Vidros e retrovisores","Guincho e assistência","Chaves e chaveiro","Manutenção"]},
+  {"name":"Lavagem e preparação","categories":["Lavagem","Higienização interna","Polimento e estética","Preparação","Limpeza"]},
+  {"name":"Operação e locação","categories":["Check-in","Check-out","Vaga / estacionamento","Entrega e retirada","Transporte / deslocamento","Combustível","Recarga elétrica","Pedágios","Comissão de locação","Taxas de plataforma","Rastreador / GPS"]},
+  {"name":"Documentação e proteção","categories":["Registro e emplacamento","Licenciamento / renovação","Vistoria / inspeção","Documentação","Seguro","Franquia de seguro","Impostos e taxas","Multas"]},
+  {"name":"Outros custos","categories":["Acessórios e equipamentos","Outros"]}
+]

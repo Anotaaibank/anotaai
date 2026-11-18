@@ -1,0 +1,13 @@
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import {resolve,join} from 'node:path';
+const root=fileURLToPath(new URL('..',import.meta.url));
+const read=path=>readFile(join(root,path),'utf8');
+const [server,html,css,js,taxonomy,journalText]=await Promise.all(['worker/api.js','web/index.html','web/style.css','web/app.js','shared/expense-categories.json','drizzle/meta/_journal.json'].map(read));
+const expenseGroups=JSON.parse(taxonomy),journal=JSON.parse(journalText),migrations=Object.fromEntries(await Promise.all(journal.entries.map(async entry=>[entry.tag,await read('drizzle/'+entry.tag+'.sql')])));
+const hostedHtml=html.replace('href="/style.css"','href="/minha-frota/style.css"').replace('src="/app.js"','src="/minha-frota/app.js"');
+const assets={'/':{type:'text/html; charset=utf-8',body:hostedHtml},'/style.css':{type:'text/css; charset=utf-8',body:css},'/app.js':{type:'text/javascript; charset=utf-8',body:js}};
+await mkdir(join(root,'server'),{recursive:true});
+await writeFile(join(root,'server/application.mjs'),'const ASSETS='+JSON.stringify(assets)+';\nconst EXPENSE_GROUPS='+JSON.stringify(expenseGroups)+';\n'+server);
+await writeFile(join(root,'server/schema.json'),JSON.stringify({journal,migrations},null,2)+'\n');
+console.log('Minha Frota: hosted bundle generated without local records.');
