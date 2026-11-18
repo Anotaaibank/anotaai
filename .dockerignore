@@ -16,5 +16,14 @@ supabase/.temp
 output
 tmp
 
+# Never upload local fleet records, backups or old Sites metadata.
+frota-us-start/.local
+frota-us-start/.openai
+frota-us-start/**/*.sqlite
+frota-us-start/**/*.sqlite-wal
+frota-us-start/**/*.sqlite-shm
+frota-us-start/**/*.bak
+frota-us-start/*.jpg
+
 # Aplicativo nativo isolado do build do servidor
 mobile
