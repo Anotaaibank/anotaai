@@ -17,3 +17,9 @@ As versões local e online têm bancos independentes; não há sincronização a
 ## Verificação
 
 Execute pnpm build, pnpm typecheck e pnpm test. Os testes de frota também podem ser executados com pnpm fleet:test. Use registros sintéticos nos testes. Verifique o login, o agrupamento por dono, os custos por categoria e a persistência após reiniciar o serviço.
+
+## Visual e instalação no celular
+
+A Minha Frota tem manifesto e ícones próprios em /minha-frota/manifest.webmanifest. O atalho abre a visão geral no modo standalone. Use a barra inferior para Início, Frota, Lançamentos, Custos e Mais. Resultados, proprietários e configurações ficam em Mais; a engrenagem também abre as configurações. Em telas de até 800px, veículos e lançamentos são apresentados em cartões, e formulários usam fonte de 16px e áreas seguras da tela.
+
+Em Configurações, Instalar ou atualizar atalho oferece o fluxo de instalação disponível no navegador ou mostra as instruções para Safari e Chrome. Se um atalho antigo conservar o ícone anterior, remova apenas o atalho e adicione-o novamente pelo endereço /minha-frota. Os registros permanecem na conta. Não há cache offline de dados privados. As imagens e os prompts estão documentados em frota-us-start/design/visual-v2.md.
